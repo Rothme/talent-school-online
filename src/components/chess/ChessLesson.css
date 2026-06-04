@@ -1,0 +1,227 @@
+.chess-lesson {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--off-white);
+}
+
+.lesson-title-bar {
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.lesson-main-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.lesson-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.step-badge {
+  background: var(--teal-pale);
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+}
+
+.lesson-prog-bar {
+  height: 4px;
+  background: var(--border);
+  width: 100%;
+}
+
+.lesson-prog-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.chess-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 4px 1fr;
+  gap: 0;
+  padding: 16px 20px;
+  background: var(--surface);
+  align-items: start;
+  justify-items: center;
+}
+
+.chess-divider {
+  background: var(--border-strong);
+  width: 1px;
+  height: 100%;
+  min-height: 320px;
+  align-self: stretch;
+}
+
+.chess-board-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.board-owner-label {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.owner-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.board-with-coords {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rank-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.coord-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rank-labels .coord-label {
+  height: 38px;
+  width: 16px;
+}
+
+.board-col-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.chess-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 38px);
+  grid-template-rows: repeat(8, 38px);
+  border: 2px solid var(--navy);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.file-labels {
+  display: flex;
+  margin-top: 3px;
+}
+
+.file-labels .coord-label {
+  width: 38px;
+  height: 16px;
+}
+
+.chess-sq {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background 0.15s;
+}
+
+.sq-light { background: #f0ebe8; }
+.sq-dark { background: #b58863; }
+.sq-hl { background: rgba(108,99,255,0.35) !important; cursor: pointer; }
+.sq-selected { background: rgba(29,158,117,0.5) !important; }
+.sq-empty-target { cursor: pointer; }
+.sq-hl:hover { background: rgba(108,99,255,0.55) !important; }
+
+.chess-piece {
+  font-size: 24px;
+  line-height: 1;
+  user-select: none;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+}
+
+.target-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(108,99,255,0.6);
+  border: 2px solid rgba(108,99,255,0.9);
+  animation: targetPulse 1s infinite;
+}
+
+@keyframes targetPulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+.board-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  font-weight: 600;
+  padding: 4px 12px;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+.hint-bar {
+  background: var(--amber-pale);
+  border-top: 1px solid rgba(186,117,23,0.2);
+  padding: 10px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--amber);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.piece-legend-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #fff;
+  border-top: 1px solid var(--border);
+  justify-content: center;
+}
+
+.piece-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+}
+
+.legend-piece { font-size: 18px; }
+.legend-name { font-size: 11px; color: var(--text-secondary); font-weight: 600; }
