@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --navy: #1a1a2e;
+  --navy-light: #252545;
+  --purple: #6c63ff;
+  --purple-light: #a78bfa;
+  --purple-pale: #eeedfe;
+  --teal: #1d9e75;
+  --teal-light: #5dcaa5;
+  --teal-pale: #e1f5ee;
+  --amber: #ba7517;
+  --amber-light: #ef9f27;
+  --amber-pale: #faeeda;
+  --coral: #e24b4a;
+  --coral-pale: #fcebeb;
+  --white: #ffffff;
+  --off-white: #f8f7ff;
+  --surface: #f1f0fb;
+  --border: rgba(108, 99, 255, 0.15);
+  --border-strong: rgba(108, 99, 255, 0.3);
+  --text-primary: #1a1a2e;
+  --text-secondary: #5a5a7a;
+  --text-muted: #9898b8;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-sm: 0 2px 8px rgba(108, 99, 255, 0.08);
+  --shadow-md: 0 4px 20px rgba(108, 99, 255, 0.12);
+  --shadow-lg: 0 8px 40px rgba(108, 99, 255, 0.16);
+  --font-main: 'Nunito', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--off-white);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: var(--font-main);
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+input, textarea, select {
+  font-family: var(--font-main);
+  outline: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
