@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TopNav from '../layout/TopNav';
 import MsMomoBar from '../shared/MsMomoBar';
 import { CHESS_LESSONS } from '../../data/curriculum';
@@ -9,9 +9,10 @@ const PIECES = {
   bK:'♚', bQ:'♛', bR:'♜', bB:'♝', bN:'♞', bP:'♟',
 };
 
-const PIECE_NAMES = {
-  K: 'King', Q: 'Queen', R: 'Rook', B: 'Bishop', N: 'Knight', P: 'Pawn'
-};
+const PIECE_NAMES = { K:'King', Q:'Queen', R:'Rook', B:'Bishop', N:'Knight', P:'Pawn' };
+
+const FILES = ['a','b','c','d','e','f','g','h'];
+const RANKS = ['8','7','6','5','4','3','2','1'];
 
 const FULL_START = [
   ['bR','bN','bB','bQ','bK','bB','bN','bR'],
@@ -24,19 +25,17 @@ const FULL_START = [
   ['wR','wN','wB','wQ','wK','wB','wN','wR'],
 ];
 
-const FILES = ['a','b','c','d','e','f','g','h'];
-const RANKS = ['8','7','6','5','4','3','2','1'];
-
 function buildStudentBoard(lessonId) {
   const board = FULL_START.map(r => [...r]);
-  if (lessonId === 'chess-1') { board[7][4] = null; }
-  if (lessonId === 'chess-2') { board[7][3] = null; }
+  if (lessonId === 'chess-1') board[7][4] = null;
+  if (lessonId === 'chess-2') board[7][3] = null;
   return board;
 }
 
-function ChessBoard({ position, highlights = [], selected = null, onSquareClick, label, ownerColor, note }) {
+function ChessBoard({ position, highlights=[], onSquareClick, label, ownerColor, note, sqSize }) {
+  const sz = sqSize || 52;
   return (
-    <div className="chess-board-wrap">
+    <div className="chess-board-wrap" style={{'--sq-size': `${sz}px`}}>
       <div className="board-owner-label" style={{ color: ownerColor }}>
         <span className="owner-indicator" style={{ background: ownerColor }} />
         {label}
@@ -50,24 +49,21 @@ function ChessBoard({ position, highlights = [], selected = null, onSquareClick,
             {position.map((row, r) =>
               row.map((piece, c) => {
                 const isLight = (r + c) % 2 === 0;
-                const isHL = highlights.some(h => h[0] === r && h[1] === c);
-                const isSel = selected && selected[0] === r && selected[1] === c;
+                const isHL = highlights.some(h => h[0]===r && h[1]===c);
                 const isEmpty = !piece && isHL;
                 return (
                   <div
                     key={`${r}-${c}`}
-                    className={[
-                      'chess-sq',
+                    className={['chess-sq',
                       isLight ? 'sq-light' : 'sq-dark',
                       isHL ? 'sq-hl' : '',
-                      isSel ? 'sq-selected' : '',
                       isEmpty ? 'sq-empty-target' : '',
                     ].join(' ')}
                     onClick={() => onSquareClick && onSquareClick(r, c)}
                     role={onSquareClick ? 'button' : undefined}
-                    aria-label={`${FILES[c]}${8 - r}${piece ? ' ' + piece : ''}`}
+                    aria-label={`${FILES[c]}${8-r}${piece?' '+piece:''}`}
                   >
-                    {piece && <span className="chess-piece">{PIECES[piece]}</span>}
+                    {piece && <span className="chess-piece" style={{fontSize: `${sz*0.58}px`}}>{PIECES[piece]}</span>}
                     {isEmpty && <span className="target-dot" />}
                   </div>
                 );
@@ -87,43 +83,54 @@ function ChessBoard({ position, highlights = [], selected = null, onSquareClick,
   );
 }
 
-export default function ChessLesson({ lessonIndex = 0, childName = 'Student', onComplete }) {
+export default function ChessLesson({ lessonIndex=0, childName='Student', onComplete }) {
   const lesson = CHESS_LESSONS[lessonIndex] || CHESS_LESSONS[0];
   const [studentBoard, setStudentBoard] = useState(() => buildStudentBoard(lesson.id));
   const [showHint, setShowHint] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [hintTarget, setHintTarget] = useState(null);
+  const [sqSize, setSqSize] = useState(52);
+  const mainRef = useRef(null);
+
+  // Dynamically calculate square size to fill available space
+  useEffect(() => {
+    function calcSize() {
+      if (!mainRef.current) return;
+      const rect = mainRef.current.getBoundingClientRect();
+      const availH = rect.height - 80; // reserve space for labels/notes
+      const availW = (rect.width / 2) - 60; // half width minus coords
+      const byHeight = Math.floor(availH / 8);
+      const byWidth = Math.floor(availW / 8);
+      const size = Math.min(byHeight, byWidth, 70); // cap at 70px
+      setSqSize(Math.max(size, 36)); // min 36px
+    }
+    calcSize();
+    window.addEventListener('resize', calcSize);
+    return () => window.removeEventListener('resize', calcSize);
+  }, []);
 
   useEffect(() => {
     setStudentBoard(buildStudentBoard(lesson.id));
     setSuccess(false);
     setShowHint(false);
-    setHintTarget(null);
   }, [lessonIndex, lesson.id]);
 
-  function handleStudentSquareClick(r, c) {
-    if (success) return;
-    if (!lesson.targetSquare) return;
+  function handleSquareClick(r, c) {
+    if (success || !lesson.targetSquare) return;
     const [tr, tc] = lesson.targetSquare;
     if (r === tr && c === tc) {
-      const newBoard = studentBoard.map(row => [...row]);
-      newBoard[r][c] = `w${lesson.targetPiece}`;
-      setStudentBoard(newBoard);
+      const nb = studentBoard.map(row => [...row]);
+      nb[r][c] = `w${lesson.targetPiece}`;
+      setStudentBoard(nb);
       setSuccess(true);
       setTimeout(() => onComplete && onComplete(), 2000);
-    } else {
-      setHintTarget([r, c]);
-      setTimeout(() => setHintTarget(null), 600);
     }
   }
 
-  const tutorHighlights = lesson.targetSquare ? [lesson.targetSquare] : [];
-  const studentHighlights = lesson.targetSquare ? [lesson.targetSquare] : [];
+  const highlights = lesson.targetSquare ? [lesson.targetSquare] : [];
 
   return (
     <div className="chess-lesson">
       <TopNav childName={childName} streak={7} xp={20} backTo="/child/dashboard" />
-
       <div className="lesson-title-bar">
         <div>
           <h1 className="lesson-main-title">{lesson.title}</h1>
@@ -131,44 +138,34 @@ export default function ChessLesson({ lessonIndex = 0, childName = 'Student', on
         </div>
         <div className="step-badge">Step {lesson.step} of {lesson.totalSteps}</div>
       </div>
-
       <div className="lesson-prog-bar">
-        <div
-          className="lesson-prog-fill"
-          style={{ width: `${(lesson.step / lesson.totalSteps) * 100}%`, background: '#1d9e75' }}
-        />
+        <div className="lesson-prog-fill"
+          style={{ width: `${(lesson.step/lesson.totalSteps)*100}%`, background: '#1d9e75' }} />
       </div>
 
-      <div className="chess-main">
+      <div className="chess-main" ref={mainRef}>
         <ChessBoard
           position={studentBoard}
-          highlights={success ? [] : studentHighlights}
-          onSquareClick={handleStudentSquareClick}
-          label={`Your board — ${lesson.targetPiece ? `place the ${PIECE_NAMES[lesson.targetPiece]}` : 'make your move'}`}
+          highlights={success ? [] : highlights}
+          onSquareClick={handleSquareClick}
+          label={`Your board — place the ${lesson.targetPiece ? PIECE_NAMES[lesson.targetPiece] : 'piece'}`}
           ownerColor="#1d9e75"
-          note={success
-            ? '✅ Correct! Well done!'
-            : hintTarget
-            ? '❌ Not quite — try the highlighted square!'
-            : `Tap the highlighted square to place the ${lesson.targetPiece ? PIECE_NAMES[lesson.targetPiece] : 'piece'}`}
+          note={success ? '✅ Correct! Well done!' : `Tap the highlighted square to place the ${lesson.targetPiece ? PIECE_NAMES[lesson.targetPiece] : 'piece'}`}
+          sqSize={sqSize}
         />
-
         <div className="chess-divider" />
-
         <ChessBoard
           position={FULL_START}
-          highlights={tutorHighlights}
+          highlights={highlights}
           label="Ms. Momo's board — watch and copy"
           ownerColor="#6c63ff"
           note={lesson.rightPanelNote}
+          sqSize={sqSize}
         />
       </div>
 
       {showHint && (
-        <div className="hint-bar">
-          <span>💡</span>
-          <span>{lesson.tip}</span>
-        </div>
+        <div className="hint-bar">💡 {lesson.tip}</div>
       )}
 
       <div className="piece-legend-bar">
