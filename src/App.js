@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import LandingPage from './pages/LandingPage';
 import ChildDashboard from './pages/child/ChildDashboard';
 import ParentDashboard from './pages/parent/ParentDashboard';
 import ChessLesson from './components/chess/ChessLesson';
@@ -30,15 +31,15 @@ export default function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/"                        element={<Navigate to="/login" />} />
-          <Route path="/login"                   element={<Login />} />
-          <Route path="/register"                element={<Register />} />
-          <Route path="/child/login"             element={<ChildLogin />} />
-          <Route path="/child/dashboard"         element={<ChildDashboard childName="Chidera" progress={{ coding:{ lessonsComplete:2, totalLessons:10 }, chess:{ lessonsComplete:0, totalLessons:6 }, typing:{ lessonsComplete:1, totalLessons:8 } }} />} />
-          <Route path="/child/lesson/:subject"   element={<LessonRouterWrapper />} />
-          <Route path="/parent/dashboard"        element={<ParentDashboard />} />
-          <Route path="/projects/:projectId"     element={<ProjectRouterWrapper />} />
-          <Route path="*"                        element={<Navigate to="/login" />} />
+          <Route path="/"                       element={<LandingPage />} />
+          <Route path="/login"                  element={<Login />} />
+          <Route path="/register"               element={<Register />} />
+          <Route path="/child/login"            element={<ChildLogin />} />
+          <Route path="/child/dashboard"        element={<ChildDashboard childName="Chidera" progress={{ coding:{ lessonsComplete:2, totalLessons:10 }, chess:{ lessonsComplete:0, totalLessons:6 }, typing:{ lessonsComplete:1, totalLessons:8 } }} />} />
+          <Route path="/child/lesson/:subject"  element={<LessonRouterWrapper />} />
+          <Route path="/parent/dashboard"       element={<ParentDashboard />} />
+          <Route path="/projects/:projectId"    element={<ProjectRouterWrapper />} />
+          <Route path="*"                       element={<Navigate to="/" />} />
         </Routes>
       </Router>
     </AuthProvider>
