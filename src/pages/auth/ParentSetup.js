@@ -74,7 +74,7 @@ export default function ParentSetup() {
   function adjustPref(subject, delta) {
     setPrefs(p => {
       const newVal = Math.max(10, Math.min(80, p[subject] + delta));
-      const diff = newVal - p[subject];
+      
       const others = SUBJECTS.filter(s => s.id !== subject).map(s => s.id);
       const newPrefs = { ...p, [subject]: newVal };
       const remainder = 100 - newVal;
