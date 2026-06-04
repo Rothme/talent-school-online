@@ -11,7 +11,7 @@ export default function ParentDashboard() {
   const { currentUser, userProfile, getChildren, logout } = useAuth();
   const [children, setChildren] = useState([]);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [shareVisible, setShareVisible] = useState(false);
+  
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
