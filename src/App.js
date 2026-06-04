@@ -11,6 +11,7 @@ import ProjectViewer from './pages/projects/ProjectViewer';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ChildLogin from './pages/auth/ChildLogin';
+import ParentSetup from './pages/auth/ParentSetup';
 import './styles/globals.css';
 
 function LessonRouterWrapper() {
@@ -19,11 +20,6 @@ function LessonRouterWrapper() {
   if (subject === 'typing') return <TypingLesson lessonIndex={0} childName="Chidera" />;
   if (subject === 'coding') return <CodingLesson lessonIndex={0} childName="Chidera" />;
   return <Navigate to="/child/dashboard" />;
-}
-
-function ProjectRouterWrapper() {
-  const { projectId } = useParams();
-  return <ProjectViewer projectId={projectId} />;
 }
 
 export default function App() {
@@ -35,10 +31,11 @@ export default function App() {
           <Route path="/login"                  element={<Login />} />
           <Route path="/register"               element={<Register />} />
           <Route path="/child/login"            element={<ChildLogin />} />
+          <Route path="/parent/setup"           element={<ParentSetup />} />
+          <Route path="/parent/dashboard"       element={<ParentDashboard />} />
           <Route path="/child/dashboard"        element={<ChildDashboard childName="Chidera" progress={{ coding:{ lessonsComplete:2, totalLessons:10 }, chess:{ lessonsComplete:0, totalLessons:6 }, typing:{ lessonsComplete:1, totalLessons:8 } }} />} />
           <Route path="/child/lesson/:subject"  element={<LessonRouterWrapper />} />
-          <Route path="/parent/dashboard"       element={<ParentDashboard />} />
-          <Route path="/projects/:projectId"    element={<ProjectRouterWrapper />} />
+          <Route path="/projects/:projectId"    element={<ProjectViewer projectId="chidera-guessing-game" />} />
           <Route path="*"                       element={<Navigate to="/" />} />
         </Routes>
       </Router>
