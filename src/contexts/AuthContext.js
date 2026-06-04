@@ -6,16 +6,20 @@ import {
   onAuthStateChanged,
   sendEmailVerification,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import {
+  doc, setDoc, getDoc,
+  collection, addDoc, getDocs, query, where,
+} from 'firebase/firestore';
 import { auth, db } from '../utils/firebase';
+import { generateStudentId } from '../utils/studentId';
 
 const AuthContext = createContext();
 export function useAuth() { return useContext(AuthContext); }
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser]   = useState(null);
+  const [userProfile, setUserProfile]   = useState(null);
+  const [loading, setLoading]           = useState(true);
 
   async function registerParent(email, password, displayName) {
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
@@ -34,7 +38,9 @@ export function AuthProvider({ children }) {
     const result = await signInWithEmailAndPassword(auth, email, password);
     if (!result.user.emailVerified) {
       await signOut(auth);
-      throw Object.assign(new Error("email-not-verified"), { code: 'auth/email-not-verified' });
+      const err = new Error('email-not-verified');
+      err.code = 'auth/email-not-verified';
+      throw err;
     }
     return result;
   }
@@ -51,12 +57,15 @@ export function AuthProvider({ children }) {
   }
 
   async function addChild(parentUid, childData) {
+    const studentId = generateStudentId(childData.name);
     const childRef = await addDoc(collection(db, 'children'), {
       ...childData,
+      studentId,
       parentUid,
       createdAt: new Date().toISOString(),
       progress: { coding: 0, chess: 0, typing: 0 },
       streak: 0, totalXP: 0,
+      lessonsComplete: { coding: 0, chess: 0, typing: 0 },
     });
     const parentSnap = await getDoc(doc(db, 'users', parentUid));
     const existing = parentSnap.data()?.children || [];
@@ -64,13 +73,33 @@ export function AuthProvider({ children }) {
       ...parentSnap.data(),
       children: [...existing, childRef.id],
     });
-    return childRef.id;
+    return { id: childRef.id, studentId };
   }
 
   async function getChildren(parentUid) {
     const q = query(collection(db, 'children'), where('parentUid', '==', parentUid));
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  async function loginChild(studentId, pin) {
+    const q = query(
+      collection(db, 'children'),
+      where('studentId', '==', studentId.toUpperCase().trim())
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      const err = new Error('child-not-found');
+      err.code = 'child/not-found';
+      throw err;
+    }
+    const child = { id: snap.docs[0].id, ...snap.docs[0].data() };
+    if (child.pin !== pin) {
+      const err = new Error('wrong-pin');
+      err.code = 'child/wrong-pin';
+      throw err;
+    }
+    return child;
   }
 
   useEffect(() => {
@@ -85,8 +114,12 @@ export function AuthProvider({ children }) {
   const value = {
     currentUser, userProfile, loading,
     registerParent, login, logout,
-    fetchUserProfile, addChild, getChildren,
+    fetchUserProfile, addChild, getChildren, loginChild,
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 }
