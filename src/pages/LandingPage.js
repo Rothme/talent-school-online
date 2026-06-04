@@ -16,7 +16,8 @@ export default function LandingPage() {
         <div className="lp-nav-links">
           <a href="#skills" className="lp-nav-link">Skills</a>
           <a href="#schedule" className="lp-nav-link">How it works</a>
-          <button className="lp-nav-login" onClick={() => navigate('/login')}>Log in</button>
+          <button className="lp-nav-login" onClick={() => navigate('/child/login')}>👧 Student login</button>
+          <button className="lp-nav-login" onClick={() => navigate('/login')}>Parent login</button>
           <button className="lp-nav-cta" onClick={() => navigate('/register')}>Start free today</button>
         </div>
       </nav>
