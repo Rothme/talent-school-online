@@ -7,7 +7,7 @@
 }
 
 .lesson-title-bar {
-  padding: 6px 20px;
+  padding: 6px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -16,18 +16,8 @@
   flex-shrink: 0;
 }
 
-.lesson-main-title {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 1px;
-}
-
-.lesson-subtitle {
-  font-size: 11px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
+.lesson-main-title { font-size: 15px; font-weight: 800; margin-bottom: 1px; }
+.lesson-subtitle { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
 
 .step-badge {
   background: var(--teal-pale);
@@ -39,110 +29,107 @@
   white-space: nowrap;
 }
 
-.lesson-prog-bar {
-  height: 4px;
-  background: var(--border);
-  width: 100%;
-  flex-shrink: 0;
-}
+.lesson-prog-bar { height: 4px; background: var(--border); flex-shrink: 0; }
+.lesson-prog-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
 
-.lesson-prog-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.4s ease;
-}
-
+/* ── Main area: fills all remaining vertical space ── */
 .chess-main {
   flex: 1;
   display: grid;
   grid-template-columns: 1fr 2px 1fr;
-  padding: 8px 12px;
-  background: var(--surface);
-  align-items: center;
-  justify-items: center;
   min-height: 0;
-  overflow: hidden;
+  background: var(--surface);
 }
 
-.chess-divider {
-  background: var(--border-strong);
-  width: 2px;
-  align-self: stretch;
-}
+.chess-divider { background: var(--border-strong); }
 
+/* ── Each board panel fills its column fully ── */
 .chess-board-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  padding: 8px 6px 4px;
+  gap: 4px;
   width: 100%;
-  padding: 0 4px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .board-owner-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
-.owner-indicator {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  display: inline-block;
-}
+.owner-indicator { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 
+/* ── Coords + grid wrapper ── */
 .board-with-coords {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 2px;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
 }
 
 .rank-labels {
   display: flex;
   flex-direction: column;
+  justify-content: stretch;
+  flex-shrink: 0;
 }
 
 .coord-label {
+  flex: 1;
   font-size: 10px;
   font-weight: 700;
   color: var(--text-muted);
-  text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.rank-labels .coord-label {
   width: 14px;
 }
 
 .board-col-wrap {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
+/* ── The grid itself stretches to fill the col-wrap ── */
 .chess-grid {
+  flex: 1;
   display: grid;
-  grid-template-columns: repeat(8, var(--sq, 56px));
-  grid-template-rows: repeat(8, var(--sq, 56px));
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
   border: 2.5px solid var(--navy);
   border-radius: 3px;
   overflow: hidden;
+  width: 100%;
 }
 
 .file-labels {
   display: flex;
+  flex-shrink: 0;
   margin-top: 3px;
 }
 
 .file-labels .coord-label {
+  flex: 1;
+  width: auto;
   height: 14px;
 }
 
+/* ── Squares fill their grid cell ── */
 .chess-sq {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,15 +146,16 @@
 .chess-piece {
   line-height: 1;
   user-select: none;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+  font-size: clamp(16px, 3.5vw, 44px);
 }
 
 .target-dot {
-  width: 18px;
-  height: 18px;
+  width: clamp(10px, 1.5vw, 20px);
+  height: clamp(10px, 1.5vw, 20px);
   border-radius: 50%;
   background: rgba(108,99,255,0.55);
-  border: 2.5px solid rgba(108,99,255,0.9);
+  border: 2px solid rgba(108,99,255,0.9);
   animation: targetPulse 1s infinite;
 }
 
@@ -177,26 +165,26 @@
 }
 
 .board-note {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
   text-align: center;
   font-weight: 600;
-  padding: 4px 14px;
+  padding: 4px 12px;
   background: #fff;
   border-radius: 20px;
   border: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .hint-bar {
   background: var(--amber-pale);
   border-top: 1px solid rgba(186,117,23,0.2);
-  padding: 8px 20px;
+  padding: 8px 16px;
   display: flex;
   gap: 8px;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--amber);
   font-weight: 600;
-  line-height: 1.5;
   flex-shrink: 0;
 }
 
@@ -204,7 +192,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 6px 16px;
+  padding: 6px 14px;
   background: #fff;
   border-top: 1px solid var(--border);
   justify-content: center;
