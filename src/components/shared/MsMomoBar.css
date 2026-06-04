@@ -1,0 +1,82 @@
+.momo-bar {
+  background: var(--navy);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  min-height: 72px;
+}
+
+.momo-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.momo-icon { font-size: 20px; }
+
+.momo-bubble {
+  flex: 1;
+  background: rgba(255,255,255,0.07);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+
+.momo-name {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.momo-speaking-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5dcaa5;
+  display: inline-block;
+  animation: pulse 0.8s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.momo-text {
+  color: #e2e8f0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.momo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.momo-btn {
+  background: rgba(255,255,255,0.1);
+  border: 0.5px solid rgba(255,255,255,0.15);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  font-family: var(--font-main);
+}
+
+.momo-btn:hover { background: rgba(255,255,255,0.18); }
+.momo-btn-active { background: rgba(29,158,117,0.3) !important; }
