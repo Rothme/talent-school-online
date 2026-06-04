@@ -198,3 +198,21 @@
 .share-modal-actions { display: flex; gap: 10px; }
 .share-wa-btn { flex: 1; height: 44px; background: #25d366; color: #fff; border: none; border-radius: var(--radius-md); font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--font-main); }
 .share-copy-btn { height: 44px; padding: 0 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--font-main); }
+
+.rec-edit-btn {
+  margin-top: 8px; background: none; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 5px 12px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  color: var(--text-secondary); font-family: var(--font-main);
+  transition: all 0.15s;
+}
+.rec-edit-btn:hover { background: var(--surface); color: var(--purple); border-color: var(--purple); }
+
+.empty-projects-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 24px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.empty-proj-icon { font-size: 36px; flex-shrink: 0; }
+.empty-proj-text { flex: 1; font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+.empty-proj-text strong { color: var(--text-primary); }
