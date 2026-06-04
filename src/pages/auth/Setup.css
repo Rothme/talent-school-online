@@ -202,3 +202,46 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 13px; font-weight: 900; flex-shrink: 0;
 }
+
+.id-reveal-icon { font-size: 52px; text-align: center; margin-bottom: 16px; }
+
+.student-id-box {
+  background: var(--navy); border-radius: var(--radius-lg);
+  padding: 24px; text-align: center; margin: 20px 0;
+}
+.student-id-label {
+  color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;
+}
+.student-id-value {
+  color: #fff; font-size: 32px; font-weight: 900;
+  letter-spacing: 4px; font-family: var(--font-mono);
+  margin-bottom: 10px;
+}
+.student-id-hint {
+  color: rgba(255,255,255,0.5); font-size: 12px; line-height: 1.5;
+}
+
+.id-instructions { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.id-instruction-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 13px; color: var(--text-secondary); font-weight: 600;
+}
+.id-step {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--purple-pale); color: var(--purple);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 900; flex-shrink: 0;
+}
+
+.child-sum-id {
+  font-size: 13px; color: var(--purple); font-weight: 700; margin-bottom: 2px;
+}
+.child-sum-id strong { font-family: var(--font-mono); letter-spacing: 1px; }
+
+.student-id-input {
+  font-family: var(--font-mono) !important;
+  letter-spacing: 2px; font-size: 16px !important;
+  text-transform: uppercase;
+}
+.field-hint { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
