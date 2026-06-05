@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   getTodaySchedule, getGreeting, getSubjectColor, getSubjectPale,
@@ -6,8 +6,122 @@ import {
   WARMUP_DURATION_MINS, MAIN_DURATION_MINS,
   CHALLENGE_DURATION_MINS, FRIDAY_TYPING_MINS,
 } from '../../utils/sessionSchedule';
+import { isActiveTestAccount } from '../../utils/testAccounts';
 import './TodaySession.css';
 
+// ── Test-mode free subject picker ─────────────────────────────────────────────
+function TestSubjectPicker({ child }) {
+  const navigate = useNavigate();
+
+  const subjects = [
+    { id: 'chess',  emoji: '♟️', label: 'Chess',  color: '#1d9e75', pale: '#e1f5ee',
+      desc: 'Pieces, strategy, and tactics' },
+    { id: 'coding', emoji: '💻', label: 'Coding', color: '#6c63ff', pale: '#eeedfe',
+      desc: 'Python projects with Ms. Momo' },
+    { id: 'typing', emoji: '⌨️', label: 'Typing', color: '#ba7517', pale: '#faeeda',
+      desc: 'Speed, accuracy, and rhythm' },
+  ];
+
+  function launch(subjectId) {
+    // Write a session state that marks warmup complete so the lesson
+    // page doesn't block entry — test accounts skip the warmup gate.
+    const state = {
+      childId: child.id,
+      date: new Date().toISOString().slice(0, 10),
+      phase: 'main',
+      warmupComplete: true,
+      mainComplete: false,
+      completed: false,
+      startedAt: Date.now(),
+      testSubject: subjectId,   // lets MainSession know which subject to load
+    };
+    saveSessionState(child.id, state);
+    navigate(`/child/lesson/${subjectId}`);
+  }
+
+  return (
+    <div className="today-page" style={{ '--accent': '#6c63ff', '--pale': '#eeedfe' }}>
+      <div className="today-card" style={{ maxWidth: 540 }}>
+        <div className="today-logo"><span className="today-dot" />Talent School Online</div>
+
+        {/* Test mode banner */}
+        <div style={{
+          background: '#faeeda',
+          border: '1.5px solid #ba7517',
+          borderRadius: 10,
+          padding: '10px 16px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          fontSize: 13,
+          color: '#633806',
+        }}>
+          <span style={{ fontSize: 18 }}>🧪</span>
+          <div>
+            <strong>Test account — all subjects unlocked.</strong>
+            <br />
+            This free access is for testing only and will not appear for real students.
+          </div>
+        </div>
+
+        <div className="today-greeting">
+          <div className="today-avatar" style={{ background: child.avatarColor || '#6c63ff' }}>
+            {child.avatar}
+          </div>
+          <div>
+            <h1 className="today-title">{getGreeting()}, {child.name}!</h1>
+            <p style={{ fontSize: 14, color: '#666', marginTop: 4 }}>
+              Choose any subject to test the full lesson experience.
+            </p>
+          </div>
+        </div>
+
+        <div className="today-streak-row" style={{ marginBottom: 20 }}>
+          <span className="streak-chip">🔥 {child.streak || 0} day streak</span>
+          <span className="streak-chip">⭐ {child.totalXP || 0} XP</span>
+          <span className="streak-chip">🆔 {child.studentId}</span>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {subjects.map(s => (
+            <button
+              key={s.id}
+              onClick={() => launch(s.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                background: s.pale,
+                border: `2px solid ${s.color}`,
+                borderRadius: 14,
+                padding: '16px 20px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'transform 0.1s, box-shadow 0.1s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = `0 4px 16px ${s.color}33`; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              <span style={{ fontSize: 36 }}>{s.emoji}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 17, color: s.color }}>{s.label}</div>
+                <div style={{ fontSize: 13, color: '#555', marginTop: 2 }}>{s.desc}</div>
+              </div>
+              <span style={{ fontSize: 22, color: s.color }}>→</span>
+            </button>
+          ))}
+        </div>
+
+        <p className="today-footer-note" style={{ marginTop: 20 }}>
+          Ms. Momo will guide you through every step 🎓
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function TodaySession() {
   const navigate = useNavigate();
   const [child, setChild] = useState(null);
@@ -47,11 +161,18 @@ export default function TodaySession() {
     if (!sessionState.warmupComplete) {
       navigate('/child/session/warmup');
     } else {
-      navigate(`/child/session/main`);
+      navigate('/child/session/main');
     }
   }
 
   if (!ready || !child || !schedule) return null;
+
+  // ── TEST ACCOUNT: show free picker, skip all timetable logic ──────────────
+  if (isActiveTestAccount()) {
+    return <TestSubjectPicker child={child} />;
+  }
+
+  // ── PRODUCTION FLOW BELOW (unchanged) ─────────────────────────────────────
 
   const color = getSubjectColor(schedule.subject);
   const pale  = getSubjectPale(schedule.subject);
