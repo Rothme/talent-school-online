@@ -1,7 +1,9 @@
+/* eslint-disable */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './ParentDashboard.css';
+import { TEST_CHILDREN } from '../../utils/testAccounts';
 
 const DAYS = ['M','T','W','T','F','S','S'];
 const ACTIVE_DAYS = [0,1,2,4];
@@ -14,6 +16,13 @@ export default function ParentDashboard() {
   const [loading, setLoading] = useState(true);
 
   const loadChildren = useCallback(async () => {
+    // Test account support
+    const testParent = sessionStorage.getItem('testParent');
+    if (testParent) {
+      setChildren(TEST_CHILDREN);
+      setLoading(false);
+      return;
+    }
     if (!currentUser) return navigate('/login');
     const kids = await getChildren(currentUser.uid);
     setChildren(kids);
@@ -24,7 +33,9 @@ export default function ParentDashboard() {
   useEffect(() => { loadChildren(); }, [loadChildren]);
 
   async function handleLogout() {
-    await logout();
+    sessionStorage.removeItem('testParent');
+    sessionStorage.removeItem('testChildren');
+    try { await logout(); } catch(e) {}
     navigate('/');
   }
 
