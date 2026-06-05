@@ -1,7 +1,9 @@
 /* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTodaySchedule, getSessionState, saveSessionState } from '../../utils/sessionSchedule';
+import {
+  getTodaySchedule, getSessionState, saveSessionState, isTestAccount
+} from '../../utils/sessionSchedule';
 import ChessLesson  from '../../components/chess/ChessLesson';
 import TypingLesson from '../../components/typing/TypingLesson';
 import CodingLesson from '../../components/coding/CodingLesson';
@@ -9,45 +11,50 @@ import './MainSession.css';
 
 export default function MainSession() {
   const navigate = useNavigate();
-  const [child, setChild] = useState(null);
-  const [subject, setSubject] = useState(null);
-  const [lessonIndex, setLessonIndex] = useState(0);
-  const [isParentPreview, setIsParentPreview] = useState(false);
-  const [isTest, setIsTest] = useState(false);
+  const [child,        setChild]        = useState(null);
+  const [subject,      setSubject]      = useState(null);
+  const [lessonIndex,  setLessonIndex]  = useState(0);
+  const [isParentPrev, setIsParentPrev] = useState(false);
+  const [isTest,       setIsTest]       = useState(false);
 
   useEffect(() => {
-    const childSession  = sessionStorage.getItem('childSession');
-    const parentPreview = sessionStorage.getItem('parentPreview');
-    const session = childSession || parentPreview;
+    const childSess   = sessionStorage.getItem('childSession');
+    const parentPrev  = sessionStorage.getItem('parentPreview');
+    const session     = childSess || parentPrev;
     if (!session) return navigate('/child/login');
 
     const c = JSON.parse(session);
     setChild(c);
-    setIsParentPreview(!!parentPreview);
+    setIsParentPrev(!!parentPrev);
+    setIsTest(isTestAccount(c));
 
-    const test = c.studentId === 'TSO-0001-C' || c.studentId === 'TSO-0002-T';
-    setIsTest(test);
-
-    // Test mode: read subject from sessionStorage override
-    const testSubject = sessionStorage.getItem('testSubject');
-    const sched = getTodaySchedule();
+    // Determine today's subject — test override takes priority
+    const testSubject   = sessionStorage.getItem('testSubject');
+    const sched         = getTodaySchedule();
     const activeSubject = testSubject || sched.subject;
-    setSubject(activeSubject);
 
-    // Check warmup is complete (skip check for parent preview)
-    const state = getSessionState(c.id);
-    if (!state?.warmupComplete && !parentPreview) {
-      navigate('/child/session/warmup');
-      return;
+    // Guard: if subject is rest/challenge, redirect home
+    if (activeSubject === 'rest' || activeSubject === 'challenge') {
+      return navigate('/child/today');
     }
 
-    // Get lesson index from progress
-    const subjectProgress = c.lessonsComplete?.[activeSubject] || 0;
-    setLessonIndex(subjectProgress);
+    setSubject(activeSubject);
+
+    // Guard: warmup must be complete (skip for parent preview)
+    const state = getSessionState(c.id);
+    if (!state?.warmupComplete && !parentPrev) {
+      return navigate('/child/session/warmup');
+    }
+
+    // Set lesson index from progress
+    const progress = c.lessonsComplete?.[activeSubject] || 0;
+    setLessonIndex(progress);
   }, [navigate]);
 
   function handleLessonComplete() {
-    if (!child) return;
+    if (!child || !subject) return;
+
+    // Save session state
     const state = getSessionState(child.id) || {};
     saveSessionState(child.id, {
       ...state,
@@ -55,30 +62,34 @@ export default function MainSession() {
       completed: true,
       completedAt: Date.now(),
     });
-    // Update child session with new progress
-    const childSession = sessionStorage.getItem('childSession');
-    if (childSession) {
-      const c = JSON.parse(childSession);
-      const newLessons = {
-        ...c.lessonsComplete,
-        [subject]: (c.lessonsComplete?.[subject] || 0) + 1,
+
+    // Update child session progress
+    const childSess = sessionStorage.getItem('childSession');
+    if (childSess) {
+      const c = JSON.parse(childSess);
+      const updated = {
+        ...c,
+        lessonsComplete: { ...c.lessonsComplete, [subject]: (c.lessonsComplete?.[subject] || 0) + 1 },
+        totalXP: (c.totalXP || 0) + 50,
       };
-      const updated = { ...c, lessonsComplete: newLessons, totalXP: (c.totalXP || 0) + 50 };
       sessionStorage.setItem('childSession', JSON.stringify(updated));
     }
-    // Clear test subject so next session uses the timetable
-    if (!isTest) sessionStorage.removeItem('testSubject');
+
     navigate('/child/session/complete');
   }
 
-  if (!child || !subject) return null;
+  if (!child || !subject) return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0f1117',color:'#fff',fontSize:16,fontWeight:700}}>
+      Loading your lesson...
+    </div>
+  );
 
   const subjectLabel = subject === 'chess' ? 'Chess' : subject === 'coding' ? 'Coding' : 'Typing';
-  const subjectEmoji = subject === 'chess' ? '♟️' : subject === 'coding' ? '💻' : '⌨️';
+  const subjectEmoji = subject === 'chess' ? '♟️'    : subject === 'coding' ? '💻'     : '⌨️';
 
   return (
     <div className="main-session">
-      {isParentPreview && (
+      {isParentPrev && (
         <div className="main-preview-banner">
           <span>👀 Previewing {child.name}'s experience</span>
           <button onClick={() => { sessionStorage.removeItem('parentPreview'); navigate('/parent/dashboard'); }}>
@@ -94,7 +105,7 @@ export default function MainSession() {
             <span className="msh-subject">{subjectEmoji} {subjectLabel} lesson</span>
             <span className="msh-child">
               {child.name}
-              {isTest && <span className="msh-test-badge"> 🧪 test mode</span>}
+              {isTest && <span className="msh-test-badge"> 🧪 test</span>}
             </span>
           </div>
         </div>
