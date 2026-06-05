@@ -46,7 +46,7 @@ export default function ChildLogin() {
         learningPrefs: child.learningPrefs,
         progress: child.progress, streak: child.streak, totalXP: child.totalXP,
       }));
-      navigate('/child/dashboard');
+      navigate('/child/today');
     } catch (err) {
       setPin('');
       if (err.code === 'child/not-found')
