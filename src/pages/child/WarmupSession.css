@@ -98,3 +98,52 @@
 .warmup-hidden-input {
   position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px;
 }
+
+/* ── Test skip buttons ── */
+.wu-skip-btn {
+  background: #fffbea;
+  border: 1.5px solid #fac775;
+  color: #ba7517;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font-main);
+  white-space: nowrap;
+}
+.wu-skip-btn:hover { background: #faeeda; }
+
+.wu-skip-btn-lg {
+  width: 100%;
+  margin-top: 10px;
+  background: #fffbea;
+  border: 1.5px solid #fac775;
+  color: #ba7517;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font-main);
+}
+.wu-skip-btn-lg:hover { background: #faeeda; }
+
+/* ── Loading bar on complete screen ── */
+.wu-loading-bar {
+  height: 4px;
+  background: #e8e8f0;
+  border-radius: 4px;
+  margin-top: 20px;
+  overflow: hidden;
+}
+.wu-loading-fill {
+  height: 100%;
+  background: #6c63ff;
+  border-radius: 4px;
+  animation: wu-load 1.2s ease-in forwards;
+}
+@keyframes wu-load {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
