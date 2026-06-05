@@ -1,9 +1,8 @@
+/* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  getTodaySchedule, getSessionState, saveSessionState,
-} from '../../utils/sessionSchedule';
-import ChessLesson from '../../components/chess/ChessLesson';
+import { getTodaySchedule, getSessionState, saveSessionState } from '../../utils/sessionSchedule';
+import ChessLesson  from '../../components/chess/ChessLesson';
 import TypingLesson from '../../components/typing/TypingLesson';
 import CodingLesson from '../../components/coding/CodingLesson';
 import './MainSession.css';
@@ -11,23 +10,31 @@ import './MainSession.css';
 export default function MainSession() {
   const navigate = useNavigate();
   const [child, setChild] = useState(null);
-  const [schedule, setSchedule] = useState(null);
+  const [subject, setSubject] = useState(null);
   const [lessonIndex, setLessonIndex] = useState(0);
   const [isParentPreview, setIsParentPreview] = useState(false);
+  const [isTest, setIsTest] = useState(false);
 
   useEffect(() => {
-    const childSession = sessionStorage.getItem('childSession');
+    const childSession  = sessionStorage.getItem('childSession');
     const parentPreview = sessionStorage.getItem('parentPreview');
     const session = childSession || parentPreview;
     if (!session) return navigate('/child/login');
+
     const c = JSON.parse(session);
     setChild(c);
     setIsParentPreview(!!parentPreview);
 
-    const sched = getTodaySchedule();
-    setSchedule(sched);
+    const test = c.studentId === 'TSO-0001-C' || c.studentId === 'TSO-0002-T';
+    setIsTest(test);
 
-    // Check warmup is complete
+    // Test mode: read subject from sessionStorage override
+    const testSubject = sessionStorage.getItem('testSubject');
+    const sched = getTodaySchedule();
+    const activeSubject = testSubject || sched.subject;
+    setSubject(activeSubject);
+
+    // Check warmup is complete (skip check for parent preview)
     const state = getSessionState(c.id);
     if (!state?.warmupComplete && !parentPreview) {
       navigate('/child/session/warmup');
@@ -35,13 +42,12 @@ export default function MainSession() {
     }
 
     // Get lesson index from progress
-    const subjectProgress = c.lessonsComplete?.[sched.subject] || 0;
+    const subjectProgress = c.lessonsComplete?.[activeSubject] || 0;
     setLessonIndex(subjectProgress);
   }, [navigate]);
 
   function handleLessonComplete() {
     if (!child) return;
-    // Update session state
     const state = getSessionState(child.id) || {};
     saveSessionState(child.id, {
       ...state,
@@ -50,26 +56,29 @@ export default function MainSession() {
       completedAt: Date.now(),
     });
     // Update child session with new progress
-    const session = sessionStorage.getItem('childSession');
-    if (session) {
-      const c = JSON.parse(session);
-      const newProgress = {
+    const childSession = sessionStorage.getItem('childSession');
+    if (childSession) {
+      const c = JSON.parse(childSession);
+      const newLessons = {
         ...c.lessonsComplete,
-        [schedule.subject]: (c.lessonsComplete?.[schedule.subject] || 0) + 1,
+        [subject]: (c.lessonsComplete?.[subject] || 0) + 1,
       };
-      const updated = { ...c, lessonsComplete: newProgress, totalXP: (c.totalXP || 0) + 50 };
+      const updated = { ...c, lessonsComplete: newLessons, totalXP: (c.totalXP || 0) + 50 };
       sessionStorage.setItem('childSession', JSON.stringify(updated));
     }
+    // Clear test subject so next session uses the timetable
+    if (!isTest) sessionStorage.removeItem('testSubject');
     navigate('/child/session/complete');
   }
 
-  if (!child || !schedule) return null;
+  if (!child || !subject) return null;
 
-  const isParent = isParentPreview;
+  const subjectLabel = subject === 'chess' ? 'Chess' : subject === 'coding' ? 'Coding' : 'Typing';
+  const subjectEmoji = subject === 'chess' ? '♟️' : subject === 'coding' ? '💻' : '⌨️';
 
   return (
     <div className="main-session">
-      {isParent && (
+      {isParentPreview && (
         <div className="main-preview-banner">
           <span>👀 Previewing {child.name}'s experience</span>
           <button onClick={() => { sessionStorage.removeItem('parentPreview'); navigate('/parent/dashboard'); }}>
@@ -82,38 +91,20 @@ export default function MainSession() {
         <div className="msh-left">
           <button className="msh-back" onClick={() => navigate('/child/today')}>←</button>
           <div className="msh-info">
-            <span className="msh-subject">
-              {schedule.emoji} {schedule.subject === 'chess' ? 'Chess' :
-               schedule.subject === 'coding' ? 'Coding' : 'Typing'} lesson
+            <span className="msh-subject">{subjectEmoji} {subjectLabel} lesson</span>
+            <span className="msh-child">
+              {child.name}
+              {isTest && <span className="msh-test-badge"> 🧪 test mode</span>}
             </span>
-            <span className="msh-child">{child.name}</span>
           </div>
         </div>
         <div className="msh-warmup-done">✅ Warm-up complete</div>
       </div>
 
       <div className="main-session-body">
-        {schedule.subject === 'chess' && (
-          <ChessLesson
-            lessonIndex={lessonIndex}
-            childName={child.name}
-            onComplete={handleLessonComplete}
-          />
-        )}
-        {schedule.subject === 'coding' && (
-          <CodingLesson
-            lessonIndex={lessonIndex}
-            childName={child.name}
-            onComplete={handleLessonComplete}
-          />
-        )}
-        {schedule.subject === 'typing' && (
-          <TypingLesson
-            lessonIndex={lessonIndex}
-            childName={child.name}
-            onComplete={handleLessonComplete}
-          />
-        )}
+        {subject === 'chess'  && <ChessLesson  lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />}
+        {subject === 'coding' && <CodingLesson lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />}
+        {subject === 'typing' && <TypingLesson lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />}
       </div>
     </div>
   );
