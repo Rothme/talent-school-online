@@ -28,6 +28,10 @@ export const TEST_CHILDREN = [
     lessonsComplete: { chess: 0, coding: 0, typing: 0 },
     streak: 7,
     totalXP: 420,
+    // ── TEST ACCOUNT FLAG ──────────────────────────
+    // Bypasses timetable restriction — all subjects
+    // accessible freely. TEST ACCOUNTS ONLY.
+    isTestAccount: true,
   },
   {
     id: 'test-child-002',
@@ -43,6 +47,8 @@ export const TEST_CHILDREN = [
     lessonsComplete: { chess: 0, coding: 0, typing: 0 },
     streak: 3,
     totalXP: 180,
+    // ── TEST ACCOUNT FLAG ──────────────────────────
+    isTestAccount: true,
   },
 ];
 
@@ -54,4 +60,19 @@ export function findTestChild(studentId, pin) {
   return TEST_CHILDREN.find(
     c => c.studentId === studentId.toUpperCase().trim() && c.pin === pin
   );
+}
+
+// Returns true if the currently logged-in child is a test account.
+// Reads from both childSession and parentPreview.
+export function isActiveTestAccount() {
+  try {
+    const raw =
+      sessionStorage.getItem('childSession') ||
+      sessionStorage.getItem('parentPreview');
+    if (!raw) return false;
+    const child = JSON.parse(raw);
+    return child?.isTestAccount === true;
+  } catch {
+    return false;
+  }
 }
