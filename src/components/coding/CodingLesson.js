@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
 import TopNav from '../layout/TopNav';
 import MsMomoBar from '../shared/MsMomoBar';
-import { CODING_LESSONS } from '../../data/curriculum';
+import { CODING_LESSONS, CODING_LESSONS_EXTENDED } from '../../data/curriculum';
 import './CodingLesson.css';
 
 export default function CodingLesson({ lessonIndex = 0, childName = 'Student', onComplete }) {
-  const lesson = CODING_LESSONS[lessonIndex] || CODING_LESSONS[0];
+  const ALL_CODING = [...CODING_LESSONS, ...CODING_LESSONS_EXTENDED];
+  const lesson = ALL_CODING[lessonIndex] || ALL_CODING[0];
   const [code, setCode] = useState(lesson.starterCode);
   const [output, setOutput] = useState('');
   const [running, setRunning] = useState(false);
