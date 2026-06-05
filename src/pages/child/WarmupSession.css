@@ -1,0 +1,100 @@
+.warmup-page {
+  height: 100vh; display: flex; flex-direction: column;
+  background: #0f1117; overflow: hidden;
+}
+
+.warmup-topbar {
+  background: var(--navy); height: 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; flex-shrink: 0;
+}
+.warmup-logo { color: #fff; font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 7px; }
+.wu-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); display: inline-block; }
+.warmup-phase-label { color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 700; }
+.warmup-timer {
+  background: var(--amber); color: #fff;
+  font-size: 16px; font-weight: 900; font-family: var(--font-mono);
+  padding: 4px 14px; border-radius: 20px; letter-spacing: 1px;
+}
+
+.warmup-progress-bar { height: 4px; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+.warmup-progress-fill { height: 100%; background: var(--amber); transition: width 1s linear; }
+
+.warmup-center {
+  flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px 16px;
+}
+
+.warmup-ready-card, .warmup-complete-card {
+  background: #fff; border-radius: var(--radius-xl);
+  padding: 36px 32px; width: 100%; max-width: 480px;
+  text-align: center; box-shadow: var(--shadow-lg);
+}
+
+.warmup-ready-icon, .wu-complete-icon { font-size: 52px; margin-bottom: 14px; }
+.warmup-ready-title { font-size: 22px; font-weight: 900; margin-bottom: 10px; color: var(--text-primary); }
+.warmup-ready-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px; }
+
+.warmup-stats-row { display: flex; justify-content: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.warmup-stat {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-secondary); font-weight: 600;
+  background: var(--surface); padding: 6px 14px; border-radius: 20px;
+}
+
+.warmup-start-btn {
+  width: 100%; height: 50px;
+  background: var(--amber); color: #fff; border: none;
+  border-radius: var(--radius-md); font-size: 16px; font-weight: 900;
+  cursor: pointer; font-family: var(--font-main); transition: opacity 0.15s;
+}
+.warmup-start-btn:hover { opacity: 0.9; }
+
+.wu-next-btn { background: var(--purple) !important; margin-top: 16px; }
+
+.wu-next-label { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }
+
+.wu-results { display: flex; justify-content: center; gap: 24px; margin: 20px 0; }
+.wu-result-item { text-align: center; }
+.wu-result-val { font-size: 40px; font-weight: 900; color: var(--purple); }
+.wu-result-lbl { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+/* Active typing state */
+.warmup-active { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+.warmup-momo-bar {
+  background: var(--navy); padding: 12px 20px;
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.wu-avatar {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--amber);
+  display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+}
+.wu-speech { flex: 1; background: rgba(255,255,255,0.07); border-radius: var(--radius-md); padding: 8px 12px; }
+.wu-name { color: #fac775; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+.wu-text { color: #e2e8f0; font-size: 12px; line-height: 1.5; }
+
+.wu-live-stats { display: flex; gap: 14px; flex-shrink: 0; }
+.wu-stat-item { text-align: center; }
+.wu-stat-val { color: #fff; font-size: 20px; font-weight: 900; }
+.wu-stat-lbl { color: rgba(255,255,255,0.4); font-size: 10px; font-weight: 600; text-transform: uppercase; }
+
+.warmup-text-area {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 24px 32px; background: #0d1117;
+}
+
+.warmup-passage {
+  font-family: var(--font-mono); font-size: 20px; line-height: 2.2;
+  max-width: 700px; text-align: center;
+}
+
+.ch-correct { color: var(--teal); }
+.ch-wrong   { color: var(--coral); background: rgba(226,75,74,0.15); border-radius: 2px; }
+.ch-cursor  { border-bottom: 3px solid var(--purple); color: #e2e8f0; animation: blink 0.8s infinite; }
+.ch-pending { color: rgba(255,255,255,0.25); }
+
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+
+.warmup-hidden-input {
+  position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px;
+}
