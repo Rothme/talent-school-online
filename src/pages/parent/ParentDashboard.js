@@ -36,7 +36,7 @@ export default function ParentDashboard() {
       streak: child.streak, totalXP: child.totalXP,
       lessonsComplete: child.lessonsComplete,
     }));
-    navigate('/child/dashboard');
+    navigate('/child/today');
   }
 
   if (loading) return (
