@@ -1,8 +1,9 @@
 /* eslint-disable */
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import LandingPage      from './pages/LandingPage';
+import SubjectPage      from './pages/subjects/SubjectPage';
 import Login            from './pages/auth/Login';
 import Register         from './pages/auth/Register';
 import ChildLogin       from './pages/auth/ChildLogin';
@@ -21,6 +22,7 @@ export default function App() {
       <Router>
         <Routes>
           <Route path="/"                        element={<LandingPage />} />
+          <Route path="/subject/:subject"        element={<SubjectPage />} />
           <Route path="/login"                   element={<Login />} />
           <Route path="/register"                element={<Register />} />
           <Route path="/child/login"             element={<ChildLogin />} />
