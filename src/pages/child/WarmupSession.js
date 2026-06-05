@@ -223,8 +223,7 @@ export default function WarmupSession() {
             <div className="wu-next-label">Now let's get to today's main lesson:</div>
             <button className="warmup-start-btn wu-next-btn"
               onClick={() => navigate('/child/session/main')}>
-              {schedule.emoji} Start {schedule.subject === 'chess' ? 'Chess' :
-                schedule.subject === 'coding' ? 'Coding' : 'Typing'} lesson →
+              {activeSubject === 'chess' ? '♟️' : activeSubject === 'coding' ? '💻' : '⌨️'} Start {activeSubject === 'chess' ? 'Chess' : activeSubject === 'coding' ? 'Coding' : 'Typing'} lesson →
             </button>
           </div>
         </div>
