@@ -24,8 +24,13 @@ export default function SessionComplete() {
   if (!child || !schedule) return null;
 
   const NEXT_DAY = {
-    1: 'Coding', 2: 'Chess', 3: 'Coding',
-    4: 'Typing', 5: 'Challenge Saturday', 6: 'Rest day', 0: 'Chess',
+    1: 'Coding day',    // Tue
+    2: 'Chess day',     // Wed
+    3: 'Coding day',    // Thu
+    4: 'Coding day',    // Fri
+    5: 'Challenge Saturday',
+    6: 'Rest day',
+    0: 'Chess day',     // Mon
   };
   const nextDay = NEXT_DAY[schedule.dayNum] || 'your next lesson';
   const isParentPreview = !!sessionStorage.getItem('parentPreview');
