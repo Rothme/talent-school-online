@@ -1,15 +1,13 @@
 /* eslint-disable */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { CHESS_LESSONS_EXPANDED } from '../../data/chessExpanded';
-import MsMomoBar from '../shared/MsMomoBar';
 import './ChessLesson.css';
 
-// ── Constants ──────────────────────────────────
+// ── Piece symbols ───────────────────────────────
 const PIECES = {
-  wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',
-  bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟',
+  wK:'♔', wQ:'♕', wR:'♖', wB:'♗', wN:'♘', wP:'♙',
+  bK:'♚', bQ:'♛', bR:'♜', bB:'♝', bN:'♞', bP:'♟',
 };
-const PIECE_NAMES = {K:'King',Q:'Queen',R:'Rook',B:'Bishop',N:'Knight',P:'Pawn'};
 const FILES = ['a','b','c','d','e','f','g','h'];
 const RANKS = ['8','7','6','5','4','3','2','1'];
 
@@ -24,556 +22,506 @@ const FULL_START = [
   ['wR','wN','wB','wQ','wK','wB','wN','wR'],
 ];
 
-const EMPTY_BOARD = Array(8).fill(null).map(() => Array(8).fill(null));
+const EMPTY_BOARD = () => Array(8).fill(null).map(() => Array(8).fill(null));
 
-// ── Knight moves from a square ──────────────────
-function knightMoves(r, c) {
-  const deltas = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-  return deltas.map(([dr,dc]) => [r+dr, c+dc]).filter(([nr,nc]) => nr>=0&&nr<8&&nc>=0&&nc<8);
+// ── Square name ↔ [row, col] ────────────────────
+function squareToRC(sq) {
+  if (!sq || sq.length < 2) return null;
+  const col = sq.charCodeAt(0) - 97;
+  const row = 8 - parseInt(sq[1]);
+  return [row, col];
 }
 
-// ── Rook moves from a square ────────────────────
-function rookMoves(r, c, board) {
-  const moves = [];
-  for (let dir of [[-1,0],[1,0],[0,-1],[0,1]]) {
-    let nr = r+dir[0], nc = c+dir[1];
-    while (nr>=0&&nr<8&&nc>=0&&nc<8) {
-      moves.push([nr,nc]);
-      if (board[nr][nc]) break;
-      nr+=dir[0]; nc+=dir[1];
-    }
-  }
-  return moves;
+// ── Voice ───────────────────────────────────────
+function speak(text, voiceOn) {
+  if (!voiceOn || !text) return;
+  window.speechSynthesis?.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.9; u.pitch = 1.05; u.volume = 1;
+  const voices = window.speechSynthesis?.getVoices() || [];
+  const pref = voices.find(v => v.lang.startsWith('en') && /female|zira|samantha|victoria|karen/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('en')) || voices[0];
+  if (pref) u.voice = pref;
+  window.speechSynthesis?.speak(u);
 }
 
-// ── Bishop moves ────────────────────────────────
-function bishopMoves(r, c, board) {
-  const moves = [];
-  for (let dir of [[-1,-1],[-1,1],[1,-1],[1,1]]) {
-    let nr = r+dir[0], nc = c+dir[1];
-    while (nr>=0&&nr<8&&nc>=0&&nc<8) {
-      moves.push([nr,nc]);
-      if (board[nr][nc]) break;
-      nr+=dir[0]; nc+=dir[1];
-    }
-  }
-  return moves;
-}
-
-// ── Queen moves ─────────────────────────────────
-function queenMoves(r, c, board) {
-  return [...rookMoves(r,c,board), ...bishopMoves(r,c,board)];
-}
-
-// ── King moves ──────────────────────────────────
-function kingMoves(r, c) {
-  const moves = [];
-  for (let dr=-1; dr<=1; dr++) for (let dc=-1; dc<=1; dc++) {
-    if (dr===0&&dc===0) continue;
-    const nr=r+dr, nc=c+dc;
-    if (nr>=0&&nr<8&&nc>=0&&nc<8) moves.push([nr,nc]);
-  }
-  return moves;
-}
-
-// ── Build board from exercise definition ────────
-function buildBoardForExercise(ex, lessonId) {
-  const b = EMPTY_BOARD.map(r => [...r]);
-  if (!ex) return b;
-
-  if (ex.type === 'placement' || ex.type === 'verify-colour' || ex.type === 'move-test' || ex.type === 'capture-test') {
-    // Place the piece being demonstrated on a relevant square
-    if (ex.from) b[ex.from[0]][ex.from[1]] = `w${ex.piece || 'P'}`;
-  }
-  if (ex.type === 'show-moves' && ex.from) {
-    b[ex.from[0]][ex.from[1]] = `w${ex.piece}`;
-  }
-  if (ex.type === 'multi-placement') {
-    // Show demo board with pieces already placed correctly (reference)
-    ex.pieces?.forEach(p => {
-      const color = p.piece === p.piece.toUpperCase() ? 'w' : 'b';
-      b[p.square[0]][p.square[1]] = `${color}${p.piece.toUpperCase()}`;
+// ── Build initial board from step definition ────
+function buildBoard(step) {
+  if (!step || !step.momoBoard) return EMPTY_BOARD();
+  const { pieces } = step.momoBoard;
+  if (pieces === 'FULL_START') return FULL_START.map(r => [...r]);
+  const b = EMPTY_BOARD();
+  if (Array.isArray(pieces)) {
+    pieces.forEach(({ piece, square }) => {
+      const rc = squareToRC(square);
+      if (rc) b[rc[0]][rc[1]] = piece;
     });
-  }
-  if (ex.type === 'pawn-placement' || ex.type === 'pawn-row') {
-    for (let c=0; c<8; c++) b[ex.row ?? 6][c] = 'wP';
-  }
-  if (ex.type === 'full-row') {
-    const row = ex.row ?? 7;
-    const pieces = ['R','N','B','Q','K','B','N','R'];
-    const color = ex.color === 'black' ? 'b' : 'w';
-    pieces.forEach((p,i) => b[row][i] = `${color}${p}`);
-  }
-  if (ex.type === 'full-setup' || ex.type === 'timed-setup') {
-    return FULL_START.map(r => [...r]);
-  }
-  if (ex.type === 'guided-move' && ex.from) {
-    // Show starting position with relevant pieces
-    const ref = FULL_START.map(r => [...r]);
-    return ref;
-  }
-  if (ex.type === 'free-play') {
-    return FULL_START.map(r => [...r]);
   }
   return b;
 }
 
-// ── Compute highlights for an exercise ──────────
-function getHighlights(ex, board) {
-  if (!ex) return [];
-  if (ex.type === 'placement' || ex.type === 'timed-placement') {
-    return ex.square ? [ex.square] : (ex.squares?.map(s => {
-      const file = s.charCodeAt(0) - 97;
-      const rank = 8 - parseInt(s[1]);
-      return [rank, file];
-    }) || []);
-  }
-  if (ex.type === 'show-moves' && ex.from) {
-    const [r,c] = ex.from;
-    const p = ex.piece;
-    if (p === 'N') return knightMoves(r,c);
-    if (p === 'R') return rookMoves(r,c,board);
-    if (p === 'B') return bishopMoves(r,c,board);
-    if (p === 'Q') return queenMoves(r,c,board);
-    if (p === 'K') return kingMoves(r,c);
-    if (p === 'P') return [[r-1,c],[r-2,c]].filter(([nr])=>nr>=0); // simplified
-  }
-  if (ex.type === 'guided-move') {
-    return ex.from ? [ex.from, ex.to].filter(Boolean) : [];
-  }
-  if (ex.type === 'multi-placement') {
-    return ex.pieces?.map(p => p.square) || [];
-  }
-  return [];
+// ── Get highlights from step ────────────────────
+function getHighlights(step) {
+  if (!step || !step.momoBoard) return [];
+  return (step.momoBoard.highlights || []).map(sq => {
+    const rc = squareToRC(sq);
+    return rc;
+  }).filter(Boolean);
 }
 
-// ── Chess Board Component ────────────────────────
-function ChessBoard({ board, highlights=[], onSquareClick, label, color='#1d9e75', note, interactive=false }) {
+// ── Check if student board matches targetPieces ─
+function boardMatchesTarget(board, targetPieces) {
+  if (!targetPieces || targetPieces === 'FULL_START') {
+    // Check full starting position
+    for (let r = 0; r < 8; r++)
+      for (let c = 0; c < 8; c++)
+        if ((board[r][c] || null) !== (FULL_START[r][c] || null)) return false;
+    return true;
+  }
+  if (!Array.isArray(targetPieces)) return false;
+  return targetPieces.every(({ piece, square }) => {
+    const rc = squareToRC(square);
+    if (!rc) return false;
+    return board[rc[0]][rc[1]] === piece;
+  });
+}
+
+// ── Chess Board Component ───────────────────────
+function ChessBoard({ board, highlights = [], onSquareClick, label, color = '#1d9e75', interactive = false, note }) {
   return (
-    <div className="chess-board-wrap">
-      <div className="board-owner-label" style={{color}}>
-        <span className="owner-indicator" style={{background:color}}/>
+    <div className="cb-wrap">
+      <div className="cb-label" style={{ color }}>
+        <span className="cb-dot" style={{ background: color }} />
         {label}
       </div>
-      <div className="board-with-coords">
-        <div className="rank-labels">
-          {RANKS.map(r=><div key={r} className="coord-label">{r}</div>)}
+      <div className="cb-inner">
+        <div className="cb-ranks">
+          {RANKS.map(r => <div key={r} className="cb-coord">{r}</div>)}
         </div>
-        <div className="board-col-wrap">
-          <div className="chess-grid">
-            {board.map((row,r)=>row.map((piece,c)=>{
-              const light=(r+c)%2===0;
-              const hl=highlights.some(h=>h[0]===r&&h[1]===c);
+        <div className="cb-col">
+          <div className="cb-grid">
+            {board.map((row, r) => row.map((piece, c) => {
+              const light   = (r + c) % 2 === 0;
+              const isHL    = highlights.some(h => h[0] === r && h[1] === c);
+              const canClick = interactive && (isHL || !highlights.length);
               return (
-                <div key={`${r}-${c}`}
-                  className={`sq ${light?'sq-light':'sq-dark'} ${hl?'sq-hl':''} ${interactive&&hl?'sq-clickable':''}`}
-                  onClick={() => interactive && onSquareClick && onSquareClick(r,c)}>
-                  {piece && <span className="piece">{PIECES[piece]||''}</span>}
+                <div
+                  key={`${r}-${c}`}
+                  className={`cb-sq ${light ? 'cb-light' : 'cb-dark'} ${isHL ? 'cb-hl' : ''} ${canClick ? 'cb-clickable' : ''}`}
+                  onClick={() => canClick && onSquareClick && onSquareClick(r, c)}
+                >
+                  {piece && <span className="cb-piece">{PIECES[piece] || ''}</span>}
                 </div>
               );
             }))}
           </div>
-          <div className="file-labels">
-            {FILES.map(f=><div key={f} className="coord-label">{f}</div>)}
+          <div className="cb-files">
+            {FILES.map(f => <div key={f} className="cb-coord">{f}</div>)}
           </div>
         </div>
       </div>
-      {note && <div className="board-note">{note}</div>}
+      {note && <div className="cb-note">{note}</div>}
     </div>
   );
 }
 
-// ── Part indicator ───────────────────────────────
-function PartIndicator({ parts, currentPart }) {
-  const labels = { instruction:'Instruction', exercises:'Exercises', challenge:'Challenge' };
-  const colors  = { instruction:'#6c63ff', exercises:'#1d9e75', challenge:'#ba7517' };
+// ── Session/Step indicator ──────────────────────
+function SessionIndicator({ session, stepIndex, total }) {
+  const label = session === 1 ? 'Session 1 — Learn' : 'Session 2 — Practice';
+  const color = session === 1 ? '#6c63ff' : '#1d9e75';
   return (
-    <div className="part-indicator">
-      {parts.map((p,i) => (
-        <div key={i} className={`part-pip ${p.part===currentPart?'part-pip-active':''}`}
-          style={p.part===currentPart?{background:colors[p.part],borderColor:colors[p.part]}:{}}>
-          <span className="part-pip-dot" />
-          <span className="part-pip-label">{labels[p.part]}</span>
-          <span className="part-pip-time">{p.duration}</span>
-        </div>
-      ))}
+    <div className="cl-session-bar">
+      <span className="cl-session-badge" style={{ background: color }}>
+        {label}
+      </span>
+      <div className="cl-step-dots">
+        {Array.from({ length: total }).map((_, i) => (
+          <span key={i} className={`cl-step-dot ${i === stepIndex ? 'cl-step-dot-active' : i < stepIndex ? 'cl-step-dot-done' : ''}`}
+            style={i === stepIndex ? { background: color } : {}} />
+        ))}
+      </div>
+      <span className="cl-step-count">Step {stepIndex + 1} of {total}</span>
     </div>
   );
 }
 
-// ── Main ChessLesson component ───────────────────
-export default function ChessLesson({ lessonIndex=0, childName='Student', onComplete }) {
+// ── Tutor bar ───────────────────────────────────
+function TutorBar({ text, voiceOn, onToggle }) {
+  return (
+    <div className="cl-tutor-bar">
+      <div className="cl-tutor-avatar">🎓</div>
+      <div className="cl-tutor-bubble">
+        <div className="cl-tutor-name">Ms. Momo</div>
+        <p className="cl-tutor-text">{text}</p>
+      </div>
+      <button className={`cl-voice-btn ${voiceOn ? 'cl-voice-on' : ''}`} onClick={onToggle}>
+        {voiceOn ? '🔊' : '🔇'}
+      </button>
+    </div>
+  );
+}
+
+// ── Feedback banner ─────────────────────────────
+function Feedback({ type, text }) {
+  if (!text) return null;
+  return (
+    <div className={`cl-feedback cl-feedback-${type}`}>
+      {type === 'success' ? '✅ ' : type === 'error' ? '❌ ' : '💡 '}
+      {text}
+    </div>
+  );
+}
+
+// ── Main ChessLesson ────────────────────────────
+export default function ChessLesson({ lessonIndex = 0, childName = 'Student', onComplete }) {
+
+  // Guard: check data exists
+  if (!CHESS_LESSONS_EXPANDED || CHESS_LESSONS_EXPANDED.length === 0) {
+    return (
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', background:'#0f1117', color:'#fff', fontSize:16, fontWeight:700, padding:32, textAlign:'center' }}>
+        Chess curriculum loading... If this persists, please refresh the page.
+      </div>
+    );
+  }
+
   const lesson = CHESS_LESSONS_EXPANDED[lessonIndex] || CHESS_LESSONS_EXPANDED[0];
-  const parts  = lesson.parts || [];
 
-  const [partIdx,      setPartIdx]      = useState(0);
-  const [exerciseIdx,  setExerciseIdx]  = useState(0);
-  const [studentBoard, setStudentBoard] = useState(null);
-  const [feedback,     setFeedback]     = useState('');
-  const [feedbackType, setFeedbackType] = useState(''); // success | error | hint
-  const [exerciseDone, setExerciseDone] = useState(false);
-  const [partDone,     setPartDone]     = useState(false);
-  const [lessonDone,   setLessonDone]   = useState(false);
-  const [showHint,     setShowHint]     = useState(false);
-  const [hintUsed,     setHintUsed]     = useState(0);
+  // Guard: check lesson has expected shape
+  if (!lesson || !lesson.session1 || !lesson.session1.steps) {
+    return (
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', background:'#0f1117', color:'#fff', fontSize:16, fontWeight:700, padding:32, textAlign:'center' }}>
+        Lesson {lessonIndex + 1} is loading. Please wait a moment.
+      </div>
+    );
+  }
 
-  const currentPart = parts[partIdx] || parts[0];
-  const exercises   = currentPart?.exercises || [];
-  const currentEx   = exercises[exerciseIdx];
+  // ── State ──────────────────────────────────────
+  const [sessionNum,  setSessionNum]  = useState(1); // 1 or 2
+  const [stepIndex,   setStepIndex]   = useState(0);
+  const [studentBoard,setStudentBoard]= useState(() => EMPTY_BOARD());
+  const [feedback,    setFeedback]    = useState({ type:'', text:'' });
+  const [stepDone,    setStepDone]    = useState(false);
+  const [lessonDone,  setLessonDone]  = useState(false);
+  const [voiceOn,     setVoiceOn]     = useState(true);
+  const [selectedPiece, setSelectedPiece] = useState(null); // for move-piece interactions
+  const hasSpokeRef = useRef(false);
 
-  // Rebuild board when part or exercise changes
+  // Current steps array
+  const steps   = sessionNum === 1 ? lesson.session1.steps : lesson.session2.steps;
+  const step    = steps[stepIndex] || steps[0];
+  const totalSteps = steps.length;
+
+  // Ms. Momo's demonstration board
+  const momoBoard  = buildBoard(step);
+  const highlights = getHighlights(step);
+
+  // ── Reset on lesson or session change ─────────
   useEffect(() => {
-    const board = buildBoardForExercise(currentEx, lesson.id);
-    setStudentBoard(board);
-    setFeedback('');
-    setFeedbackType('');
-    setExerciseDone(false);
-    setShowHint(false);
-  }, [partIdx, exerciseIdx, lessonIndex]);
+    setStudentBoard(EMPTY_BOARD());
+    setFeedback({ type:'', text:'' });
+    setStepDone(false);
+    setSelectedPiece(null);
+    hasSpokeRef.current = false;
+  }, [lessonIndex, sessionNum, stepIndex]);
 
-  const highlights = getHighlights(currentEx, studentBoard || EMPTY_BOARD);
+  // ── Auto-play voice ────────────────────────────
+  useEffect(() => {
+    if (voiceOn && step?.voice && !hasSpokeRef.current) {
+      hasSpokeRef.current = true;
+      const t = setTimeout(() => speak(step.voice, true), 400);
+      return () => clearTimeout(t);
+    }
+  }, [stepIndex, sessionNum, lessonIndex]);
 
-  // ── Handle square click on student board ──────
+  // ── Advance to next step ───────────────────────
+  function nextStep() {
+    const next = stepIndex + 1;
+    if (next >= totalSteps) {
+      if (sessionNum === 1 && lesson.session2?.steps?.length > 0) {
+        // Move to session 2
+        setSessionNum(2);
+        setStepIndex(0);
+        setStepDone(false);
+        setFeedback({ type:'', text:'' });
+        speak("Great work! Session 1 is complete. Now let us move to Session 2 — puzzles and challenge.", voiceOn);
+      } else {
+        // Lesson complete
+        setLessonDone(true);
+        speak(`Brilliant work ${childName}! You have completed Lesson ${lesson.step} — ${lesson.title}. Well done!`, voiceOn);
+        setTimeout(() => onComplete?.(), 2500);
+      }
+    } else {
+      setStepIndex(next);
+      setStepDone(false);
+      setFeedback({ type:'', text:'' });
+      setSelectedPiece(null);
+    }
+  }
+
+  // ── Handle student board click ─────────────────
   function handleSquareClick(r, c) {
-    if (exerciseDone || !currentEx) return;
-    const ex = currentEx;
+    if (stepDone) return;
+    if (!step) return;
 
-    if (ex.type === 'placement' || ex.type === 'timed-placement') {
-      const target = ex.square;
-      if (!target) return;
-      if (r === target[0] && c === target[1]) {
-        const nb = studentBoard.map(row => [...row]);
-        nb[r][c] = `w${ex.piece || 'K'}`;
-        setStudentBoard(nb);
-        markExerciseDone('✅ Correct! Well placed!');
-      } else {
-        setFeedback(`Not quite. Try again — look for the highlighted square.`);
-        setFeedbackType('error');
-      }
+    const { type, targetPieces, movePiece, isYesNo, freePlay } = step;
+
+    // Free play — any interaction counts
+    if (freePlay) {
+      markDone(step.outputSuccess || 'Well played! Free play complete.');
       return;
     }
 
-    if (ex.type === 'identify') {
-      const piece = studentBoard[r][c];
-      if (piece && piece.includes(ex.piece)) {
-        markExerciseDone('✅ Correct! That is the ' + PIECE_NAMES[ex.piece] + '!');
-      } else {
-        setFeedback('That is not the ' + PIECE_NAMES[ex.piece] + '. Look for the right piece!');
-        setFeedbackType('error');
-      }
-      return;
-    }
+    // Move piece interaction — two clicks: select then move
+    if (movePiece) {
+      const [fr, fc] = movePiece.from;
+      const [tr, tc] = movePiece.to;
 
-    if (ex.type === 'show-moves') {
-      const isHL = highlights.some(h => h[0]===r && h[1]===c);
-      if (isHL) {
-        const nb = studentBoard.map(row => [...row]);
-        nb[r][c] = nb[r][c] ? null : 'wX'; // mark visited
-        setStudentBoard(nb);
-        // Count how many highlights have been clicked
-        const visited = nb.flat().filter(p => p==='wX').length;
-        if (visited >= Math.min(highlights.length, 3)) {
-          markExerciseDone('✅ Great! You found the moves!');
+      if (!selectedPiece) {
+        // First click — select the piece to move
+        if (r === fr && c === fc) {
+          setSelectedPiece([r, c]);
+          setFeedback({ type:'hint', text:'Good — now click the destination square to move the piece.' });
         } else {
-          setFeedback(`Good! Keep finding the squares — ${highlights.length - visited} more to go.`);
-          setFeedbackType('hint');
+          // Put piece from momoBoard at the correct starting square
+          const nb = studentBoard.map(row => [...row]);
+          nb[fr][fc] = momoBoard[fr][fc]; // put it there for them
+          setStudentBoard(nb);
+          setFeedback({ type:'hint', text:'Click the highlighted piece first, then click where to move it.' });
+        }
+        return;
+      }
+
+      // Second click — move to destination
+      if (r === tr && c === tc) {
+        const nb = studentBoard.map(row => [...row]);
+        const piece = nb[selectedPiece[0]][selectedPiece[1]] || momoBoard[fr][fc];
+        nb[tr][tc] = piece;
+        nb[fr][fc] = null;
+        setStudentBoard(nb);
+        setSelectedPiece(null);
+        markDone(step.outputSuccess || 'Correct move!');
+      } else {
+        setSelectedPiece(null);
+        setFeedback({ type:'error', text: step.outputWrong || 'Not quite — click the piece first, then the destination.' });
+      }
+      return;
+    }
+
+    // Placement interaction — click a square to place target piece
+    if (targetPieces && !isYesNo) {
+      const nb = studentBoard.map(row => [...row]);
+
+      // Find which target piece should go here
+      const match = Array.isArray(targetPieces)
+        ? targetPieces.find(tp => {
+            const rc = squareToRC(tp.square);
+            return rc && rc[0] === r && rc[1] === c;
+          })
+        : null;
+
+      if (match) {
+        nb[r][c] = match.piece;
+        setStudentBoard(nb);
+        // Check if ALL target pieces are now placed
+        const allPlaced = boardMatchesTarget(nb, targetPieces);
+        if (allPlaced) {
+          markDone(step.outputSuccess || 'All pieces placed correctly!');
+        } else {
+          const remaining = Array.isArray(targetPieces)
+            ? targetPieces.filter(tp => {
+                const rc = squareToRC(tp.square);
+                return rc && nb[rc[0]][rc[1]] !== tp.piece;
+              }).length
+            : 0;
+          setFeedback({ type:'hint', text: `Correct! ${remaining} more piece${remaining !== 1 ? 's' : ''} to place.` });
         }
       } else {
-        setFeedback('That square is not reachable from here. Try a highlighted square.');
-        setFeedbackType('error');
+        setFeedback({ type:'error', text: step.outputWrong || 'That is not the right square. Look at the highlighted squares.' });
       }
       return;
     }
 
-    if (ex.type === 'guided-move' && ex.from) {
-      const nb = studentBoard.map(row => [...row]);
-      if (r===ex.from[0] && c===ex.from[1]) {
-        setFeedback('Good — now click where you want to move it.');
-        setFeedbackType('hint');
-        return;
-      }
-      if (ex.to && r===ex.to[0] && c===ex.to[1]) {
-        const piece = nb[ex.from[0]][ex.from[1]];
-        nb[ex.to[0]][ex.to[1]] = piece;
-        nb[ex.from[0]][ex.from[1]] = null;
-        setStudentBoard(nb);
-        markExerciseDone('✅ Perfect move!');
-        return;
-      }
-      setFeedback('Move the highlighted piece to the highlighted destination.');
-      setFeedbackType('error');
-      return;
-    }
-
-    // move-test / capture-test — click anywhere to answer yes/no
-    if (ex.type === 'move-test' || ex.type === 'capture-test') {
-      markExerciseDone(ex.answer
-        ? '✅ Yes it can! ' + (ex.tip || '')
-        : '❌ No it cannot! ' + (ex.tip || ''));
-      return;
+    // Default: any square click on non-interactive steps advances
+    if (!targetPieces && !movePiece && !isYesNo) {
+      markDone(step.outputSuccess || 'Good!');
     }
   }
 
-  function markExerciseDone(msg) {
-    setFeedback(msg);
-    setFeedbackType('success');
-    setExerciseDone(true);
-    setTimeout(() => advanceExercise(), 1800);
-  }
-
-  function advanceExercise() {
-    const nextEx = exerciseIdx + 1;
-    if (nextEx >= exercises.length) {
-      setPartDone(true);
+  // ── Yes/No answer ──────────────────────────────
+  function handleAnswer(answer) {
+    if (stepDone) return;
+    if (answer === step.correctAnswer) {
+      markDone(step.outputSuccess || 'Correct!');
     } else {
-      setExerciseIdx(nextEx);
-      setExerciseDone(false);
-      setFeedback('');
+      setFeedback({ type:'error', text: step.outputWrong || 'Not quite — think it through again.' });
+      speak(step.outputWrong || 'Not quite — think it through again.', voiceOn);
     }
   }
 
-  function advancePart() {
-    const nextPart = partIdx + 1;
-    if (nextPart >= parts.length) {
-      setLessonDone(true);
-      setTimeout(() => onComplete && onComplete(), 2000);
-    } else {
-      setPartIdx(nextPart);
-      setExerciseIdx(0);
-      setPartDone(false);
-      setFeedback('');
-    }
+  // ── Mark step done ─────────────────────────────
+  function markDone(msg) {
+    setFeedback({ type:'success', text: msg });
+    setStepDone(true);
+    speak(msg, voiceOn);
+    setTimeout(() => nextStep(), 2000);
   }
 
-  function useHint() {
-    setShowHint(true);
-    setHintUsed(h => h + 1);
+  // ── Voice toggle ───────────────────────────────
+  function toggleVoice() {
+    const next = !voiceOn;
+    setVoiceOn(next);
+    if (!next) window.speechSynthesis?.cancel();
+    else speak(step?.voice || '', true);
   }
 
-  if (!lesson || !currentPart) return null;
-
-  const color = '#1d9e75';
-  const pale  = '#e1f5ee';
-
-  // ── LESSON DONE ──────────────────────────────
-  if (lessonDone) return (
-    <div className="chess-lesson">
-      <div className="chess-lesson-done">
-        <div style={{fontSize:64}}>🏆</div>
-        <h2>Chess Lesson Complete!</h2>
-        <p>{lesson.title} — well done {childName}!</p>
-        <p className="chess-done-tip">{lesson.tip}</p>
-      </div>
-    </div>
-  );
-
-  // ── PART DONE — transition screen ─────────────
-  if (partDone) return (
-    <div className="chess-lesson">
-      <div className="chess-part-done">
-        <div style={{fontSize:52}}>✅</div>
-        <h2>{currentPart.part === 'instruction' ? 'Instruction complete!'
-            : currentPart.part === 'exercises'   ? 'Exercises complete!'
-            : 'Challenge complete!'}</h2>
-        <p style={{marginBottom:24, color:'#555', lineHeight:1.7}}>
-          {currentPart.part === 'instruction'
-            ? 'You have learned the concept. Now let\'s practise it!'
-            : currentPart.part === 'exercises'
-            ? 'Great work! Now for the challenge round!'
-            : 'Excellent! You have completed this lesson!'}
-        </p>
-        <button className="chess-advance-btn" style={{background:color}} onClick={advancePart}>
-          {currentPart.part === 'instruction' ? 'Start exercises →'
-           : currentPart.part === 'exercises'  ? 'Take the challenge →'
-           : 'Finish lesson →'}
-        </button>
-      </div>
-    </div>
-  );
-
-  // ── INSTRUCTION PART ─────────────────────────
-  if (currentPart.part === 'instruction') return (
-    <div className="chess-lesson">
-      <div className="chess-lesson-header">
-        <div className="chess-lesson-meta">
-          <h1 className="chess-lesson-title">{lesson.title}</h1>
-          <p className="chess-lesson-sub">{lesson.subtitle} · {lesson.levelName}</p>
-        </div>
-        <div className="chess-step-badge" style={{background:pale, color}}>
-          Lesson {lesson.step} of {lesson.totalSteps}
-        </div>
-      </div>
-
-      <div className="chess-prog-bar">
-        <div className="chess-prog-fill" style={{width:`${(lesson.step/lesson.totalSteps)*100}%`, background:color}} />
-      </div>
-
-      <PartIndicator parts={parts} currentPart={currentPart.part} />
-
-      <div className="chess-instruction-body">
-        <div className="chess-instruction-left">
-          <div className="chess-part-badge" style={{background:'#eeedfe', color:'#6c63ff'}}>
-            📖 {currentPart.title} · {currentPart.duration}
-          </div>
-          <div className="chess-momo-instruction">
-            <div className="chess-momo-avatar">🎓</div>
-            <div className="chess-momo-bubble">
-              <div className="chess-momo-name">Ms. Momo</div>
-              <p className="chess-momo-text">{currentPart.content}</p>
-            </div>
-          </div>
-          {lesson.tip && (
-            <div className="chess-tip-box">
-              <span className="chess-tip-icon">💡</span>
-              <span>{lesson.tip}</span>
-            </div>
-          )}
-          <button className="chess-advance-btn" style={{background:color}} onClick={advancePart}>
-            I understand — start exercises →
-          </button>
-        </div>
-
-        <div className="chess-instruction-right">
-          <ChessBoard
-            board={FULL_START}
-            highlights={lesson.targetSquare ? [lesson.targetSquare] : []}
-            label="Ms. Momo's board"
-            color="#6c63ff"
-            note={lesson.rightPanelNote || 'Study this position carefully'}
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  // ── EXERCISES PART ────────────────────────────
-  if (currentPart.part === 'exercises') return (
-    <div className="chess-lesson">
-      <div className="chess-lesson-header">
-        <div className="chess-lesson-meta">
-          <h1 className="chess-lesson-title">{lesson.title}</h1>
-          <p className="chess-lesson-sub">{lesson.subtitle} · {lesson.levelName}</p>
-        </div>
-        <div className="chess-step-badge" style={{background:pale, color}}>
-          Exercise {exerciseIdx+1} of {exercises.length}
-        </div>
-      </div>
-
-      <div className="chess-prog-bar">
-        <div className="chess-prog-fill"
-          style={{width:`${((exerciseIdx+(exerciseDone?1:0))/exercises.length)*100}%`, background:color}} />
-      </div>
-
-      <PartIndicator parts={parts} currentPart={currentPart.part} />
-
-      <div className="chess-exercise-body">
-        <div className="chess-exercise-left">
-          <div className="chess-part-badge" style={{background:pale, color}}>
-            ✏️ {currentPart.title} · {currentPart.duration}
-          </div>
-
-          <div className="chess-exercise-instruction">
-            <div className="chess-ex-num" style={{background:color}}>{exerciseIdx+1}</div>
-            <p className="chess-ex-text">{currentEx?.instruction}</p>
-          </div>
-
-          {feedback && (
-            <div className={`chess-feedback chess-feedback-${feedbackType}`}>
-              {feedback}
-            </div>
-          )}
-
-          {showHint && currentEx?.tip && (
-            <div className="chess-hint">
-              💡 {currentEx.tip}
-            </div>
-          )}
-
-          <div className="chess-exercise-actions">
-            {!exerciseDone && !showHint && hintUsed < 3 && (
-              <button className="chess-hint-btn" onClick={useHint}>💡 Show hint</button>
-            )}
-            {exerciseDone && (
-              <button className="chess-advance-btn" style={{background:color}} onClick={advanceExercise}>
-                Next exercise →
-              </button>
-            )}
-          </div>
-
-          {/* Yes/No buttons for move-test type */}
-          {(currentEx?.type === 'move-test' || currentEx?.type === 'capture-test') && !exerciseDone && (
-            <div className="chess-yesno">
-              <button className="chess-yes-btn" onClick={() => {
-                if (currentEx.answer === true) markExerciseDone('✅ Correct! ' + (currentEx.tip||''));
-                else { setFeedback('Not quite. ' + (currentEx.tip||'')); setFeedbackType('error'); }
-              }}>Yes it can ✓</button>
-              <button className="chess-no-btn" onClick={() => {
-                if (currentEx.answer === false) markExerciseDone('✅ Correct! ' + (currentEx.tip||''));
-                else { setFeedback('Not quite. ' + (currentEx.tip||'')); setFeedbackType('error'); }
-              }}>No it cannot ✗</button>
+  // ── Lesson done screen ─────────────────────────
+  if (lessonDone) {
+    return (
+      <div className="chess-lesson-done-screen">
+        <div className="chess-lesson-done-card">
+          <div style={{ fontSize: 56 }}>🏆</div>
+          <h2>Chess Lesson Complete!</h2>
+          <p className="chess-done-title">{lesson.title}</p>
+          <p className="chess-done-msg">
+            Excellent work {childName}! You have finished Lesson {lesson.step} of {lesson.totalSteps}.
+            Every chess master started exactly where you are right now.
+          </p>
+          {lesson.concept && (
+            <div className="chess-done-concept">
+              <strong>What you learned:</strong> {lesson.concept}
             </div>
           )}
         </div>
-
-        <div className="chess-exercise-right">
-          <ChessBoard
-            board={studentBoard || EMPTY_BOARD}
-            highlights={exerciseDone ? [] : highlights}
-            onSquareClick={handleSquareClick}
-            interactive={!exerciseDone}
-            label={`Your board — ${currentEx?.type === 'show-moves' ? 'click the highlighted squares' : 'interact here'}`}
-            color={color}
-            note={exerciseDone ? '✅ Done! Loading next exercise...' : 'Click the highlighted squares'}
-          />
-        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  // ── CHALLENGE PART ────────────────────────────
+  const levelColor = '#1d9e75';
+
   return (
     <div className="chess-lesson">
+
+      {/* ── Header ── */}
       <div className="chess-lesson-header">
-        <div className="chess-lesson-meta">
-          <h1 className="chess-lesson-title">{lesson.title}</h1>
-          <p className="chess-lesson-sub">{lesson.subtitle} · {lesson.levelName}</p>
+        <div>
+          <div className="chess-lesson-title-text">{lesson.title}</div>
+          <div className="chess-lesson-subtitle">{lesson.subtitle} · {lesson.levelName}</div>
         </div>
-        <div className="chess-step-badge" style={{background:'#faeeda', color:'#ba7517'}}>
-          🏆 Challenge · {currentPart.duration}
+        <div className="chess-prog-bar-wrap">
+          <div className="chess-prog-bar">
+            <div className="chess-prog-fill"
+              style={{ width: `${((lesson.step - 1) / lesson.totalSteps) * 100}%`, background: levelColor }} />
+          </div>
+          <span className="chess-prog-label">Lesson {lesson.step} of {lesson.totalSteps}</span>
         </div>
       </div>
 
-      <div className="chess-prog-bar">
-        <div className="chess-prog-fill" style={{width:'95%', background:'#ba7517'}} />
-      </div>
+      {/* ── Session indicator ── */}
+      <SessionIndicator session={sessionNum} stepIndex={stepIndex} total={totalSteps} />
 
-      <PartIndicator parts={parts} currentPart={currentPart.part} />
+      {/* ── Three-panel body ── */}
+      <div className="chess-panels">
 
-      <div className="chess-challenge-body">
-        <div className="chess-momo-instruction" style={{marginBottom:20}}>
-          <div className="chess-momo-avatar">🎓</div>
-          <div className="chess-momo-bubble">
-            <div className="chess-momo-name">Ms. Momo</div>
-            <p className="chess-momo-text">{currentPart.description}</p>
+        {/* LEFT — Ms. Momo's board */}
+        <div className="chess-panel chess-panel-momo">
+          <div className="chess-panel-header" style={{ background: '#6c63ff' }}>
+            🎓 Ms. Momo's Board
+          </div>
+          <div className="chess-panel-body">
+            <ChessBoard
+              board={momoBoard}
+              highlights={highlights}
+              label="Ms. Momo demonstrates here"
+              color="#6c63ff"
+              note={step?.type === 'instruction' ? 'Watch and mirror on your board →' : 'Reference position'}
+            />
           </div>
         </div>
 
-        <div className="chess-challenge-boards">
-          <ChessBoard
-            board={FULL_START}
-            highlights={lesson.targetSquare ? [lesson.targetSquare] : []}
-            label="Challenge board"
-            color="#ba7517"
-            note={currentPart.tip}
-          />
+        {/* CENTRE — Student board */}
+        <div className="chess-panel chess-panel-student">
+          <div className="chess-panel-header" style={{ background: '#1a1a2e' }}>
+            ✏️ Your Board — {childName}
+          </div>
+          <div className="chess-panel-body">
+            <ChessBoard
+              board={studentBoard}
+              highlights={stepDone ? [] : highlights}
+              onSquareClick={handleSquareClick}
+              interactive={!stepDone && !step?.isYesNo}
+              label={step?.studentTask || 'Complete the task'}
+              color={levelColor}
+              note={stepDone ? '✅ Moving to next step...' : 'Click highlighted squares'}
+            />
+          </div>
         </div>
 
-        <div className="chess-challenge-actions">
-          <button className="chess-advance-btn" style={{background:'#ba7517'}} onClick={advancePart}>
-            Complete challenge →
-          </button>
+        {/* RIGHT — Output/Result */}
+        <div className="chess-panel chess-panel-output">
+          <div className="chess-panel-header" style={{ background: '#0d0d2b' }}>
+            📋 Result
+          </div>
+          <div className="chess-panel-body chess-output-body">
+
+            {/* Step type badge */}
+            <div className="chess-step-type-badge">
+              {step?.type === 'instruction' && <span className="chess-badge chess-badge-instruction">📖 Instruction · {step.duration}</span>}
+              {step?.type === 'exercise'    && <span className="chess-badge chess-badge-exercise">✏️ Exercise · {step.duration}</span>}
+              {step?.type === 'puzzle'      && <span className="chess-badge chess-badge-puzzle">🧩 Puzzle · {step.duration}</span>}
+              {step?.type === 'review'      && <span className="chess-badge chess-badge-review">🔄 Review · {step.duration}</span>}
+              {step?.type === 'challenge'   && <span className="chess-badge chess-badge-challenge">🏆 Challenge · {step.duration}</span>}
+            </div>
+
+            {/* Task description */}
+            <div className="chess-task-box">
+              <div className="chess-task-label">Your task</div>
+              <div className="chess-task-text">{step?.studentTask}</div>
+            </div>
+
+            {/* Feedback */}
+            <Feedback type={feedback.type} text={feedback.text} />
+
+            {/* Yes/No buttons for puzzle steps */}
+            {step?.isYesNo && !stepDone && (
+              <div className="chess-yesno-wrap">
+                <button className="chess-yes-btn" onClick={() => handleAnswer(true)}>
+                  ✓ Yes
+                </button>
+                <button className="chess-no-btn" onClick={() => handleAnswer(false)}>
+                  ✗ No
+                </button>
+              </div>
+            )}
+
+            {/* Free play / instruction — manual advance button */}
+            {(step?.type === 'instruction' || step?.freePlay) && !stepDone && (
+              <button
+                className="chess-advance-btn"
+                style={{ background: levelColor }}
+                onClick={() => markDone(step.outputSuccess || 'Step complete!')}
+              >
+                {step?.type === 'instruction' ? 'I understand →' : 'Continue →'}
+              </button>
+            )}
+
+            {/* Manual next if stuck */}
+            {stepDone && (
+              <div className="chess-next-hint">
+                Moving to next step...
+                <button className="chess-skip-link" onClick={nextStep}>Skip wait →</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* ── Bottom tutor bar ── */}
+      <TutorBar
+        text={step?.voice || 'Follow the instructions above.'}
+        voiceOn={voiceOn}
+        onToggle={toggleVoice}
+      />
+
     </div>
   );
 }
