@@ -1,8 +1,7 @@
-/* ═══════════════════════════════════════════════
-   CHESS LESSON — full classroom layout
-   Three panels: Ms. Momo | Student | Result
-   Green board · Solid pieces · Drag-and-drop tray
-   ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   CHESS LESSON — full-screen classroom
+   Large green boards · SVG pieces · Slim tray
+   ═══════════════════════════════════════════════════ */
 
 .chess-root {
   height: 100%;
@@ -12,19 +11,15 @@
   font-family: var(--font-main);
   overflow: hidden;
 }
-
-/* ── Loading ── */
 .chess-loading {
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0f1117;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,.5);
   font-size: 15px;
-  font-weight: 700;
-  text-align: center;
-  padding: 32px;
+  font-weight: 600;
+  background: #0f1117;
 }
 
 /* ── Top bar ── */
@@ -33,18 +28,18 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: #1a1a2e;
-  border-bottom: 2px solid #1d9e75;
+  background: #0d0d2b;
+  border-bottom: 3px solid #1d9e75;
   flex-shrink: 0;
   gap: 12px;
 }
-.chess-topbar-left   { min-width: 0; }
-.chess-lesson-title  { color: #fff; font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chess-lesson-sub    { color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 600; margin-top: 2px; }
-.chess-prog-wrap     { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.chess-prog-track    { width: 90px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
-.chess-prog-fill     { height: 100%; background: #1d9e75; border-radius: 4px; transition: width 0.4s ease; }
-.chess-prog-lbl      { font-size: 10px; color: rgba(255,255,255,0.35); font-weight: 700; white-space: nowrap; }
+.chess-topbar-left { min-width: 0; }
+.chess-title    { color:#fff; font-size:14px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.chess-subtitle { color:rgba(255,255,255,.4); font-size:11px; font-weight:600; margin-top:2px; }
+.chess-prog-wrap { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.chess-prog-track { width:80px; height:4px; background:rgba(255,255,255,.1); border-radius:4px; overflow:hidden; }
+.chess-prog-fill  { height:100%; background:#1d9e75; border-radius:4px; transition:width .4s; }
+.chess-prog-lbl   { font-size:10px; color:rgba(255,255,255,.3); font-weight:700; white-space:nowrap; }
 
 /* ── Session bar ── */
 .sess-bar {
@@ -52,29 +47,29 @@
   align-items: center;
   gap: 10px;
   padding: 5px 16px;
-  background: rgba(255,255,255,0.03);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,.02);
+  border-bottom: 1px solid rgba(255,255,255,.06);
   flex-shrink: 0;
 }
-.sess-badge  { font-size: 10px; font-weight: 800; color: #fff; padding: 2px 9px; border-radius: 20px; }
-.sess-dots   { display: flex; gap: 5px; flex: 1; justify-content: center; }
-.sess-dot    { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.12); transition: all 0.2s; }
-.sess-dot-active { transform: scale(1.3); }
-.sess-dot-done   { background: rgba(255,255,255,0.4) !important; }
-.sess-count  { font-size: 10px; color: rgba(255,255,255,0.3); font-weight: 700; white-space: nowrap; }
+.sess-badge { font-size:10px; font-weight:800; color:#fff; padding:2px 9px; border-radius:20px; }
+.sess-dots  { display:flex; gap:5px; flex:1; justify-content:center; }
+.sess-dot   { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.12); transition:all .2s; }
+.sess-dot.active { transform:scale(1.3); }
+.sess-dot.done   { background:rgba(255,255,255,.38) !important; }
+.sess-count { font-size:10px; color:rgba(255,255,255,.3); font-weight:700; white-space:nowrap; }
 
-/* ── Three-panel grid ── */
+/* ── Three-panel layout ── */
 .chess-panels {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr 280px;
+  grid-template-columns: 1fr 1fr 230px;
   overflow: hidden;
   min-height: 0;
 }
 .chess-panel {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255,255,255,0.06);
+  border-right: 1px solid rgba(255,255,255,.06);
   overflow: hidden;
 }
 .chess-panel:last-child { border-right: none; }
@@ -82,16 +77,16 @@
   padding: 6px 12px;
   font-size: 10px;
   font-weight: 800;
-  color: rgba(255,255,255,0.9);
-  letter-spacing: 0.05em;
+  color: rgba(255,255,255,.9);
+  letter-spacing: .05em;
   text-transform: uppercase;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
 }
-.chess-demo-badge { background: #e24b4a; color: #fff; font-size: 8px; padding: 1px 5px; border-radius: 3px; }
-.chess-your-badge { background: #1d9e75; color: #fff; font-size: 8px; padding: 1px 5px; border-radius: 3px; }
+.hdr-badge       { font-size:8px; background:rgba(255,255,255,.15); color:#fff; padding:1px 6px; border-radius:3px; font-weight:700; }
+.hdr-badge-green { background:#1d9e75; }
 .chess-panel-body {
   flex: 1;
   overflow-y: auto;
@@ -103,183 +98,6 @@
   background: #161826;
   min-height: 0;
 }
-
-/* ── Chess board ── */
-.cb-wrap { display: flex; flex-direction: column; align-items: flex-start; }
-.cb-owner-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  font-weight: 800;
-  margin-bottom: 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.cb-owner-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.cb-inner     { display: flex; gap: 3px; align-items: flex-start; }
-.cb-ranks     { display: flex; flex-direction: column; }
-.cb-coord-rank {
-  width: 14px; height: 44px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 600;
-}
-.cb-col        { display: flex; flex-direction: column; }
-.cb-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 44px);
-  grid-template-rows:    repeat(8, 44px);
-  border: 2.5px solid rgba(255,255,255,0.18);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.cb-files      { display: flex; margin-top: 3px; }
-.cb-coord-file { width: 44px; height: 12px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: rgba(255,255,255,0.4); font-weight: 600; }
-
-/* ── Green squares ── */
-.cb-sq   { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; position: relative; transition: background 0.1s; }
-.cb-lt   { background: #eaffe8; }
-.cb-dk   { background: #4a9e4f; }
-
-/* Highlight — yellow glow (Ms. Momo's squares) */
-.cb-hl   { background: rgba(255,214,0,0.7) !important; box-shadow: inset 0 0 0 2px rgba(200,160,0,0.9); }
-
-/* Target drop zone — bright green pulse */
-.cb-target {
-  background: rgba(40,210,80,0.75) !important;
-  cursor: pointer;
-  animation: cb-pulse 1.2s ease-in-out infinite;
-}
-.cb-target:hover { background: rgba(40,230,90,0.9) !important; }
-@keyframes cb-pulse { 0%,100%{box-shadow:inset 0 0 0 2px rgba(40,200,70,0.8)} 50%{box-shadow:inset 0 0 0 3px rgba(40,230,90,1)} }
-
-/* Selected square */
-.cb-selected { background: rgba(108,99,255,0.65) !important; box-shadow: inset 0 0 0 2px rgba(168,139,250,0.9); }
-
-/* ── SOLID BOLD PIECES ── */
-.cb-piece-w {
-  font-size: 30px;
-  line-height: 1;
-  color: #ffffff;
-  text-shadow:
-    0 0 2px #fff,
-    1px 1px 3px rgba(0,0,0,0.95),
-    -1px -1px 2px rgba(0,0,0,0.7),
-    0 2px 4px rgba(0,0,0,0.8);
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.8));
-  user-select: none;
-  pointer-events: none;
-  display: block;
-}
-.cb-piece-b {
-  font-size: 30px;
-  line-height: 1;
-  color: #111111;
-  text-shadow:
-    1px 1px 3px rgba(0,0,0,1),
-    -1px -1px 2px rgba(0,0,0,0.8),
-    0 0 4px rgba(0,0,0,0.9);
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
-  user-select: none;
-  pointer-events: none;
-  display: block;
-}
-
-.cb-note {
-  margin-top: 5px;
-  font-size: 10px;
-  color: rgba(255,255,255,0.35);
-  font-style: italic;
-  text-align: center;
-  align-self: center;
-}
-
-/* ── PIECE TRAY ── */
-.tray-wrap {
-  width: 100%;
-  background: #1a1c2e;
-  border-radius: 8px;
-  padding: 7px 8px 8px;
-}
-.tray-demo { opacity: 0.45; }
-.tray-label {
-  font-size: 9px;
-  color: rgba(255,255,255,0.3);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  margin-bottom: 6px;
-}
-.tray-pieces {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.tray-piece {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 5px 6px;
-  border-radius: 7px;
-  border: 1.5px solid transparent;
-  transition: all 0.15s;
-  position: relative;
-  min-width: 42px;
-}
-.tray-active {
-  background: #1a2e1a;
-  border-color: #1d9e75;
-  cursor: grab;
-}
-.tray-active:hover   { background: #1e371e; transform: translateY(-1px); }
-.tray-active:active  { cursor: grabbing; transform: scale(0.96); }
-.tray-inactive {
-  background: rgba(255,255,255,0.03);
-  border-color: rgba(255,255,255,0.06);
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-.tray-sym {
-  font-size: 28px;
-  line-height: 1;
-  display: block;
-}
-.tray-sym-w {
-  color: #ffffff;
-  text-shadow: 0 0 2px #fff, 1px 1px 3px rgba(0,0,0,0.95), 0 2px 4px rgba(0,0,0,0.8);
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.8));
-}
-.tray-sym-b {
-  color: #111111;
-  text-shadow: 1px 1px 3px rgba(0,0,0,1), 0 2px 4px rgba(0,0,0,0.8);
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
-}
-.tray-name {
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-.tray-active .tray-name   { color: #5dcaa5; }
-.tray-inactive .tray-name { color: rgba(255,255,255,0.3); }
-.tray-active-dot {
-  position: absolute;
-  top: 3px; right: 3px;
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: #1d9e75;
-}
-.tray-hint {
-  margin-top: 5px;
-  font-size: 9px;
-  color: #5dcaa5;
-  font-weight: 700;
-  text-align: center;
-}
-.tray-hint strong { color: #fff; }
-
-/* ── Result panel ── */
 .chess-result-body {
   flex: 1;
   overflow-y: auto;
@@ -289,160 +107,227 @@
   gap: 10px;
   background: #0a0c14;
 }
-.chess-badge {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 800;
-  padding: 3px 9px;
-  border-radius: 20px;
-}
-.chess-badge-instruction { background: rgba(108,99,255,0.15); color: #a78bfa; }
-.chess-badge-exercise    { background: rgba(29,158,117,0.15);  color: #5dcaa5; }
-.chess-badge-puzzle      { background: rgba(186,117,23,0.15);  color: #fac775; }
-.chess-badge-review      { background: rgba(108,99,255,0.12);  color: #a78bfa; }
-.chess-badge-challenge   { background: rgba(226,75,74,0.12);   color: #f09595; }
 
-.chess-task-box  { background: rgba(255,255,255,0.05); border-radius: 9px; padding: 10px 12px; }
-.chess-task-lbl  { font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 800; margin-bottom: 5px; }
-.chess-task-text { font-size: 12px; color: #e2e8f0; font-weight: 600; line-height: 1.6; }
-
-/* ── Feedback ── */
-.cl-fb {
-  border-radius: 9px;
-  padding: 9px 12px;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.55;
+/* ── Chess board container ── */
+.cb-container { display:flex; flex-direction:column; }
+.cb-owner {
+  display:flex; align-items:center; gap:6px;
+  font-size:10px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.05em; margin-bottom:5px;
 }
-.cl-fb-success { background: rgba(29,158,117,0.12);  color: #5dcaa5; border: 1px solid rgba(29,158,117,0.25); }
-.cl-fb-error   { background: rgba(226,75,74,0.10);   color: #f09595; border: 1px solid rgba(226,75,74,0.22); }
-.cl-fb-hint    { background: rgba(250,199,117,0.08); color: #fac775; border: 1px solid rgba(250,199,117,0.2); }
-
-/* ── Yes/No ── */
-.chess-yesno   { display: flex; gap: 8px; }
-.chess-yes-btn {
-  flex: 1; height: 44px;
-  background: rgba(29,158,117,0.12); color: #5dcaa5;
-  border: 1.5px solid rgba(29,158,117,0.3); border-radius: 10px;
-  font-size: 15px; font-weight: 900; cursor: pointer; font-family: var(--font-main);
+.cb-owner-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.cb-inner     { display:flex; gap:4px; }
+.cb-ranks     { display:flex; flex-direction:column; }
+.cb-rank-lbl  {
+  width:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; color:rgba(255,255,255,.4); font-weight:600;
 }
-.chess-yes-btn:hover { background: rgba(29,158,117,0.2); }
-.chess-no-btn {
-  flex: 1; height: 44px;
-  background: rgba(226,75,74,0.10); color: #f09595;
-  border: 1.5px solid rgba(226,75,74,0.25); border-radius: 10px;
-  font-size: 15px; font-weight: 900; cursor: pointer; font-family: var(--font-main);
+.cb-right  { display:flex; flex-direction:column; }
+.cb-board  {
+  position: relative;
+  border: 3px solid rgba(255,255,255,.2);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
-.chess-no-btn:hover  { background: rgba(226,75,74,0.18); }
-
-/* ── Advance button ── */
-.chess-advance-btn {
-  width: 100%; height: 44px;
-  background: #1d9e75; color: #fff; border: none; border-radius: 10px;
-  font-size: 13px; font-weight: 900; cursor: pointer; font-family: var(--font-main);
-  transition: opacity 0.15s;
-}
-.chess-advance-btn:hover { opacity: 0.9; }
-
-/* ── Timed info ── */
-.chess-timed-info {
-  font-size: 12px; color: #fac775; font-weight: 700;
-  background: rgba(250,199,117,0.08); border-radius: 8px; padding: 8px 10px;
+.cb-files { display:flex; margin-top:3px; }
+.cb-file-lbl {
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; color:rgba(255,255,255,.4); font-weight:600;
+  height:13px;
 }
 
-/* ── Next hint ── */
-.chess-next-hint {
-  font-size: 11px; color: rgba(255,255,255,0.35); font-weight: 600;
-  display: flex; align-items: center; gap: 10px;
-}
-.chess-skip-btn {
-  background: none; border: none; color: #a78bfa;
-  font-size: 11px; font-weight: 800; cursor: pointer; font-family: var(--font-main);
-}
-
-/* ── Active piece hint ── */
-.chess-piece-hint {
+/* ── Individual squares ── */
+.cb-sq {
+  position: absolute;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(29,158,117,0.06);
-  border: 1px solid rgba(29,158,117,0.15);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 11px;
-  color: rgba(255,255,255,0.55);
-  font-weight: 600;
-  line-height: 1.55;
+  justify-content: center;
+  transition: background .08s;
 }
-.chess-piece-hint strong { color: #5dcaa5; }
-.chess-piece-hint-sym {
-  font-size: 26px;
-  color: #fff;
-  text-shadow: 0 0 2px #fff, 1px 1px 3px rgba(0,0,0,0.9);
-  flex-shrink: 0;
+.cb-sq-interactive { cursor: pointer; }
+.cb-sq-interactive:hover { filter: brightness(1.12); }
+
+/* Pulsing target ring */
+.cb-target-ring {
+  position: absolute;
+  inset: 3px;
+  border: 2.5px solid rgba(50,230,80,.9);
+  border-radius: 3px;
+  animation: ring-pulse 1s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes ring-pulse {
+  0%,100% { opacity:1; }
+  50% { opacity:.5; }
 }
 
-/* ── TUTOR BAR ── */
-.tutor-bar {
+/* SVG piece wrapper */
+.cb-piece-wrap {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 14px;
-  background: #0f1117;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── Piece tray ── */
+.tray-wrap {
+  width: 100%;
+  background: #111320;
+  border-radius: 8px;
+  padding: 7px 8px 8px;
   flex-shrink: 0;
 }
-.tutor-avatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: #1d9e75;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; flex-shrink: 0;
+.tray-label {
+  font-size:9px; color:rgba(255,255,255,.3); text-transform:uppercase;
+  letter-spacing:.07em; font-weight:700; margin-bottom:6px;
+}
+.tray-row { display:flex; gap:4px; justify-content:center; flex-wrap:wrap; }
+.tray-piece {
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:5px 7px; border-radius:7px; border:2px solid transparent;
+  transition:all .12s; position:relative; min-width:40px;
+  user-select:none;
+}
+.tray-active {
+  background:#1a2e1a; border-color:#1d9e75; cursor:grab;
+}
+.tray-active:hover { background:#1f381f; transform:translateY(-2px); }
+.tray-active:active { cursor:grabbing; transform:scale(.96); }
+.tray-locked {
+  background:rgba(255,255,255,.02);
+  border-color:rgba(255,255,255,.05);
+  opacity:.28; cursor:not-allowed;
+}
+.tray-piece-name {
+  font-size:8px; font-weight:700; letter-spacing:.02em;
+}
+.tray-active .tray-piece-name   { color:#5dcaa5; }
+.tray-locked .tray-piece-name   { color:rgba(255,255,255,.25); }
+.tray-active-glow {
+  position:absolute; top:3px; right:3px;
+  width:6px; height:6px; border-radius:50%;
+  background:#1d9e75;
+  animation: glow-pulse .9s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.5;transform:scale(.7)}
+}
+.tray-hint {
+  text-align:center; font-size:9px; color:#5dcaa5; font-weight:600; margin-top:5px;
+}
+.tray-hint strong { color:#fff; }
+
+/* ── Result panel content ── */
+.chess-badge {
+  display:inline-block; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px;
+}
+.chess-badge-inst      { background:rgba(108,99,255,.18); color:#c4bcff; }
+.chess-badge-ex        { background:rgba(29,158,117,.18); color:#5dcaa5; }
+.chess-badge-puzzle    { background:rgba(186,117,23,.18); color:#fac775; }
+.chess-badge-review    { background:rgba(108,99,255,.14); color:#c4bcff; }
+.chess-badge-challenge { background:rgba(226,75,74,.14);  color:#f09595; }
+
+.chess-task-box  { background:rgba(255,255,255,.05); border-radius:9px; padding:10px 12px; }
+.chess-task-lbl  { font-size:9px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:.07em; font-weight:700; margin-bottom:4px; }
+.chess-task-text { font-size:12px; color:#e2e8f0; line-height:1.65; }
+
+.chess-fb {
+  border-radius:9px; padding:9px 12px;
+  font-size:12px; font-weight:600; line-height:1.55;
+}
+.chess-fb-success { background:rgba(29,158,117,.12); color:#5dcaa5; border:1px solid rgba(29,158,117,.25); }
+.chess-fb-error   { background:rgba(226,75,74,.10);  color:#f09595; border:1px solid rgba(226,75,74,.22); }
+.chess-fb-hint    { background:rgba(250,199,117,.08); color:#fac775; border:1px solid rgba(250,199,117,.2); }
+
+.chess-yesno   { display:flex; gap:8px; }
+.chess-yes-btn {
+  flex:1; height:44px; background:rgba(29,158,117,.12); color:#5dcaa5;
+  border:1.5px solid rgba(29,158,117,.3); border-radius:10px;
+  font-size:15px; font-weight:900; cursor:pointer; font-family:var(--font-main);
+}
+.chess-yes-btn:hover { background:rgba(29,158,117,.22); }
+.chess-no-btn {
+  flex:1; height:44px; background:rgba(226,75,74,.10); color:#f09595;
+  border:1.5px solid rgba(226,75,74,.25); border-radius:10px;
+  font-size:15px; font-weight:900; cursor:pointer; font-family:var(--font-main);
+}
+.chess-no-btn:hover { background:rgba(226,75,74,.18); }
+
+.chess-adv-btn {
+  width:100%; padding:11px; background:#1d9e75; color:#fff; border:none;
+  border-radius:10px; font-size:13px; font-weight:900; cursor:pointer;
+  font-family:var(--font-main); transition:opacity .15s;
+}
+.chess-adv-btn:hover { opacity:.88; }
+
+.chess-next-row {
+  display:flex; align-items:center; gap:10px;
+  font-size:11px; color:rgba(255,255,255,.35); font-weight:600;
+}
+.chess-skip-btn {
+  background:none; border:none; color:#a78bfa;
+  font-size:11px; font-weight:800; cursor:pointer; font-family:var(--font-main);
+}
+.chess-piece-reminder {
+  display:flex; align-items:center; gap:10px;
+  background:rgba(29,158,117,.06); border:1px solid rgba(29,158,117,.14);
+  border-radius:9px; padding:9px 11px;
+  font-size:11px; color:rgba(255,255,255,.5); line-height:1.6;
+}
+.chess-piece-reminder strong { color:#5dcaa5; }
+
+/* ── Tutor bar ── */
+.chess-tutor-bar {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:10px 14px; background:#0f1117;
+  border-top:1px solid rgba(255,255,255,.07); flex-shrink:0;
+}
+.tutor-av {
+  width:38px; height:38px; border-radius:50%; background:#1d9e75;
+  display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0;
 }
 .tutor-bubble {
-  flex: 1; background: rgba(255,255,255,0.04);
-  border-radius: 10px; padding: 8px 12px; min-width: 0;
+  flex:1; background:rgba(255,255,255,.04); border-radius:10px; padding:8px 12px; min-width:0;
 }
 .tutor-name {
-  font-size: 9px; font-weight: 800; color: #5dcaa5;
-  text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px;
-  display: flex; align-items: center; gap: 6px;
+  font-size:9px; font-weight:800; color:#5dcaa5; text-transform:uppercase;
+  letter-spacing:.07em; margin-bottom:4px; display:flex; align-items:center; gap:7px;
 }
-.tutor-voice-badge {
-  font-size: 9px; background: rgba(29,158,117,0.2); color: #5dcaa5;
-  padding: 1px 6px; border-radius: 10px; font-weight: 700;
+.tutor-voice-pill {
+  font-size:9px; background:rgba(29,158,117,.2); color:#5dcaa5;
+  padding:1px 7px; border-radius:10px; font-weight:700;
 }
-.tutor-text { font-size: 12px; font-weight: 600; color: #e2e8f0; line-height: 1.65; }
+.tutor-speech { font-size:12px; color:#e2e8f0; line-height:1.7; font-weight:400; }
 .tutor-voice-btn {
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.5); border-radius: 8px;
-  width: 34px; height: 34px; font-size: 16px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; align-self: center; transition: background 0.15s;
+  width:34px; height:34px; border-radius:8px; flex-shrink:0; align-self:center;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.5); font-size:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:background .15s;
 }
-.tutor-voice-on {
-  background: rgba(29,158,117,0.15);
-  border-color: rgba(29,158,117,0.35);
-  color: #5dcaa5;
+.tutor-voice-btn.voice-on {
+  background:rgba(29,158,117,.15); border-color:rgba(29,158,117,.35); color:#5dcaa5;
 }
 
-/* ── LESSON DONE SCREEN ── */
+/* ── Lesson done ── */
 .chess-done-screen {
-  height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  background: #0d0d2b; padding: 24px;
+  height:100%; display:flex; align-items:center; justify-content:center;
+  background:#0d0d2b; padding:24px;
 }
 .chess-done-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(29,158,117,0.25);
-  border-radius: 20px; padding: 40px 36px;
-  text-align: center; max-width: 460px; width: 100%;
+  background:rgba(255,255,255,.04); border:1px solid rgba(29,158,117,.25);
+  border-radius:20px; padding:40px 36px; text-align:center; max-width:460px; width:100%;
 }
-.chess-done-trophy { font-size: 56px; margin-bottom: 14px; }
-.chess-done-h2     { color: #fff; font-size: 24px; font-weight: 900; margin-bottom: 6px; }
-.chess-done-title  { color: #5dcaa5; font-size: 14px; font-weight: 700; margin-bottom: 14px; }
-.chess-done-msg    { color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 600; line-height: 1.7; margin-bottom: 16px; }
-.chess-done-concept {
-  background: rgba(29,158,117,0.08); border: 1px solid rgba(29,158,117,0.2);
-  border-radius: 10px; padding: 12px 14px;
-  font-size: 13px; font-weight: 600; color: #a8f0d8; line-height: 1.6; text-align: left;
+.chess-done-trophy   { font-size:56px; margin-bottom:14px; }
+.chess-done-card h2  { color:#fff; font-size:24px; font-weight:900; margin-bottom:6px; }
+.chess-done-subtitle { color:#5dcaa5; font-size:14px; font-weight:700; margin-bottom:14px; }
+.chess-done-msg      { color:rgba(255,255,255,.6); font-size:14px; line-height:1.7; margin-bottom:16px; }
+.chess-done-concept  {
+  background:rgba(29,158,117,.08); border:1px solid rgba(29,158,117,.2);
+  border-radius:10px; padding:12px 14px; font-size:13px; color:#a8f0d8;
+  line-height:1.6; text-align:left;
 }
