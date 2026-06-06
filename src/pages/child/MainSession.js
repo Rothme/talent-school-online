@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   getTodaySchedule, getSessionState, saveSessionState, isTestAccount
 } from '../../utils/sessionSchedule';
-import ChessLesson  from '../../components/chess/ChessLesson';
+import ChessLesson      from '../../components/chess/ChessLesson';
+import ChessBoardLesson from '../../components/chess/ChessBoardLesson';
 import TypingLesson from '../../components/typing/TypingLesson';
 import CodingLesson from '../../components/coding/CodingLesson';
 import './MainSession.css';
@@ -113,7 +114,11 @@ export default function MainSession() {
       </div>
 
       <div className="main-session-body">
-        {subject === 'chess'  && <ChessLesson  lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />}
+        {subject === 'chess'  && lessonIndex === 0
+          ? <ChessBoardLesson childName={child.name} onComplete={handleLessonComplete} />
+          : subject === 'chess'
+          ? <ChessLesson lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />
+          : null}
         {subject === 'coding' && <CodingLesson lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />}
         {subject === 'typing' && <TypingLesson lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />}
       </div>
