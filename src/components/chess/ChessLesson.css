@@ -1,182 +1,255 @@
-/* ── Chess Lesson Shell ── */
+/* ── Lesson shell ── */
 .chess-lesson {
-  height: 100%; display: flex; flex-direction: column;
-  background: #0f1117; overflow: hidden; font-family: var(--font-main);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #0f1117;
+  font-family: var(--font-main);
+  overflow: hidden;
 }
 
 /* ── Header ── */
 .chess-lesson-header {
-  background: var(--navy); padding: 10px 20px;
-  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--navy);
+  border-bottom: 2px solid #1d9e75;
+  flex-shrink: 0;
 }
-.chess-lesson-meta h1.chess-lesson-title { color: #fff; font-size: 15px; font-weight: 800; margin: 0; }
-.chess-lesson-sub { color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 600; margin: 2px 0 0; }
-.chess-step-badge { font-size: 12px; font-weight: 800; padding: 5px 12px; border-radius: 20px; }
+.chess-lesson-title-text { color: #fff; font-size: 14px; font-weight: 800; }
+.chess-lesson-subtitle   { color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 600; margin-top: 2px; }
+.chess-prog-bar-wrap { display: flex; align-items: center; gap: 10px; }
+.chess-prog-bar  { width: 100px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+.chess-prog-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+.chess-prog-label { font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 700; white-space: nowrap; }
 
-/* ── Progress bar ── */
-.chess-prog-bar { height: 3px; background: rgba(255,255,255,0.1); flex-shrink: 0; }
-.chess-prog-fill { height: 100%; transition: width 0.4s ease; }
+/* ── Session indicator ── */
+.cl-session-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.cl-session-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.cl-step-dots { display: flex; gap: 5px; flex: 1; justify-content: center; }
+.cl-step-dot  {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.12); transition: all 0.2s;
+}
+.cl-step-dot-active { background: #fff; transform: scale(1.2); }
+.cl-step-dot-done   { background: rgba(255,255,255,0.4); }
+.cl-step-count { font-size: 11px; color: rgba(255,255,255,0.35); font-weight: 700; white-space: nowrap; }
 
-/* ── Part Indicator ── */
-.part-indicator {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 8px 20px; background: var(--navy); border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0;
+/* ── Three panels ── */
+.chess-panels {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  overflow: hidden;
+  min-height: 0;
 }
-.part-pip {
-  display: flex; align-items: center; gap: 5px;
-  padding: 4px 10px; border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.15);
-  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4);
-  transition: all 0.2s;
+.chess-panel {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  overflow: hidden;
 }
-.part-pip-active { color: #fff !important; }
-.part-pip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.part-pip-label { font-weight: 800; }
-.part-pip-time { opacity: 0.7; }
+.chess-panel:last-child { border-right: none; }
+.chess-panel-header {
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.chess-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  min-height: 0;
+}
+.chess-output-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 14px;
+  overflow-y: auto;
+}
 
-/* ── Part badge ── */
-.chess-part-badge {
-  display: inline-block; font-size: 12px; font-weight: 800;
-  padding: 5px 12px; border-radius: 20px; margin-bottom: 14px;
+/* ── Chess board ── */
+.cb-wrap { display: flex; flex-direction: column; }
+.cb-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 800; margin-bottom: 6px;
 }
-
-/* ── Instruction layout ── */
-.chess-instruction-body {
-  flex: 1; display: grid; grid-template-columns: 1fr 1fr;
-  gap: 20px; padding: 16px 20px; overflow: hidden; min-height: 0;
-}
-.chess-instruction-left {
-  display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
-}
-.chess-instruction-right {
+.cb-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.cb-inner { display: flex; align-items: flex-start; gap: 3px; }
+.cb-ranks { display: flex; flex-direction: column; }
+.cb-coord {
+  width: 14px; height: 36px;
   display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: rgba(255,255,255,0.35); font-weight: 700;
 }
+.cb-col { display: flex; flex-direction: column; }
+.cb-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 36px);
+  grid-template-rows:    repeat(8, 36px);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cb-files { display: flex; margin-top: 2px; }
+.cb-files .cb-coord { width: 36px; height: 12px; }
+.cb-sq {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: default; transition: background 0.1s;
+}
+.cb-light { background: #f0d9b5; }
+.cb-dark  { background: #b58863; }
+.cb-hl    { background: rgba(108,99,255,0.6) !important; }
+.cb-clickable { cursor: pointer; }
+.cb-clickable:hover { background: rgba(108,99,255,0.8) !important; }
+.cb-piece { font-size: 22px; line-height: 1; pointer-events: none; user-select: none; }
+.cb-note  { margin-top: 6px; font-size: 10px; color: rgba(255,255,255,0.35); font-style: italic; text-align: center; }
 
-/* ── Ms. Momo bubble ── */
-.chess-momo-instruction { display: flex; align-items: flex-start; gap: 10px; }
-.chess-momo-avatar {
-  width: 40px; height: 40px; border-radius: 50%;
-  background: #1d9e75; display: flex; align-items: center;
-  justify-content: center; font-size: 18px; flex-shrink: 0;
+/* ── Output panel content ── */
+.chess-step-type-badge { }
+.chess-badge {
+  display: inline-block;
+  font-size: 11px; font-weight: 800;
+  padding: 4px 10px; border-radius: 20px;
 }
-.chess-momo-bubble {
-  background: rgba(255,255,255,0.07); border-radius: 12px;
-  padding: 10px 14px; flex: 1;
-}
-.chess-momo-name { color: #5dcaa5; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
-.chess-momo-text { color: #e2e8f0; font-size: 13px; line-height: 1.65; font-weight: 600; }
+.chess-badge-instruction { background: rgba(108,99,255,0.15); color: #a78bfa; }
+.chess-badge-exercise    { background: rgba(29,158,117,0.15);  color: #5dcaa5; }
+.chess-badge-puzzle      { background: rgba(186,117,23,0.15);  color: #fac775; }
+.chess-badge-review      { background: rgba(108,99,255,0.12);  color: #a78bfa; }
+.chess-badge-challenge   { background: rgba(226,75,74,0.12);   color: #f09595; }
 
-/* ── Tip box ── */
-.chess-tip-box {
-  background: rgba(250,199,117,0.1); border: 1px solid rgba(250,199,117,0.25);
-  border-radius: 10px; padding: 10px 14px; display: flex; gap: 8px; align-items: flex-start;
+.chess-task-box {
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 10px 12px;
 }
-.chess-tip-icon { font-size: 16px; flex-shrink: 0; }
-.chess-tip-box span:last-child { color: #fac775; font-size: 13px; font-weight: 600; line-height: 1.6; }
+.chess-task-label { font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+.chess-task-text  { font-size: 13px; font-weight: 700; color: #e2e8f0; line-height: 1.6; }
+
+/* ── Feedback ── */
+.cl-feedback {
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+.cl-feedback-success { background: rgba(29,158,117,0.12);  color: #5dcaa5; border: 1px solid rgba(29,158,117,0.25); }
+.cl-feedback-error   { background: rgba(226,75,74,0.1);    color: #f09595; border: 1px solid rgba(226,75,74,0.2); }
+.cl-feedback-hint    { background: rgba(250,199,117,0.08); color: #fac775; border: 1px solid rgba(250,199,117,0.2); }
+
+/* ── Yes/No buttons ── */
+.chess-yesno-wrap { display: flex; gap: 8px; }
+.chess-yes-btn {
+  flex: 1; height: 44px;
+  background: rgba(29,158,117,0.12); color: #5dcaa5;
+  border: 1.5px solid rgba(29,158,117,0.3); border-radius: 10px;
+  font-size: 15px; font-weight: 900; cursor: pointer; font-family: var(--font-main);
+  transition: background 0.15s;
+}
+.chess-yes-btn:hover { background: rgba(29,158,117,0.22); }
+.chess-no-btn {
+  flex: 1; height: 44px;
+  background: rgba(226,75,74,0.1); color: #f09595;
+  border: 1.5px solid rgba(226,75,74,0.25); border-radius: 10px;
+  font-size: 15px; font-weight: 900; cursor: pointer; font-family: var(--font-main);
+  transition: background 0.15s;
+}
+.chess-no-btn:hover { background: rgba(226,75,74,0.18); }
 
 /* ── Advance button ── */
 .chess-advance-btn {
-  width: 100%; height: 46px; color: #fff; border: none; border-radius: 10px;
+  width: 100%; height: 44px;
+  color: #fff; border: none; border-radius: 10px;
   font-size: 14px; font-weight: 900; cursor: pointer; font-family: var(--font-main);
-  transition: opacity 0.15s; margin-top: auto;
+  transition: opacity 0.15s; margin-top: 4px;
 }
 .chess-advance-btn:hover { opacity: 0.9; }
 
-/* ── Exercise layout ── */
-.chess-exercise-body {
-  flex: 1; display: grid; grid-template-columns: 1fr 1fr;
-  gap: 20px; padding: 16px 20px; overflow: hidden; min-height: 0;
+/* ── Next hint ── */
+.chess-next-hint {
+  font-size: 12px; color: rgba(255,255,255,0.35); font-weight: 600;
+  display: flex; align-items: center; gap: 10px;
 }
-.chess-exercise-left { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-.chess-exercise-right { display: flex; align-items: center; justify-content: center; }
+.chess-skip-link {
+  background: none; border: none; color: #a78bfa;
+  font-size: 12px; font-weight: 800; cursor: pointer; font-family: var(--font-main);
+}
 
-.chess-exercise-instruction {
-  display: flex; align-items: flex-start; gap: 10px;
-  background: rgba(255,255,255,0.06); border-radius: 10px; padding: 12px;
+/* ── Tutor bar ── */
+.cl-tutor-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #0f1117;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
 }
-.chess-ex-num {
-  width: 28px; height: 28px; border-radius: 50%;
+.cl-tutor-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #1d9e75;
   display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 13px; font-weight: 900; flex-shrink: 0;
+  font-size: 18px; flex-shrink: 0;
 }
-.chess-ex-text { color: #e2e8f0; font-size: 14px; font-weight: 700; line-height: 1.6; }
+.cl-tutor-bubble {
+  flex: 1; background: rgba(255,255,255,0.04);
+  border-radius: 10px; padding: 8px 12px; min-width: 0;
+}
+.cl-tutor-name { font-size: 10px; font-weight: 800; color: #5dcaa5; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+.cl-tutor-text { font-size: 12px; font-weight: 600; color: #e2e8f0; line-height: 1.6; }
+.cl-voice-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); border-radius: 8px; width: 34px; height: 34px;
+  font-size: 16px; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.cl-voice-on { background: rgba(29,158,117,0.15); border-color: rgba(29,158,117,0.3); color: #5dcaa5; }
 
-/* ── Feedback ── */
-.chess-feedback {
-  border-radius: 10px; padding: 10px 14px;
-  font-size: 13px; font-weight: 700; line-height: 1.5;
+/* ── Lesson done screen ── */
+.chess-lesson-done-screen {
+  height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: #0d0d2b; padding: 24px;
 }
-.chess-feedback-success { background: rgba(29,158,117,0.15); color: #5dcaa5; border: 1px solid rgba(29,158,117,0.3); }
-.chess-feedback-error   { background: rgba(226,75,74,0.12);  color: #f09595; border: 1px solid rgba(226,75,74,0.25); }
-.chess-feedback-hint    { background: rgba(250,199,117,0.1); color: #fac775; border: 1px solid rgba(250,199,117,0.25); }
-
-.chess-hint {
-  background: rgba(250,199,117,0.1); border: 1px solid rgba(250,199,117,0.25);
-  border-radius: 10px; padding: 10px 14px; color: #fac775; font-size: 13px; font-weight: 600;
+.chess-lesson-done-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(29,158,117,0.25);
+  border-radius: 20px; padding: 40px 36px;
+  text-align: center; max-width: 460px; width: 100%;
 }
-
-/* ── Hint / yes/no buttons ── */
-.chess-exercise-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.chess-hint-btn {
-  background: rgba(250,199,117,0.1); color: #fac775; border: 1px solid rgba(250,199,117,0.3);
-  border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700;
-  cursor: pointer; font-family: var(--font-main);
-}
-.chess-yesno { display: flex; gap: 10px; }
-.chess-yes-btn {
-  flex: 1; height: 44px; background: rgba(29,158,117,0.15); color: #5dcaa5;
-  border: 1.5px solid rgba(29,158,117,0.3); border-radius: 10px;
-  font-size: 14px; font-weight: 800; cursor: pointer; font-family: var(--font-main);
-}
-.chess-no-btn {
-  flex: 1; height: 44px; background: rgba(226,75,74,0.12); color: #f09595;
-  border: 1.5px solid rgba(226,75,74,0.25); border-radius: 10px;
-  font-size: 14px; font-weight: 800; cursor: pointer; font-family: var(--font-main);
-}
-
-/* ── Challenge layout ── */
-.chess-challenge-body { flex: 1; display: flex; flex-direction: column; padding: 16px 20px; gap: 14px; overflow-y: auto; }
-.chess-challenge-boards { display: flex; justify-content: center; }
-.chess-challenge-actions { margin-top: auto; }
-
-/* ── Part done / Lesson done screens ── */
-.chess-part-done, .chess-lesson-done {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 40px 32px;
-}
-.chess-part-done h2, .chess-lesson-done h2 { color: #fff; font-size: 24px; font-weight: 900; margin: 12px 0 8px; }
-.chess-part-done p, .chess-lesson-done p { color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 600; line-height: 1.7; max-width: 400px; }
-.chess-done-tip { color: #fac775 !important; font-style: italic; }
-
-/* ── Chess board ── */
-.chess-board-wrap { display: flex; flex-direction: column; }
-.board-owner-label {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 12px; font-weight: 800; margin-bottom: 6px; color: #fff;
-}
-.owner-indicator { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.board-with-coords { display: flex; align-items: flex-start; gap: 4px; }
-.rank-labels { display: flex; flex-direction: column; gap: 0; padding-top: 2px; }
-.coord-label {
-  width: 16px; height: 40px; display: flex; align-items: center; justify-content: center;
-  font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;
-}
-.board-col-wrap { display: flex; flex-direction: column; }
-.chess-grid {
-  display: grid; grid-template-columns: repeat(8, 40px);
-  grid-template-rows: repeat(8, 40px);
-  border: 2px solid rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden;
-}
-.file-labels { display: flex; margin-top: 3px; }
-.file-labels .coord-label { width: 40px; height: 14px; }
-.sq { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: default; transition: background 0.1s; }
-.sq-light { background: #f0d9b5; }
-.sq-dark  { background: #b58863; }
-.sq-hl    { background: rgba(108,99,255,0.55) !important; }
-.sq-clickable { cursor: pointer; }
-.sq-clickable:hover { background: rgba(108,99,255,0.75) !important; }
-.piece { font-size: 26px; line-height: 1; pointer-events: none; }
-.board-note {
-  margin-top: 6px; font-size: 11px; color: rgba(255,255,255,0.5);
-  text-align: center; font-weight: 600; font-style: italic;
+.chess-lesson-done-card h2  { color: #fff; font-size: 24px; font-weight: 900; margin: 12px 0 6px; }
+.chess-done-title           { color: #5dcaa5; font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+.chess-done-msg             { color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 600; line-height: 1.7; margin-bottom: 16px; }
+.chess-done-concept {
+  background: rgba(29,158,117,0.08); border: 1px solid rgba(29,158,117,0.2);
+  border-radius: 10px; padding: 12px 14px; font-size: 13px; font-weight: 600;
+  color: #a8f0d8; line-height: 1.6; text-align: left;
 }
