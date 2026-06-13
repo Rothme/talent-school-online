@@ -1,91 +1,284 @@
-.bl-root{height:100%;display:flex;flex-direction:column;background:#0f1117;font-family:var(--font-main);overflow:hidden}
-.bl-topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#0d0d2b;border-bottom:3px solid #1d9e75;flex-shrink:0;gap:12px}
-.bl-title{color:#fff;font-size:14px;font-weight:800}
-.bl-sub{color:rgba(255,255,255,.4);font-size:11px;margin-top:1px}
-.sess-bar{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.sess-badge{font-size:10px;font-weight:800;background:#6c63ff;color:#fff;padding:2px 9px;border-radius:20px;white-space:nowrap}
-.sess-dots{display:flex;gap:4px}
-.sess-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .2s}
-.sess-dot.active{background:#1d9e75;transform:scale(1.3)}
-.sess-dot.done{background:rgba(255,255,255,.4)}
-.sess-pct{font-size:10px;color:rgba(255,255,255,.35);white-space:nowrap}
-.bl-main{flex:1;display:grid;grid-template-columns:1fr 250px;overflow:hidden;min-height:0}
-.board-col{background:#161826;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 16px;gap:8px;overflow:hidden}
+/* ═══════════════════════════════════════════════
+   ChessBoardLesson — lichess-style large board
+   Board fills left, sidebar on right
+   ═══════════════════════════════════════════════ */
 
-/* Piece trays */
-.tray-outer{width:100%;max-width:420px}
-.tray-label{font-size:9px;font-weight:800;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
-.tray-row{display:flex;gap:4px;flex-wrap:wrap;align-items:flex-end}
-.tray-piece{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 5px;border-radius:6px;border:1.5px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);transition:all .15s;min-width:38px}
-.tray-glow{border-color:rgba(255,210,0,.85)!important;background:rgba(255,210,0,.1)!important;box-shadow:0 0 10px rgba(255,210,0,.4),0 0 20px rgba(255,200,0,.2)}
-.tray-img{width:32px;height:32px;display:block}
-.tray-img-sm{width:26px;height:26px;display:block}
-.tray-name{font-size:8px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.02em}
-.tray-pawns{}
-.tray-pawn-stack{display:flex;align-items:center;gap:3px}
-.tray-pawn-count{font-size:12px;font-weight:900;color:rgba(255,255,255,.5)}
+.cbl-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #1a1a2e;
+  font-family: var(--font-main);
+  overflow: hidden;
+}
 
-/* chessboard.js overrides */
-.cbjs-wrap{}
-#main-lesson-board{border:3px solid rgba(255,255,255,.2)!important;border-radius:3px!important}
-.square-55d63{cursor:pointer!important}
-.square-55d63:hover{filter:brightness(1.12)}
+/* ── Top bar ── */
+.cbl-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #0d0d2b;
+  border-bottom: 3px solid #1d9e75;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.cbl-topbar-left { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.cbl-lesson-title { color:#fff; font-size:14px; font-weight:800; }
+.cbl-lesson-sub   { color:rgba(255,255,255,.4); font-size:11px; }
+.cbl-progress     { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.cbl-prog-track   { width:100px; height:4px; background:rgba(255,255,255,.1); border-radius:4px; overflow:hidden; }
+.cbl-prog-fill    { height:100%; background:#1d9e75; border-radius:4px; transition:width .5s; }
+.cbl-prog-phase   { font-size:11px; color:#5dcaa5; font-weight:700; white-space:nowrap; max-width:130px; overflow:hidden; text-overflow:ellipsis; }
+.cbl-prog-pct     { font-size:10px; color:rgba(255,255,255,.3); white-space:nowrap; }
 
-/* Result panel */
-.result-panel{background:#0a0c14;padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
-.phase-chip{display:flex;align-items:center;gap:7px;background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.2);border-radius:10px;padding:8px 10px}
-.phase-icon{font-size:18px}
-.phase-name{font-size:12px;font-weight:800;color:#5dcaa5;flex:1}
-.phase-mins{font-size:10px;color:rgba(255,255,255,.3)}
-.task-card{background:rgba(255,255,255,.05);border-radius:9px;padding:10px 12px}
-.task-lbl{font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:4px}
-.task-txt{font-size:12px;color:#e2e8f0;line-height:1.65}
-.playing-row{display:flex;align-items:center;gap:8px;font-size:11px;color:#5dcaa5;font-weight:600;background:rgba(29,158,117,.08);border-radius:8px;padding:7px 10px}
-.playing-dot{width:8px;height:8px;border-radius:50%;background:#1d9e75;animation:dot-pulse .6s ease-in-out infinite alternate}
-@keyframes dot-pulse{0%{opacity:.3}100%{opacity:1}}
-.score-row{display:flex;align-items:center;gap:10px}
-.score-box{background:rgba(29,158,117,.12);border:1px solid rgba(29,158,117,.25);border-radius:10px;padding:8px 14px;display:flex;align-items:baseline;gap:3px}
-.score-n{font-size:26px;font-weight:900;color:#5dcaa5}
-.score-d{font-size:13px;color:rgba(255,255,255,.35);font-weight:700}
-.streak{font-size:13px;font-weight:800;color:#fac775}
-.fb{border-radius:9px;padding:9px 12px;font-size:12px;font-weight:600;line-height:1.55}
-.fb-success{background:rgba(29,158,117,.12);color:#5dcaa5;border:1px solid rgba(29,158,117,.25)}
-.fb-error{background:rgba(226,75,74,.1);color:#f09595;border:1px solid rgba(226,75,74,.22)}
-.fb-hint{background:rgba(250,199,117,.08);color:#fac775;border:1px solid rgba(250,199,117,.2)}
-.fb-info{background:rgba(108,99,255,.1);color:#c4bcff;border:1px solid rgba(108,99,255,.2)}
-.colour-btns{display:flex;flex-direction:column;gap:8px}
-.btn-light{padding:12px;background:rgba(240,230,200,.1);color:#f0e8c8;border:1.5px solid rgba(240,230,200,.3);border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font-main)}
-.btn-light:hover{background:rgba(240,230,200,.18)}
-.btn-dark{padding:12px;background:rgba(74,124,89,.2);color:#5dcaa5;border:1.5px solid rgba(74,124,89,.4);border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font-main)}
-.btn-dark:hover{background:rgba(74,124,89,.28)}
-.file-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-.file-btn{padding:8px 4px;background:rgba(108,99,255,.12);color:#c4bcff;border:1.5px solid rgba(108,99,255,.25);border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font-main);transition:all .12s}
-.file-btn:hover{background:rgba(108,99,255,.22);transform:scale(1.04)}
-.speed-box{display:flex;flex-direction:column;gap:8px}
-.speed-find{font-size:11px;color:rgba(255,255,255,.4);font-weight:600}
-.speed-sq{font-size:42px;font-weight:900;color:#fac775;text-align:center;letter-spacing:.1em;text-shadow:0 0 20px rgba(250,199,117,.5)}
-.speed-track{height:6px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden}
-.speed-fill{height:100%;background:#1d9e75;border-radius:6px;transition:width 1s linear}
-.speed-meta{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.4);font-weight:600}
-.continue-btn{width:100%;padding:12px;background:#1d9e75;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:900;cursor:pointer;font-family:var(--font-main);transition:opacity .15s;margin-top:auto}
-.continue-btn:hover{opacity:.88}
+/* ── Main layout: board | sidebar ── */
+.cbl-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  overflow: hidden;
+  min-height: 0;
+}
 
-/* Tutor bar */
-.bl-tutor-bar{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:#0f1117;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
-.tutor-av{width:38px;height:38px;border-radius:50%;background:#1d9e75;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
-.tutor-bubble{flex:1;background:rgba(255,255,255,.04);border-radius:10px;padding:8px 12px;min-width:0}
-.tutor-name{font-size:9px;font-weight:800;color:#5dcaa5;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;display:flex;align-items:center;gap:7px}
-.voice-pill{font-size:9px;background:rgba(29,158,117,.2);color:#5dcaa5;padding:1px 7px;border-radius:10px}
-.tutor-txt{font-size:12px;color:#e2e8f0;line-height:1.7}
-.voice-btn{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;align-self:center;flex-shrink:0}
-.voice-on{background:rgba(29,158,117,.15);border-color:rgba(29,158,117,.35);color:#5dcaa5}
+/* ── Board area — left column ── */
+.cbl-board-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  background: #161826;
+  border-right: 1px solid rgba(255,255,255,.06);
+  gap: 8px;
+  overflow: hidden;
+}
 
-/* Done screen */
-.lesson-done{height:100%;display:flex;align-items:center;justify-content:center;background:#0d0d2b;padding:24px}
-.done-card{background:rgba(255,255,255,.04);border:1px solid rgba(29,158,117,.25);border-radius:20px;padding:40px 36px;text-align:center;max-width:460px;width:100%}
-.done-card h2{color:#fff;font-size:24px;font-weight:900;margin-bottom:6px}
-.done-sub{color:#5dcaa5;font-size:14px;font-weight:700;margin-bottom:14px}
-.done-msg{color:rgba(255,255,255,.6);font-size:14px;line-height:1.7;margin-bottom:20px}
-.done-score{background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.2);border-radius:12px;padding:16px}
-.done-n{font-size:40px;font-weight:900;color:#5dcaa5;display:block}
-.done-lbl{font-size:13px;color:rgba(255,255,255,.5);font-weight:600}
+/* ── Piece trays ── */
+.cbl-tray {
+  width: 100%;
+  max-width: 560px;
+}
+.cbl-tray-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(255,255,255,.3);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 5px;
+}
+.cbl-tray-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.cbl-tray-piece {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 5px;
+  border-radius: 7px;
+  border: 1.5px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  transition: all .15s;
+  min-width: 46px;
+}
+.tray-neon {
+  border-color: rgba(255,220,0,.85) !important;
+  background: rgba(255,220,0,.1) !important;
+  box-shadow: 0 0 12px rgba(255,220,0,.4), 0 0 24px rgba(255,200,0,.2);
+}
+.cbl-tray-name { font-size:8px; font-weight:700; color:rgba(255,255,255,.4); }
+.cbl-tray-pawns {}
+.cbl-pawn-x { font-size:13px; font-weight:900; color:rgba(255,255,255,.5); }
+
+/* ── THE BOARD — large, lichess-style ── */
+.cbl-board-wrap {
+  display: flex;
+  gap: 5px;
+  align-items: flex-start;
+}
+.cbl-ranks {
+  display: flex;
+  flex-direction: column;
+}
+.cbl-rank-lbl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,.45);
+  transition: color .2s;
+}
+.cbl-grid-col { display:flex; flex-direction:column; }
+.cbl-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  border: 3px solid rgba(255,255,255,.2);
+  border-radius: 4px;
+  overflow: hidden;
+  /* Size set dynamically via JS — but defaults to fill available space */
+  width: min(65vh, calc(100vw - 320px));
+  aspect-ratio: 1;
+}
+.cbl-files {
+  display: flex;
+  margin-top: 4px;
+}
+.cbl-file-lbl {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,.45);
+  height: 15px;
+  transition: color .2s;
+}
+.neon-coord { color: rgba(255,225,0,.95) !important; text-shadow: 0 0 8px rgba(255,220,0,.8); }
+
+/* ── Squares ── */
+.cbl-sq {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  transition: filter .06s;
+}
+.cbl-sq:hover { filter: brightness(1.15); }
+.cbl-sq:active { filter: brightness(.9); }
+
+/* Rank label height synced to square size */
+.cbl-rank-lbl { height: calc((min(65vh, calc(100vw - 320px))) / 8); }
+
+/* Square colours */
+.sq-light { background: #f0d9b5; }
+.sq-dark  { background: #b58863; }
+
+/* State overlays */
+.sq-neon   { background: rgba(255,220,0,.82) !important; }
+.sq-target { background: rgba(60,220,90,.78) !important; }
+.sq-clicked{ background: rgba(29,158,117,.85) !important; }
+.sq-wrong  { background: rgba(226,75,74,.82) !important; }
+
+.sq-tick {
+  font-size: 28px;
+  font-weight: 900;
+  color: rgba(255,255,255,.96);
+  text-shadow: 0 1px 4px rgba(0,0,0,.9);
+  pointer-events: none;
+  z-index: 2;
+}
+.sq-ring {
+  position: absolute; inset: 4px;
+  border: 3px solid rgba(50,230,80,.9);
+  border-radius: 3px;
+  animation: ring-pulse 1s ease-in-out infinite;
+  pointer-events: none; z-index: 2;
+}
+.sq-neon-ring {
+  position: absolute; inset: 2px;
+  border: 3px solid rgba(255,220,0,.95);
+  border-radius: 3px;
+  box-shadow: 0 0 12px rgba(255,220,0,.7), inset 0 0 8px rgba(255,220,0,.25);
+  animation: neon-ring-pulse .65s ease-in-out infinite alternate;
+  pointer-events: none; z-index: 2;
+}
+@keyframes ring-pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+@keyframes neon-ring-pulse { 0%{opacity:.75}100%{opacity:1;box-shadow:0 0 20px rgba(255,220,0,.9)} }
+
+.sq-piece {
+  position: absolute; inset: 2px;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 3; pointer-events: none;
+}
+
+/* ── Sidebar ── */
+.cbl-sidebar {
+  background: #0a0c14;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.cbl-phase-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(29,158,117,.1);
+  border: 1px solid rgba(29,158,117,.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.cbl-phase-icon { font-size: 22px; }
+.cbl-phase-name { font-size: 13px; font-weight: 800; color: #5dcaa5; }
+.cbl-phase-time { font-size: 10px; color: rgba(255,255,255,.35); margin-top: 2px; }
+
+.cbl-task-box { background:rgba(255,255,255,.05); border-radius:9px; padding:10px 12px; }
+.cbl-task-lbl { font-size:9px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:.07em; font-weight:700; margin-bottom:4px; }
+.cbl-task-txt { font-size:13px; color:#e2e8f0; line-height:1.65; }
+
+.cbl-playing { display:flex; align-items:center; gap:8px; font-size:12px; color:#5dcaa5; font-weight:600; background:rgba(29,158,117,.08); border-radius:8px; padding:8px 10px; }
+.cbl-playing-dot { width:8px; height:8px; border-radius:50%; background:#1d9e75; animation:dot-pulse .6s ease-in-out infinite alternate; flex-shrink:0; }
+@keyframes dot-pulse { 0%{opacity:.3}100%{opacity:1} }
+
+.cbl-score-row { display:flex; align-items:center; gap:10px; }
+.cbl-score-box { background:rgba(29,158,117,.12); border:1px solid rgba(29,158,117,.25); border-radius:10px; padding:8px 14px; display:flex; align-items:baseline; }
+.cbl-score-n { font-size:28px; font-weight:900; color:#5dcaa5; }
+.cbl-score-d { font-size:14px; color:rgba(255,255,255,.35); font-weight:700; }
+.cbl-streak  { font-size:13px; font-weight:800; color:#fac775; }
+
+.cbl-fb { border-radius:9px; padding:10px 12px; font-size:13px; font-weight:600; line-height:1.55; }
+.cbl-fb-success { background:rgba(29,158,117,.12); color:#5dcaa5; border:1px solid rgba(29,158,117,.25); }
+.cbl-fb-error   { background:rgba(226,75,74,.10);  color:#f09595; border:1px solid rgba(226,75,74,.22); }
+.cbl-fb-hint    { background:rgba(250,199,117,.08); color:#fac775; border:1px solid rgba(250,199,117,.2); }
+.cbl-fb-info    { background:rgba(108,99,255,.10);  color:#c4bcff; border:1px solid rgba(108,99,255,.2); }
+
+.cbl-colour-btns { display:flex; flex-direction:column; gap:8px; }
+.cbl-btn-light { padding:13px; background:rgba(240,230,200,.1); color:#f0e8c8; border:1.5px solid rgba(240,230,200,.3); border-radius:10px; font-size:14px; font-weight:800; cursor:pointer; font-family:var(--font-main); }
+.cbl-btn-light:hover { background:rgba(240,230,200,.18); }
+.cbl-btn-dark  { padding:13px; background:rgba(74,124,89,.2); color:#5dcaa5; border:1.5px solid rgba(74,124,89,.4); border-radius:10px; font-size:14px; font-weight:800; cursor:pointer; font-family:var(--font-main); }
+.cbl-btn-dark:hover  { background:rgba(74,124,89,.28); }
+
+.cbl-file-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.cbl-file-btn  { padding:9px 4px; background:rgba(108,99,255,.12); color:#c4bcff; border:1.5px solid rgba(108,99,255,.25); border-radius:8px; font-size:14px; font-weight:800; cursor:pointer; font-family:var(--font-main); transition:all .12s; }
+.cbl-file-btn:hover { background:rgba(108,99,255,.22); transform:scale(1.04); }
+
+.cbl-speed-box { display:flex; flex-direction:column; gap:8px; }
+.cbl-speed-label { font-size:12px; color:rgba(255,255,255,.4); font-weight:600; }
+.cbl-speed-sq { font-size:48px; font-weight:900; color:#fac775; text-align:center; letter-spacing:.1em; text-shadow:0 0 20px rgba(250,199,117,.5); }
+.cbl-speed-track { height:6px; background:rgba(255,255,255,.1); border-radius:6px; overflow:hidden; }
+.cbl-speed-fill  { height:100%; background:#1d9e75; border-radius:6px; transition:width 1s linear; }
+.cbl-speed-meta  { display:flex; justify-content:space-between; font-size:12px; color:rgba(255,255,255,.45); font-weight:600; }
+
+.cbl-continue { width:100%; padding:13px; background:#1d9e75; color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:900; cursor:pointer; font-family:var(--font-main); transition:opacity .15s; margin-top:auto; }
+.cbl-continue:hover { opacity:.88; }
+
+/* ── Tutor bar ── */
+.cbl-tutor-bar { display:flex; align-items:flex-start; gap:10px; padding:10px 14px; background:#0f1117; border-top:1px solid rgba(255,255,255,.07); flex-shrink:0; }
+.cbl-tutor-av  { width:40px; height:40px; border-radius:50%; background:#1d9e75; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.cbl-tutor-bubble { flex:1; background:rgba(255,255,255,.04); border-radius:10px; padding:8px 12px; min-width:0; }
+.cbl-tutor-name { font-size:9px; font-weight:800; color:#5dcaa5; text-transform:uppercase; letter-spacing:.07em; margin-bottom:4px; display:flex; align-items:center; gap:7px; }
+.cbl-voice-pill { font-size:9px; background:rgba(29,158,117,.2); color:#5dcaa5; padding:1px 7px; border-radius:10px; }
+.cbl-tutor-text { font-size:12px; color:#e2e8f0; line-height:1.7; }
+.cbl-voice-btn  { width:36px; height:36px; border-radius:8px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); color:rgba(255,255,255,.5); font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center; align-self:center; flex-shrink:0; }
+.cbl-voice-on   { background:rgba(29,158,117,.15); border-color:rgba(29,158,117,.35); color:#5dcaa5; }
+
+/* ── Done screen ── */
+.cbl-done { height:100%; display:flex; align-items:center; justify-content:center; background:#0d0d2b; padding:24px; }
+.cbl-done-card { background:rgba(255,255,255,.04); border:1px solid rgba(29,158,117,.25); border-radius:20px; padding:44px 38px; text-align:center; max-width:480px; width:100%; }
+.cbl-done-card h2 { color:#fff; font-size:26px; font-weight:900; margin-bottom:8px; }
+.cbl-done-sub { color:#5dcaa5; font-size:15px; font-weight:700; margin-bottom:16px; }
+.cbl-done-msg { color:rgba(255,255,255,.6); font-size:14px; line-height:1.7; margin-bottom:22px; }
+.cbl-done-score { background:rgba(29,158,117,.1); border:1px solid rgba(29,158,117,.2); border-radius:12px; padding:18px; }
+.cbl-done-n { font-size:44px; font-weight:900; color:#5dcaa5; display:block; }
+.cbl-done-lbl { font-size:14px; color:rgba(255,255,255,.5); font-weight:600; }
