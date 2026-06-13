@@ -8,201 +8,209 @@ import './ChessBoardLesson.css';
 // CONSTANTS
 // ─────────────────────────────────────────────────────
 const FILES = ['a','b','c','d','e','f','g','h'];
-const RANKS_DISPLAY = ['8','7','6','5','4','3','2','1']; // top to bottom display
-const SQ = 58; // large squares
-
-const PIECE_ORDER = ['K','Q','R','R','B','B','N','N','P','P','P','P','P','P','P','P'];
-const PIECE_LABELS = { K:'King', Q:'Queen', R:'Rook', B:'Bishop', N:'Knight', P:'Pawn' };
-const PIECE_NAMES_FULL = ['King','Queen','Rook','Rook','Bishop','Bishop','Knight','Knight',
-  'Pawn','Pawn','Pawn','Pawn','Pawn','Pawn','Pawn','Pawn'];
-
-// SVG piece renderer — solid filled, bold
-function PieceSVG({ type, color, size = 36 }) {
-  const s   = size;
-  const col = color === 'w' ? '#ffffff' : '#1a1a1a';
-  const str = color === 'w' ? '#111111' : '#777777';
-  const sw  = color === 'w' ? 1.5 : 1.2;
-  const sc  = `scale(${s / 45})`;
-  const shapes = {
-    K:(
-      <g transform={sc}>
-        <polygon points="22.5,11 11,11 8.5,4 16,7.5 22.5,2 29,7.5 36.5,4 34,11 22.5,11"
-          fill={col} stroke={str} strokeWidth={sw} strokeLinejoin="round"/>
-        <path d="M11,11 Q8.5,35 8.5,40 L36.5,40 Q36.5,35 34,11 Z" fill={col} stroke={str} strokeWidth={sw}/>
-        <rect x="20" y="2" width="5" height="10" rx="1.5" fill={col} stroke={str} strokeWidth={sw}/>
-        <rect x="17" y="5" width="11" height="3.5" rx="1.5" fill={col} stroke={str} strokeWidth={sw}/>
-        <path d="M8.5,40 Q8.5,43.5 12,43.5 L33,43.5 Q36.5,43.5 36.5,40 Z" fill={col} stroke={str} strokeWidth={sw}/>
-      </g>
-    ),
-    Q:(
-      <g transform={sc}>
-        <circle cx="6" cy="12" r="3.5" fill={col} stroke={str} strokeWidth={sw}/>
-        <circle cx="15" cy="9" r="3.5" fill={col} stroke={str} strokeWidth={sw}/>
-        <circle cx="22.5" cy="8" r="3.5" fill={col} stroke={str} strokeWidth={sw}/>
-        <circle cx="30" cy="9" r="3.5" fill={col} stroke={str} strokeWidth={sw}/>
-        <circle cx="39" cy="12" r="3.5" fill={col} stroke={str} strokeWidth={sw}/>
-        <path d="M6,12 Q7,27 9,30 L36,30 Q38,27 39,12 Q30,21 22.5,15 Q15,21 6,12Z" fill={col} stroke={str} strokeWidth={sw}/>
-        <rect x="9" y="30" width="27" height="10" rx="1" fill={col} stroke={str} strokeWidth={sw}/>
-        <path d="M9,40 Q9,43.5 12,43.5 L33,43.5 Q36.5,43.5 36.5,40 Z" fill={col} stroke={str} strokeWidth={sw}/>
-      </g>
-    ),
-    R:(
-      <g transform={sc}>
-        <rect x="9" y="7" width="6" height="8" rx="1" fill={col} stroke={str} strokeWidth={sw}/>
-        <rect x="20" y="7" width="5" height="8" rx="1" fill={col} stroke={str} strokeWidth={sw}/>
-        <rect x="30" y="7" width="6" height="8" rx="1" fill={col} stroke={str} strokeWidth={sw}/>
-        <rect x="9" y="13" width="27" height="5" rx="1" fill={col} stroke={str} strokeWidth={sw}/>
-        <rect x="11" y="18" width="23" height="18" rx="1" fill={col} stroke={str} strokeWidth={sw}/>
-        <path d="M9,40 Q9,43.5 12,43.5 L33,43.5 Q36.5,43.5 36.5,40 L11,40 Z" fill={col} stroke={str} strokeWidth={sw}/>
-      </g>
-    ),
-    B:(
-      <g transform={sc}>
-        <circle cx="22.5" cy="9" r="4" fill={col} stroke={str} strokeWidth={sw}/>
-        <circle cx="22.5" cy="9" r="1.5" fill={str}/>
-        <ellipse cx="22.5" cy="26" rx="9" ry="15" fill={col} stroke={str} strokeWidth={sw}/>
-        <ellipse cx="22.5" cy="26" rx="4.5" ry="9" fill={str}/>
-        <path d="M9,40 Q9,43.5 12,43.5 L33,43.5 Q36.5,43.5 36.5,40 Q22.5,36 9,40 Z" fill={col} stroke={str} strokeWidth={sw}/>
-      </g>
-    ),
-    N:(
-      <g transform={sc}>
-        <path d="M22,10 Q13,10 10,17 Q9,22 10,26 Q11.5,28 14.5,28.5 Q12,32 11,36 L34,36 Q33,31 32,29 Q35.5,27 36.5,23 Q37,15 30,11.5 Q27,9.5 22,10 Z"
-          fill={col} stroke={str} strokeWidth={sw} strokeLinejoin="round"/>
-        <circle cx="17" cy="18" r="2.5" fill={str}/>
-        <path d="M10,26 Q14,25 16.5,27 Q14,29.5 12,33 Q10,30 10,26 Z" fill={str}/>
-        <path d="M9,40 Q9,43.5 12,43.5 L33,43.5 Q36.5,43.5 36.5,40 L11,40 Z" fill={col} stroke={str} strokeWidth={sw}/>
-      </g>
-    ),
-    P:(
-      <g transform={sc}>
-        <circle cx="22.5" cy="12" r="6.5" fill={col} stroke={str} strokeWidth={sw}/>
-        <path d="M14,23 Q14,34 16,36 L29,36 Q31,34 31,23 Q27,26.5 22.5,26.5 Q18,26.5 14,23 Z" fill={col} stroke={str} strokeWidth={sw}/>
-        <path d="M9,40 Q9,43.5 12,43.5 L33,43.5 Q36.5,43.5 36.5,40 L16,36 L29,36 Z" fill={col} stroke={str} strokeWidth={sw}/>
-      </g>
-    ),
-  };
-  return <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{display:'block'}}>{shapes[type]}</svg>;
-}
+const RANKS = ['8','7','6','5','4','3','2','1'];
+const PIECE_NAMES = { K:'King', Q:'Queen', R:'Rook', B:'Bishop', N:'Knight', P:'Pawn' };
+const PIECE_ORDER_DISPLAY = ['K','Q','R','R','B','B','N','N'];
+const BOARD_SIZE = 400; // px
+const SQ = BOARD_SIZE / 8;
 
 // ─────────────────────────────────────────────────────
-// PIECE TRAY — outside the board, top or bottom
+// CHESSBOARD.JS WRAPPER
+// Renders the real chessboard using the chessboard.js lib
 // ─────────────────────────────────────────────────────
-function PieceTray({ color, glowPieces = [], label }) {
-  const pieces = color === 'w'
-    ? ['K','Q','R','R','B','B','N','N','P','P','P','P','P','P','P','P']
-    : ['k','q','r','r','b','b','n','n','p','p','p','p','p','p','p','p'];
+function ChessboardJS({
+  position = 'empty',
+  boardId,
+  onSquareClick,
+  neonFile = null,
+  neonRank = null,
+  neonSquares = [],
+  clickedSquares = [],
+  wrongSquares = [],
+  targetSquares = [],
+  draggable = false,
+  onDrop,
+}) {
+  const boardRef  = useRef(null);
+  const canvasRef = useRef(null);
+  const cbRef     = useRef(null);
 
-  const displayPieces = color === 'w'
-    ? ['K','Q','R','R','B','B','N','N']  // show main pieces + indicate pawns
-    : ['k','q','r','r','b','b','n','n'];
+  // Init chessboard.js once
+  useEffect(() => {
+    if (!window.Chessboard || !window.$) return;
+    const cfg = {
+      position,
+      showNotation: true,
+      pieceTheme: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/img/chesspieces/wikipedia/{piece}.png',
+      draggable,
+      onDrop: onDrop || undefined,
+    };
+    cbRef.current = window.Chessboard(boardId, cfg);
+    return () => { try { cbRef.current?.destroy(); } catch(e){} };
+  }, [boardId]);
+
+  // Update position when it changes
+  useEffect(() => {
+    if (!cbRef.current) return;
+    try { cbRef.current.position(position, false); } catch(e){}
+  }, [position]);
+
+  // Draw neon overlays on canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width  = BOARD_SIZE;
+    canvas.height = BOARD_SIZE;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, BOARD_SIZE, BOARD_SIZE);
+
+    function sqToXY(sq) {
+      const fi = FILES.indexOf(sq[0]);
+      const ri = 8 - parseInt(sq[1]);
+      return { x: fi * SQ, y: ri * SQ };
+    }
+
+    // Draw neon file
+    if (neonFile) {
+      const fi = FILES.indexOf(neonFile);
+      if (fi >= 0) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,210,0,0.13)';
+        ctx.fillRect(fi * SQ, 0, SQ, BOARD_SIZE);
+        ctx.strokeStyle = 'rgba(255,210,0,0.9)';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(255,210,0,0.7)';
+        ctx.shadowBlur = 14;
+        ctx.strokeRect(fi * SQ + 2, 2, SQ - 4, BOARD_SIZE - 4);
+        ctx.restore();
+      }
+    }
+
+    // Draw neon rank
+    if (neonRank) {
+      const ri = 8 - parseInt(neonRank);
+      if (ri >= 0 && ri < 8) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,210,0,0.13)';
+        ctx.fillRect(0, ri * SQ, BOARD_SIZE, SQ);
+        ctx.strokeStyle = 'rgba(255,210,0,0.9)';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(255,210,0,0.7)';
+        ctx.shadowBlur = 14;
+        ctx.strokeRect(2, ri * SQ + 2, BOARD_SIZE - 4, SQ - 4);
+        ctx.restore();
+      }
+    }
+
+    // Draw neon individual squares
+    neonSquares.forEach(sq => {
+      const { x, y } = sqToXY(sq);
+      ctx.save();
+      ctx.fillStyle   = 'rgba(255,210,0,0.18)';
+      ctx.strokeStyle = 'rgba(255,210,0,0.95)';
+      ctx.lineWidth   = 3;
+      ctx.shadowColor = 'rgba(255,210,0,0.8)';
+      ctx.shadowBlur  = 16;
+      ctx.fillRect(x + 2, y + 2, SQ - 4, SQ - 4);
+      ctx.strokeRect(x + 3, y + 3, SQ - 6, SQ - 6);
+      ctx.restore();
+    });
+
+    // Green target squares
+    targetSquares.forEach(sq => {
+      if (clickedSquares.includes(sq)) return;
+      const { x, y } = sqToXY(sq);
+      ctx.save();
+      ctx.fillStyle   = 'rgba(50,210,80,0.22)';
+      ctx.strokeStyle = 'rgba(50,210,80,0.9)';
+      ctx.lineWidth   = 3;
+      ctx.shadowColor = 'rgba(50,210,80,0.6)';
+      ctx.shadowBlur  = 10;
+      ctx.fillRect(x + 2, y + 2, SQ - 4, SQ - 4);
+      ctx.strokeRect(x + 3, y + 3, SQ - 6, SQ - 6);
+      ctx.restore();
+    });
+
+    // Clicked squares — green tick overlay
+    clickedSquares.forEach(sq => {
+      const { x, y } = sqToXY(sq);
+      ctx.save();
+      ctx.fillStyle = 'rgba(29,158,117,0.55)';
+      ctx.fillRect(x, y, SQ, SQ);
+      ctx.font      = `bold ${SQ * 0.6}px Arial`;
+      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur  = 6;
+      ctx.fillText('✓', x + SQ / 2, y + SQ / 2);
+      ctx.restore();
+    });
+
+    // Wrong squares — red flash
+    wrongSquares.forEach(sq => {
+      const { x, y } = sqToXY(sq);
+      ctx.save();
+      ctx.fillStyle = 'rgba(226,75,74,0.65)';
+      ctx.fillRect(x, y, SQ, SQ);
+      ctx.restore();
+    });
+  }, [neonFile, neonRank, neonSquares, targetSquares, clickedSquares, wrongSquares]);
+
+  // Wire up click handler on chessboard squares
+  useEffect(() => {
+    if (!onSquareClick) return;
+    const el = document.getElementById(boardId);
+    if (!el) return;
+    const handler = (e) => {
+      const sq = e.target.closest('[data-square]');
+      const square = sq?.getAttribute('data-square') ||
+                     e.target.closest('.square-55d63')?.getAttribute('data-square');
+      if (square) onSquareClick(square);
+    };
+    el.addEventListener('click', handler);
+    return () => el.removeEventListener('click', handler);
+  }, [onSquareClick, boardId]);
 
   return (
-    <div className="bl-tray-outer">
-      <div className="bl-tray-label">{label}</div>
-      <div className="bl-tray-row">
-        {/* Main pieces */}
-        {displayPieces.map((p, i) => {
-          const type = p.toUpperCase();
-          const glowing = glowPieces.includes(PIECE_LABELS[type]?.toLowerCase()) ||
-                          glowPieces.includes(type.toLowerCase());
-          return (
-            <div key={`${p}-${i}`}
-              className={`bl-tray-piece ${glowing ? 'bl-tray-piece-glow' : ''}`}>
-              <PieceSVG type={type} color={color} size={38} />
-              <span className="bl-tray-piece-lbl">{PIECE_LABELS[type]}</span>
-            </div>
-          );
-        })}
-        {/* Pawns as a group */}
-        <div className={`bl-tray-piece bl-tray-pawns ${glowPieces.includes('pawn') ? 'bl-tray-piece-glow' : ''}`}>
-          <div className="bl-pawns-stack">
-            <PieceSVG type="P" color={color} size={32} />
-            <span className="bl-pawns-count">×8</span>
-          </div>
-          <span className="bl-tray-piece-lbl">Pawns</span>
-        </div>
-      </div>
+    <div className="cbjs-wrap" style={{ width: BOARD_SIZE, height: BOARD_SIZE, position:'relative' }}>
+      <div id={boardId} ref={boardRef} style={{ width: BOARD_SIZE }} />
+      <canvas
+        ref={canvasRef}
+        style={{ position:'absolute', top:0, left:0, pointerEvents:'none', zIndex:10 }}
+      />
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────
-// LARGE CHESS BOARD — clean, green, no pieces on it
+// PIECE TRAY — real piece images, outside the board
 // ─────────────────────────────────────────────────────
-function ChessBoard({
-  neonSquares = [],   // squares glowing neon yellow
-  neonFiles   = [],   // entire files glowing
-  neonRanks   = [],   // entire ranks glowing
-  clickedSquares = [],
-  wrongSquares   = [],
-  targetSquares  = [],
-  showColours    = false,
-  onSquareClick,
-}) {
-  const size = SQ * 8;
-
-  function getBg(file, rankNum) {
-    const sq     = `${file}${rankNum}`;
-    const fi     = FILES.indexOf(file);
-    const ri     = rankNum - 1;
-    const isLight = (fi + ri) % 2 !== 0;
-    const baseLight = '#eef6eb';
-    const baseDark  = '#4a7c59';
-
-    const isNeonSq   = neonSquares.includes(sq);
-    const isNeonFile = neonFiles.includes(file);
-    const isNeonRank = neonRanks.includes(String(rankNum));
-    const isClicked  = clickedSquares.includes(sq);
-    const isWrong    = wrongSquares.includes(sq);
-    const isTgt      = targetSquares.includes(sq) && !isClicked;
-
-    if (isWrong)   return 'rgba(226,75,74,0.85)';
-    if (isClicked) return 'rgba(29,158,117,0.88)';
-    if (isNeonSq || isNeonFile || isNeonRank) return 'rgba(255,230,0,0.9)';
-    if (isTgt)     return isLight ? 'rgba(80,230,120,0.8)' : 'rgba(30,160,70,0.85)';
-    return isLight ? baseLight : baseDark;
-  }
+function PieceTray({ color, glowPieces = [], label }) {
+  const base = `https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/img/chesspieces/wikipedia`;
+  const prefix = color === 'w' ? 'w' : 'b';
 
   return (
-    <div className="bl-board-wrap">
-      <div className="bl-ranks-col">
-        {RANKS_DISPLAY.map(r => (
-          <div key={r} className={`bl-rank-lbl ${neonRanks.includes(r) ? 'bl-coord-neon' : ''}`}
-            style={{ height: SQ }}>{r}</div>
-        ))}
-      </div>
-      <div>
-        <div className="bl-board" style={{ width: size, height: size }}>
-          {RANKS_DISPLAY.map((rankLabel, ri) => {
-            const rankNum = parseInt(rankLabel);
-            return FILES.map((file, fi) => {
-              const sq      = `${file}${rankNum}`;
-              const bg      = getBg(file, rankNum);
-              const isClicked = clickedSquares.includes(sq);
-              const isTgt   = targetSquares.includes(sq) && !isClicked;
-              const isNeon  = neonSquares.includes(sq) ||
-                              neonFiles.includes(file) ||
-                              neonRanks.includes(String(rankNum));
-              return (
-                <div key={sq}
-                  className={`bl-sq ${isTgt ? 'bl-sq-target' : ''} ${isNeon ? 'bl-sq-neon' : ''} ${onSquareClick ? 'bl-sq-clickable' : ''}`}
-                  style={{ left: fi*SQ, top: ri*SQ, width:SQ, height:SQ, background:bg }}
-                  onClick={() => onSquareClick?.(sq)}
-                >
-                  {isClicked && <span className="bl-sq-tick">✓</span>}
-                  {isTgt && !isClicked && <span className="bl-sq-ring" />}
-                  {isNeon && <span className="bl-sq-neon-ring" />}
-                </div>
-              );
-            });
-          })}
-        </div>
-        <div className="bl-files-row">
-          {FILES.map(f => (
-            <div key={f} className={`bl-file-lbl ${neonFiles.includes(f) ? 'bl-coord-neon' : ''}`}
-              style={{ width: SQ }}>{f}</div>
-          ))}
+    <div className="tray-outer">
+      <div className="tray-label">{label}</div>
+      <div className="tray-row">
+        {PIECE_ORDER_DISPLAY.map((t, i) => {
+          const name    = PIECE_NAMES[t];
+          const glowing = glowPieces.includes(name.toLowerCase()) || glowPieces.includes(t.toLowerCase());
+          return (
+            <div key={`${t}-${i}`} className={`tray-piece ${glowing ? 'tray-glow' : ''}`}>
+              <img src={`${base}/${prefix}${t}.png`} alt={name} className="tray-img" />
+              <span className="tray-name">{name}</span>
+            </div>
+          );
+        })}
+        {/* Pawns group */}
+        <div className={`tray-piece tray-pawns ${glowPieces.includes('pawn') ? 'tray-glow' : ''}`}>
+          <div className="tray-pawn-stack">
+            <img src={`${base}/${prefix}P.png`} alt="Pawn" className="tray-img-sm" />
+            <span className="tray-pawn-count">×8</span>
+          </div>
+          <span className="tray-name">Pawns</span>
         </div>
       </div>
     </div>
@@ -222,84 +230,111 @@ function ResultPanel({
   isPlaying,
 }) {
   return (
-    <div className="bl-result">
-      <div className="bl-phase-chip">
-        <span className="bl-phase-icon">
+    <div className="result-panel">
+      {/* Phase chip */}
+      <div className="phase-chip">
+        <span className="phase-icon">
           {phase?.type==='story'?'📖':phase?.type==='files'?'📊':
            phase?.type==='ranks'?'📈':phase?.type==='squares'?'🎯':
            phase?.type==='colours'?'🎨':phase?.type==='speed'?'⚡':'✅'}
         </span>
-        <span className="bl-phase-name">{phase?.title}</span>
-        <span className="bl-phase-mins">{phase?.durationMins}m</span>
+        <span className="phase-name">{phase?.title}</span>
+        <span className="phase-mins">{phase?.durationMins}m</span>
       </div>
 
+      {/* Task */}
       {step?.task && (
-        <div className="bl-task-card">
-          <div className="bl-task-lbl">Your task</div>
-          <div className="bl-task-txt">{step.task}</div>
+        <div className="task-card">
+          <div className="task-lbl">Your task</div>
+          <div className="task-txt">{step.task}</div>
         </div>
       )}
 
+      {/* Playing indicator */}
       {isPlaying && (
-        <div className="bl-playing-indicator">
-          <span className="bl-wave">▶</span>
-          <span>Ms. Momo is speaking...</span>
+        <div className="playing-row">
+          <span className="playing-dot" />
+          Ms. Momo is speaking...
         </div>
       )}
 
+      {/* Score */}
       {total > 0 && (
-        <div className="bl-score-row">
-          <div className="bl-score-box">
-            <span className="bl-score-n">{score}</span>
-            <span className="bl-score-d">/{total}</span>
+        <div className="score-row">
+          <div className="score-box">
+            <span className="score-n">{score}</span>
+            <span className="score-d">/{total}</span>
           </div>
-          {streak >= 3 && <div className="bl-streak">🔥 {streak} streak!</div>}
+          {streak >= 3 && <div className="streak">🔥 {streak} streak!</div>}
         </div>
       )}
 
+      {/* Feedback */}
       {feedback && (
-        <div className={`bl-fb bl-fb-${fbType}`}>
+        <div className={`fb fb-${fbType}`}>
           {fbType==='success'?'✅ ':fbType==='error'?'❌ ':'💡 '}{feedback}
         </div>
       )}
 
+      {/* Colour quiz buttons */}
       {quizState?.active && (
-        <div className="bl-colour-btns">
-          <button className="bl-btn-light" onClick={()=>onLightDark('light')}>☀️ Light Square</button>
-          <button className="bl-btn-dark"  onClick={()=>onLightDark('dark')}>🌑 Dark Square</button>
+        <div className="colour-btns">
+          <button className="btn-light" onClick={()=>onLightDark('light')}>☀️ Light Square</button>
+          <button className="btn-dark"  onClick={()=>onLightDark('dark')}>🌑 Dark Square</button>
         </div>
       )}
 
+      {/* File quiz buttons */}
       {fileQuizState?.active && (
-        <div className="bl-file-grid">
+        <div className="file-grid">
           {FILES.map(f=>(
-            <button key={f} className="bl-file-btn" onClick={()=>onFileAnswer(f)}>
+            <button key={f} className="file-btn" onClick={()=>onFileAnswer(f)}>
               File {f.toUpperCase()}
             </button>
           ))}
         </div>
       )}
 
+      {/* Speed round */}
       {speedState?.active && (
-        <div className="bl-speed-box">
-          <div className="bl-speed-find">Find this square:</div>
-          <div className="bl-speed-sq">{speedState.currentTarget?.toUpperCase()}</div>
-          <div className="bl-speed-bar-track">
-            <div className="bl-speed-bar-fill"
+        <div className="speed-box">
+          <div className="speed-find">Find this square:</div>
+          <div className="speed-sq">{speedState.currentTarget?.toUpperCase()}</div>
+          <div className="speed-track">
+            <div className="speed-fill"
               style={{width:`${(speedState.timeLeft/speedState.totalTime)*100}%`}}/>
           </div>
-          <div className="bl-speed-meta">
-            <span>⏱ {speedState.timeLeft}s left</span>
-            <span>✓ {speedState.hits} correct</span>
+          <div className="speed-meta">
+            <span>⏱ {speedState.timeLeft}s</span>
+            <span>✓ {speedState.hits}</span>
           </div>
         </div>
       )}
 
+      {/* Continue button */}
       {!speedState?.active && !quizState?.active && !fileQuizState?.active && (
-        <button className="bl-continue-btn" onClick={onContinue}>
+        <button className="continue-btn" onClick={onContinue}>
           {continueLabel || 'Continue →'}
         </button>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────
+// SESSION DOTS
+// ─────────────────────────────────────────────────────
+function SessionBar({ phaseIdx, phases }) {
+  const pct = Math.round((phaseIdx / phases.length) * 100);
+  return (
+    <div className="sess-bar">
+      <span className="sess-badge">Session 1 — Learn</span>
+      <div className="sess-dots">
+        {phases.map((_, i) => (
+          <span key={i} className={`sess-dot ${i===phaseIdx?'active':i<phaseIdx?'done':''}`} />
+        ))}
+      </div>
+      <span className="sess-pct">{pct}% complete</span>
     </div>
   );
 }
@@ -311,67 +346,66 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
   const lesson = LESSON_1;
   const phases = lesson.phases;
 
-  const [phaseIdx,   setPhaseIdx]   = useState(0);
-  const [stepIdx,    setStepIdx]    = useState(0);
-  const [voiceOn,    setVoiceOn]    = useState(true);
-  const [isPlaying,  setIsPlaying]  = useState(false);
+  const [phaseIdx,  setPhaseIdx]  = useState(0);
+  const [stepIdx,   setStepIdx]   = useState(0);
+  const [voiceOn,   setVoiceOn]   = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  // Board interaction state
-  const [clicked,    setClicked]    = useState([]);
-  const [wrongSqs,   setWrongSqs]   = useState([]);
-  const [score,      setScore]      = useState(0);
-  const [total,      setTotal]      = useState(0);
-  const [streak,     setStreak]     = useState(0);
-  const [feedback,   setFeedback]   = useState('');
-  const [fbType,     setFbType]     = useState('info');
+  // Board state
+  const [boardPos,    setBoardPos]    = useState('empty');
+  const [neonFile,    setNeonFile]    = useState(null);
+  const [neonRank,    setNeonRank]    = useState(null);
+  const [neonSqs,     setNeonSqs]     = useState([]);
+  const [glowPieces,  setGlowPieces]  = useState([]);
+  const [clicked,     setClicked]     = useState([]);
+  const [wrongSqs,    setWrongSqs]    = useState([]);
+  const [targetSqs,   setTargetSqs]   = useState([]);
 
-  // Neon highlight state (driven by voice parsing)
-  const [neonSqs,    setNeonSqs]    = useState([]);
-  const [neonFiles,  setNeonFiles]  = useState([]);
-  const [neonRanks,  setNeonRanks]  = useState([]);
-  const [glowPieces, setGlowPieces] = useState([]); // piece names to glow in tray
+  // Score + feedback
+  const [score,    setScore]    = useState(0);
+  const [total,    setTotal]    = useState(0);
+  const [streak,   setStreak]   = useState(0);
+  const [feedback, setFeedback] = useState('');
+  const [fbType,   setFbType]   = useState('info');
 
-  // Lesson flow state
-  const [indepIdx,   setIndepIdx]   = useState(0);
+  // Step-specific state
+  const [indepIdx, setIndepIdx] = useState(0);
   const [quizState,  setQuizState]  = useState(null);
   const [quizIdx,    setQuizIdx]    = useState(0);
   const [fileQuizState, setFileQuizState] = useState(null);
   const [speedState, setSpeedState] = useState(null);
   const [lessonDone, setLessonDone] = useState(false);
 
-  const speedRef = useRef(null);
-  const voiceRef = useRef(false);
+  const speedRef  = useRef(null);
+  const voiceRef  = useRef(false);
   const neonTimer = useRef(null);
 
   const phase = phases[phaseIdx];
   const steps = phase?.steps || [];
   const step  = steps[stepIdx];
 
-  // ── Fill name placeholder ─────────────────────────
   function fill(text) {
-    return (text || '').replace(/\{name\}/g, childName);
+    return (text||'').replace(/\{name\}/g, childName);
   }
 
-  // ── Neon highlight from voice text ───────────────
+  // ── Neon from voice text ──────────────────────────
   function applyNeonFromText(text) {
     const mentions = parseHighlights(text);
-    const sqs = [], files = [], ranks = [], pieces = [];
+    const sqs=[], files=[], ranks=[], pieces=[];
     mentions.forEach(m => {
-      if (m.type === 'square') sqs.push(m.value);
-      else if (m.type === 'file') files.push(m.value);
-      else if (m.type === 'rank') ranks.push(m.value);
-      else if (m.type === 'piece') pieces.push(m.value);
+      if (m.type==='square') sqs.push(m.value);
+      else if (m.type==='file') files.push(m.value);
+      else if (m.type==='rank') ranks.push(m.value);
+      else if (m.type==='piece') pieces.push(m.value);
     });
+    if (files.length)  setNeonFile(files[0]);
+    if (ranks.length)  setNeonRank(ranks[0]);
     if (sqs.length)    setNeonSqs(sqs);
-    if (files.length)  setNeonFiles(files);
-    if (ranks.length)  setNeonRanks(ranks);
     if (pieces.length) setGlowPieces(pieces);
-
-    // Clear after 8 seconds
     clearTimeout(neonTimer.current);
     neonTimer.current = setTimeout(() => {
-      setNeonSqs([]); setNeonFiles([]); setNeonRanks([]); setGlowPieces([]);
-    }, 8000);
+      setNeonFile(null); setNeonRank(null); setNeonSqs([]); setGlowPieces([]);
+    }, 9000);
   }
 
   // ── Reset on step change ──────────────────────────
@@ -379,16 +413,36 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
     voiceRef.current = false;
     setClicked([]); setWrongSqs([]);
     setFeedback(''); setFbType('info');
-    setSpeedState(null);
-    setNeonSqs([]); setNeonFiles([]); setNeonRanks([]); setGlowPieces([]);
-    setIndepIdx(0);
+    setSpeedState(null); setIndepIdx(0);
+    setNeonFile(null); setNeonRank(null); setNeonSqs([]); setGlowPieces([]);
 
+    // Apply step-level highlights
+    if (step?.highlightFile) setNeonFile(step.highlightFile);
+    if (step?.highlightRank) setNeonRank(String(step.highlightRank));
+    if (step?.highlights?.length) setNeonSqs(step.highlights);
+
+    // Target squares
+    if (step?.taskType === 'click-file' || step?.taskType === 'click-rank') {
+      setTargetSqs(step.targetSquares || []);
+    } else if (step?.taskType === 'click-square') {
+      setTargetSqs(step.targetSquares || []);
+    } else {
+      setTargetSqs([]);
+    }
+
+    // Quiz init
     if (step?.taskType === 'colour-quiz') {
-      setQuizState({ active:true }); setQuizIdx(0);
-    } else { setQuizState(null); }
+      setQuizState({active:true}); setQuizIdx(0);
+      const first = step.quizSquares?.[0]?.sq;
+      if (first) setNeonSqs([first]);
+    } else setQuizState(null);
 
-    if (step?.taskType === 'file-name-quiz') { startFileQuiz(); }
-    else { setFileQuizState(null); }
+    if (step?.taskType === 'file-name-quiz') startFileQuiz();
+    else setFileQuizState(null);
+
+    // Board position
+    if (step?.boardState === 'start') setBoardPos('start');
+    else if (step?.boardState === 'coloured' || step?.boardState === 'empty' || !step?.boardState) setBoardPos('empty');
   }, [phaseIdx, stepIdx]);
 
   // ── Auto-play voice ───────────────────────────────
@@ -403,14 +457,14 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
         onEnd:   () => setIsPlaying(false),
         onError: () => setIsPlaying(false),
       });
-    }, 400);
+    }, 500);
     return () => clearTimeout(t);
   }, [phaseIdx, stepIdx, voiceOn]);
 
   // ── Advance ───────────────────────────────────────
-  function nextStep() {
+  const nextStep = useCallback(() => {
     stopSpeech();
-    setNeonSqs([]); setNeonFiles([]); setNeonRanks([]); setGlowPieces([]);
+    setNeonFile(null); setNeonRank(null); setNeonSqs([]); setGlowPieces([]);
     const next = stepIdx + 1;
     if (next < steps.length) {
       setStepIdx(next);
@@ -420,15 +474,14 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
         setPhaseIdx(nextP); setStepIdx(0);
       } else {
         setLessonDone(true);
-        speakElevenLabs(`Congratulations ${childName}! You have completed your very first chess lesson! You are amazing!`);
-        setTimeout(() => onComplete?.(), 3500);
+        speakElevenLabs(`Congratulations ${childName}! You have completed your very first chess lesson! You know every single square on the chess board! I am so proud of you!`);
+        setTimeout(() => onComplete?.(), 4000);
       }
     }
-  }
+  }, [stepIdx, steps.length, phaseIdx, phases.length, childName]);
 
-  function showFb(msg, type, voice = '') {
-    setFeedback(fill(msg));
-    setFbType(type);
+  function showFb(msg, type, voice='') {
+    setFeedback(fill(msg)); setFbType(type);
     if (voice && voiceOn) {
       const vt = fill(voice);
       applyNeonFromText(vt);
@@ -441,87 +494,79 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
     if (!step) return;
     const { taskType } = step;
 
-    if (taskType === 'click-file') {
+    if (taskType==='click-file') {
       if (step.targetSquares?.includes(sq) && !clicked.includes(sq)) {
-        const nc = [...clicked, sq];
-        setClicked(nc); setStreak(s=>s+1);
-        if (nc.length === step.targetSquares.length) {
+        const nc=[...clicked,sq]; setClicked(nc); setStreak(s=>s+1);
+        if (nc.length===step.targetSquares.length) {
           setScore(s=>s+nc.length); setTotal(t=>t+nc.length);
-          showFb(step.successVoice||'File complete!', 'success', step.successVoice);
-          setTimeout(()=>nextStep(), 1800);
-        } else showFb(`✓ ${nc.length} of ${step.targetSquares.length} — keep clicking!`, 'hint');
+          setTargetSqs([]);
+          showFb(step.successVoice||'File complete!','success',step.successVoice);
+          setTimeout(()=>nextStep(),1900);
+        } else showFb(`✓ ${nc.length} of ${step.targetSquares.length} — keep clicking!`,'hint');
       } else if (!step.targetSquares?.includes(sq)) {
-        setWrongSqs([sq]); setStreak(0);
-        setTimeout(()=>setWrongSqs([]),600);
-        showFb('That square is not in this file — click inside the glowing column!','error');
+        setWrongSqs([sq]); setStreak(0); setTimeout(()=>setWrongSqs([]),600);
+        showFb('That square is not in this file — click inside the yellow glowing column!','error');
       }
       return;
     }
 
-    if (taskType === 'click-rank') {
+    if (taskType==='click-rank') {
       if (step.targetSquares?.includes(sq) && !clicked.includes(sq)) {
-        const nc = [...clicked, sq];
-        setClicked(nc); setStreak(s=>s+1);
-        if (nc.length === step.targetSquares.length) {
+        const nc=[...clicked,sq]; setClicked(nc); setStreak(s=>s+1);
+        if (nc.length===step.targetSquares.length) {
           setScore(s=>s+nc.length); setTotal(t=>t+nc.length);
+          setTargetSqs([]);
           showFb(step.successVoice||'Rank complete!','success',step.successVoice);
-          setTimeout(()=>nextStep(),1800);
+          setTimeout(()=>nextStep(),1900);
         } else showFb(`✓ ${nc.length} of ${step.targetSquares.length} — keep going!`,'hint');
       } else if (!step.targetSquares?.includes(sq)) {
-        setWrongSqs([sq]); setStreak(0);
-        setTimeout(()=>setWrongSqs([]),600);
+        setWrongSqs([sq]); setStreak(0); setTimeout(()=>setWrongSqs([]),600);
         showFb('That square is not in this rank — click along the glowing row!','error');
       }
       return;
     }
 
-    if (taskType === 'click-square') {
+    if (taskType==='click-square') {
       setTotal(t=>t+1);
       if (step.targetSquares?.includes(sq)) {
         setClicked([sq]); setScore(s=>s+1); setStreak(s=>s+1);
+        setTargetSqs([]);
         showFb(step.successVoice||'Correct!','success',step.successVoice);
-        setTimeout(()=>nextStep(),1800);
+        setTimeout(()=>nextStep(),1900);
       } else {
-        setWrongSqs([sq]); setStreak(0);
-        setTimeout(()=>setWrongSqs([]),700);
+        setWrongSqs([sq]); setStreak(0); setTimeout(()=>setWrongSqs([]),700);
         showFb(step.wrongVoice||'Not quite — try again!','error',step.wrongVoice);
       }
       return;
     }
 
-    if (taskType === 'independent-squares') {
-      const tgts = step.targetSquares || [];
-      const curr = tgts[indepIdx];
+    if (taskType==='independent-squares') {
+      const tgts=step.targetSquares||[], curr=tgts[indepIdx];
       if (!curr) return;
       setTotal(t=>t+1);
-      if (sq === curr) {
+      if (sq===curr) {
         setClicked(p=>[...p,sq]); setScore(s=>s+1); setStreak(s=>s+1);
-        const vm = (step.voiceCorrect?.[indepIdx]||'Correct!').replace(/\{name\}/g,childName);
+        const vm=(step.voiceCorrect?.[indepIdx]||'Correct!').replace(/\{name\}/g,childName);
         showFb(vm,'success');
-        if (voiceOn) { applyNeonFromText(vm); speakElevenLabs(vm,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)}); }
-        const ni = indepIdx+1;
-        if (ni >= tgts.length) {
-          const vm2=(step.successVoice||`Well done!`).replace('{score}',score+1).replace(/\{name\}/g,childName);
-          setTimeout(()=>{ showFb(vm2,'success'); },500);
+        if(voiceOn) speakElevenLabs(vm,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)});
+        const ni=indepIdx+1;
+        if (ni>=tgts.length) {
+          const vm2=(step.successVoice||'Well done!').replace('{score}',score+1).replace(/\{name\}/g,childName);
+          setTimeout(()=>showFb(vm2,'success'),500);
           setTimeout(()=>nextStep(),2500);
         } else {
           setIndepIdx(ni);
-          const nextSq=tgts[ni];
           setTimeout(()=>{
-            const hintMsg=`Now find ${nextSq.toUpperCase()}`;
-            showFb(hintMsg,'hint');
-            setNeonSqs([]); // clear old
-            if(voiceOn) speakElevenLabs(`Now find ${nextSq}`,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)});
+            setNeonSqs([tgts[ni]]);
+            showFb(`Now find: ${tgts[ni].toUpperCase()}`,'hint');
+            if(voiceOn) speakElevenLabs(`Now find ${tgts[ni]}`,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)});
           },700);
         }
       } else {
-        setWrongSqs([sq]); setStreak(0);
-        setTimeout(()=>setWrongSqs([]),700);
-        const vm=(step.voiceWrong||`Look for ${curr}!`)
-          .replace('{sq}',curr.toUpperCase())
-          .replace('{file}',curr[0].toUpperCase())
-          .replace('{fileNum}',String(curr.charCodeAt(0)-96))
-          .replace('{rank}',curr[1])
+        setWrongSqs([sq]); setStreak(0); setTimeout(()=>setWrongSqs([]),700);
+        const vm=(step.voiceWrong||`Not quite! Find ${curr.toUpperCase()}!`)
+          .replace('{sq}',curr.toUpperCase()).replace('{file}',curr[0].toUpperCase())
+          .replace('{fileNum}',String(curr.charCodeAt(0)-96)).replace('{rank}',curr[1])
           .replace(/\{name\}/g,childName);
         showFb(vm,'error');
         if(voiceOn) speakElevenLabs(vm,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)});
@@ -533,17 +578,16 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
       if (sq===speedState.currentTarget) {
         const nh=speedState.hits+1;
         setClicked(p=>[...p,sq]); setStreak(s=>s+1);
-        const rem=speedState.targets.filter(t=>t!==sq&&!speedState.done.includes(t));
-        if(rem.length===0){endSpeedRound(nh);}
-        else{
+        const rem=speedState.targets.filter(t=>!speedState.done.includes(t)&&t!==sq);
+        if (rem.length===0) { endSpeedRound(nh); }
+        else {
           const next=rem[0];
           setSpeedState(p=>({...p,hits:nh,currentTarget:next,done:[...p.done,sq]}));
           setNeonSqs([next]);
-          showFb(`✓ ${sq.toUpperCase()} — now find ${next.toUpperCase()}!`,'success');
+          showFb(`✓ ${sq.toUpperCase()} — find ${next.toUpperCase()}!`,'success');
         }
       } else {
-        setWrongSqs([sq]); setStreak(0);
-        setTimeout(()=>setWrongSqs([]),400);
+        setWrongSqs([sq]); setStreak(0); setTimeout(()=>setWrongSqs([]),400);
       }
     }
   }
@@ -559,9 +603,9 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
     if(voiceOn) speakElevenLabs(`Go! Find ${tgts[0]}!`,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)});
     speedRef.current=setInterval(()=>{
       setSpeedState(p=>{
-        if(!p) return p;
+        if (!p) return p;
         const tl=p.timeLeft-1;
-        if(tl<=0){clearInterval(speedRef.current);endSpeedRound(p.hits);return{...p,timeLeft:0,active:false};}
+        if (tl<=0){clearInterval(speedRef.current);endSpeedRound(p.hits);return{...p,timeLeft:0,active:false};}
         return{...p,timeLeft:tl};
       });
     },1000);
@@ -573,29 +617,35 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
     setNeonSqs([]);
     const tgt=step.targetScore||12, tot=(step.targetSquares||[]).length;
     setScore(hits); setTotal(tot);
-    let vm = hits>=tgt ? step.successVoice : hits>=tgt*0.7 ? step.goodVoice : step.tryAgainVoice;
+    let vm=hits>=tgt?step.successVoice:hits>= tgt*0.7?step.goodVoice:step.tryAgainVoice;
     vm=(vm||`You scored ${hits}!`).replace('{score}',hits).replace(/\{name\}/g,childName);
     showFb(vm,hits>=tgt?'success':'hint',vm);
-    setTimeout(()=>nextStep(),3000);
+    setTimeout(()=>nextStep(),3200);
   }
 
   // ── Colour quiz ───────────────────────────────────
   function handleLightDark(answer) {
-    if(!quizState?.active) return;
+    if (!quizState?.active) return;
     const qs=step.quizSquares||[], curr=qs[quizIdx];
-    if(!curr) return;
+    if (!curr) return;
     setTotal(t=>t+1);
-    if(answer===curr.colour){
-      setScore(s=>s+1); setStreak(s=>s+1);
-      setClicked(p=>[...p,curr.sq]);
+    if (answer===curr.colour) {
+      setScore(s=>s+1); setStreak(s=>s+1); setClicked(p=>[...p,curr.sq]);
       const vm=(step.voiceCorrect||'Correct!').replace('{sq}',curr.sq.toUpperCase()).replace('{colour}',curr.colour);
       showFb(vm,'success');
       if(voiceOn) speakElevenLabs(vm,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)});
       const ni=quizIdx+1;
-      if(ni>=qs.length){setQuizState({active:false});setTimeout(()=>{const vm2=(step.successVoice||'Done!').replace('{score}',score+1).replace(/\{name\}/g,childName);showFb(vm2,'success');},500);setTimeout(()=>nextStep(),2500);}
-      else{setQuizIdx(ni);const nxt=qs[ni];setNeonSqs([nxt.sq]);setTimeout(()=>showFb(`Is ${nxt.sq.toUpperCase()} light or dark?`,'hint'),700);}
+      if (ni>=qs.length) {
+        setQuizState({active:false});
+        const vm2=(step.successVoice||'Well done!').replace('{score}',score+1).replace(/\{name\}/g,childName);
+        setTimeout(()=>showFb(vm2,'success'),500);
+        setTimeout(()=>nextStep(),2500);
+      } else {
+        setQuizIdx(ni); setNeonSqs([qs[ni].sq]);
+        setTimeout(()=>showFb(`Is ${qs[ni].sq.toUpperCase()} light or dark?`,'hint'),700);
+      }
     } else {
-      setStreak(0);setWrongSqs([curr.sq]);setTimeout(()=>setWrongSqs([]),800);
+      setStreak(0); setWrongSqs([curr.sq]); setTimeout(()=>setWrongSqs([]),800);
       const vm=(step.voiceWrong||`${curr.sq} is ${curr.colour}!`).replace('{sq}',curr.sq.toUpperCase()).replace('{colour}',curr.colour);
       showFb(vm,'error');
       if(voiceOn) speakElevenLabs(vm,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)});
@@ -606,20 +656,19 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
   function startFileQuiz() {
     const shuffled=[...FILES].sort(()=>Math.random()-0.5).slice(0,6);
     setFileQuizState({active:true,remaining:shuffled.slice(1),current:shuffled[0]});
-    setNeonFiles([shuffled[0]]);
+    setNeonFile(shuffled[0]); setNeonRank(null); setNeonSqs([]);
   }
 
   function handleFileAnswer(answer) {
-    if(!fileQuizState?.active) return;
-    const curr=fileQuizState.current;
-    setTotal(t=>t+1);
-    if(answer===curr){
+    if (!fileQuizState?.active) return;
+    const curr=fileQuizState.current; setTotal(t=>t+1);
+    if (answer===curr) {
       setScore(s=>s+1); setStreak(s=>s+1);
       showFb(`Correct! That was file ${curr.toUpperCase()}!`,'success');
       if(voiceOn) speakElevenLabs(`Yes! File ${curr}!`,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)});
       const rem=fileQuizState.remaining;
-      if(rem.length===0){setFileQuizState({active:false});setNeonFiles([]);setTimeout(()=>nextStep(),1800);}
-      else{setTimeout(()=>{setFileQuizState({active:true,remaining:rem.slice(1),current:rem[0]});setNeonFiles([rem[0]]);showFb('Which file is this?','hint');},900);}
+      if (rem.length===0) { setFileQuizState({active:false}); setNeonFile(null); setTimeout(()=>nextStep(),1800); }
+      else { setTimeout(()=>{ setFileQuizState({active:true,remaining:rem.slice(1),current:rem[0]}); setNeonFile(rem[0]); showFb('Which file is this?','hint'); },900); }
     } else {
       setStreak(0);
       showFb(`Not quite — that was file ${curr.toUpperCase()}!`,'error');
@@ -627,91 +676,78 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
     }
   }
 
-  // ── Continue handler ──────────────────────────────
+  // ── Continue ──────────────────────────────────────
   function handleContinue() {
-    if(step?.taskType==='speed-intro'){startSpeedRound();return;}
-    if(step?.taskType==='complete'){setLessonDone(true);setTimeout(()=>onComplete?.(),1500);return;}
+    if (step?.taskType==='speed-intro') { startSpeedRound(); return; }
+    if (step?.taskType==='complete') { setLessonDone(true); setTimeout(()=>onComplete?.(),1500); return; }
     nextStep();
   }
 
-  // ── Target squares for current step ──────────────
-  const targetSqs = step?.taskType==='independent-squares'
-    ? [step.targetSquares?.[indepIdx]].filter(Boolean)
-    : step?.taskType==='colour-quiz'&&quizState?.active
-    ? [step.quizSquares?.[quizIdx]?.sq].filter(Boolean)
-    : step?.taskType==='speed-round'&&speedState?.active
-    ? [] // neon handles it
-    : step?.taskType==='click-square' ? (step.targetSquares||[])
-    : [];
+  // ── Neon targets for board ────────────────────────
+  const boardNeonSqs = [
+    ...neonSqs,
+    ...(step?.taskType==='independent-squares' ? [step.targetSquares?.[indepIdx]].filter(Boolean) : []),
+    ...(step?.taskType==='colour-quiz'&&quizState?.active ? [step.quizSquares?.[quizIdx]?.sq].filter(Boolean) : []),
+    ...(step?.taskType==='speed-round'&&speedState?.active ? [speedState.currentTarget].filter(Boolean) : []),
+  ];
 
-  // ── Neon from step definition ─────────────────────
-  const stepNeonSqs   = [...neonSqs,   ...(step?.highlights||[])];
-  const stepNeonFiles = [...neonFiles, step?.highlightFile ? [step.highlightFile] : []].flat();
-  const stepNeonRanks = [...neonRanks, step?.highlightRank ? [String(step.highlightRank)] : []].flat();
-
-  if(lessonDone) return (
-    <div className="bl-done">
-      <div className="bl-done-card">
+  if (lessonDone) return (
+    <div className="lesson-done">
+      <div className="done-card">
         <div style={{fontSize:60,marginBottom:14}}>🏆</div>
         <h2>Lesson 1 Complete!</h2>
-        <p className="bl-done-sub">The Board — Files, Ranks and Squares</p>
-        <p className="bl-done-msg">Outstanding work {childName}! You know the entire chess board. You are ready for Lesson 2!</p>
-        <div className="bl-done-score">
-          <span className="bl-done-n">{score}</span>
-          <span className="bl-done-lbl"> squares found correctly</span>
+        <p className="done-sub">The Board — Files, Ranks and Squares</p>
+        <p className="done-msg">Outstanding work {childName}! You know every square on the chess board. You are ready for Lesson 2!</p>
+        <div className="done-score">
+          <span className="done-n">{score}</span>
+          <span className="done-lbl"> correct answers</span>
         </div>
       </div>
     </div>
   );
 
-  const pct = Math.round((phaseIdx/phases.length)*100);
-  const contLabel = step?.taskType==='speed-intro' ? '⚡ Start Speed Challenge!' : step?.continueLabel||'Continue →';
+  const contLabel = step?.taskType==='speed-intro'
+    ? '⚡ Start Speed Challenge!'
+    : step?.continueLabel || 'Continue →';
 
   return (
     <div className="bl-root">
-
       {/* Top bar */}
       <div className="bl-topbar">
         <div>
           <div className="bl-title">{lesson.title}</div>
           <div className="bl-sub">{lesson.subtitle}</div>
         </div>
-        <div className="bl-prog-wrap">
-          <div className="bl-prog-track"><div className="bl-prog-fill" style={{width:`${pct}%`}}/></div>
-          <span className="bl-prog-phase">{phase?.title}</span>
-          <span className="bl-prog-pct">{pct}%</span>
-        </div>
+        <SessionBar phaseIdx={phaseIdx} phases={phases} />
       </div>
 
-      {/* Main layout: tray-board-tray | result */}
+      {/* Main */}
       <div className="bl-main">
 
-        {/* Left: board column with piece trays */}
-        <div className="bl-board-col">
-
-          {/* BLACK pieces tray — above the board */}
+        {/* Board column */}
+        <div className="board-col">
+          {/* Black tray — above */}
           <PieceTray color="b" glowPieces={glowPieces} label="Black's pieces" />
 
-          {/* The board */}
-          <div className="bl-board-section">
-            <ChessBoard
-              neonSquares={stepNeonSqs}
-              neonFiles={stepNeonFiles}
-              neonRanks={stepNeonRanks}
-              clickedSquares={clicked}
-              wrongSquares={wrongSqs}
-              targetSquares={targetSqs}
-              showColours={step?.boardState==='coloured'}
-              onSquareClick={handleSquareClick}
-            />
-          </div>
+          {/* Chessboard */}
+          <ChessboardJS
+            boardId="main-lesson-board"
+            position={boardPos}
+            onSquareClick={handleSquareClick}
+            neonFile={neonFile}
+            neonRank={neonRank}
+            neonSquares={boardNeonSqs}
+            clickedSquares={clicked}
+            wrongSquares={wrongSqs}
+            targetSquares={targetSqs}
+            draggable={false}
+          />
 
-          {/* WHITE pieces tray — below the board */}
+          {/* White tray — below */}
           <PieceTray color="w" glowPieces={glowPieces} label="White's pieces" />
-
         </div>
 
-        {/* Right: result panel */}
+        {/* Result panel */}
         <ResultPanel
           phase={phase} step={step}
           score={score} total={total} streak={streak}
@@ -728,19 +764,22 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
 
       {/* Tutor bar */}
       <div className="bl-tutor-bar">
-        <div className="bl-tutor-av">🎓</div>
-        <div className="bl-tutor-bubble">
-          <div className="bl-tutor-name">
+        <div className="tutor-av">🎓</div>
+        <div className="tutor-bubble">
+          <div className="tutor-name">
             Ms. Momo
-            {voiceOn&&<span className="bl-voice-pill">{isPlaying?'🔊 speaking...':'🔊 voice on'}</span>}
+            {voiceOn && <span className="voice-pill">{isPlaying?'🔊 speaking...':'🔊 ElevenLabs on'}</span>}
           </div>
-          <p className="bl-tutor-txt">{fill(step?.voice||'')}</p>
+          <p className="tutor-txt">{fill(step?.voice||'')}</p>
         </div>
-        <button className={`bl-voice-btn ${voiceOn?'bl-voc-on':''}`} onClick={()=>{
-          const n=!voiceOn; setVoiceOn(n);
-          if(!n) stopSpeech();
-          else if(step?.voice){ const t=fill(step.voice); applyNeonFromText(t); speakElevenLabs(t,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)}); }
-        }}>{voiceOn?'🔊':'🔇'}</button>
+        <button className={`voice-btn ${voiceOn?'voice-on':''}`}
+          onClick={()=>{
+            const n=!voiceOn; setVoiceOn(n);
+            if(!n) stopSpeech();
+            else if(step?.voice){ const t=fill(step.voice); applyNeonFromText(t); speakElevenLabs(t,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)}); }
+          }}>
+          {voiceOn?'🔊':'🔇'}
+        </button>
       </div>
     </div>
   );
