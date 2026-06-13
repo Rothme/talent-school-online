@@ -8,7 +8,21 @@
 
 const audioCache = new Map();
 let currentAudio = null;
-const VOICE_ID    = 'me1JPr2K6H7KZB9nz2Wk';
+let userHasInteracted = false;
+let pendingText = null;
+let pendingCallbacks = null;
+const VOICE_ID = 'me1JPr2K6H7KZB9nz2Wk';
+
+// Call this on any user click to unlock audio
+export function unlockAudio() {
+  userHasInteracted = true;
+  // Play any speech that was queued before interaction
+  if (pendingText) {
+    const t = pendingText, cb = pendingCallbacks;
+    pendingText = null; pendingCallbacks = null;
+    speakElevenLabs(t, cb || {});
+  }
+}
 
 // Use window.location.origin so it works on any deployment URL
 function getTTSUrl() {
@@ -26,6 +40,15 @@ export function stopSpeech() {
 export async function speakElevenLabs(text, { onStart, onEnd, onError } = {}) {
   if (!text?.trim()) return;
   stopSpeech();
+
+  // Queue speech if browser hasn't received a user gesture yet
+  if (!userHasInteracted) {
+    pendingText = text;
+    pendingCallbacks = { onStart, onEnd, onError };
+    // Still try browser speech as fallback — it may work on some browsers
+    browserSpeak(text, { onStart, onEnd });
+    return;
+  }
 
   const cacheKey = text.trim().slice(0, 150);
 
