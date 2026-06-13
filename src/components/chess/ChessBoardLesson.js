@@ -1,7 +1,7 @@
 /* eslint-disable */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LESSON_1 } from '../../data/chessLesson1';
-import { speakElevenLabs, stopSpeech, parseHighlights } from '../../utils/elevenlabs';
+import { speakElevenLabs, stopSpeech, parseHighlights, unlockAudio } from '../../utils/elevenlabs';
 import './ChessBoardLesson.css';
 
 // ─────────────────────────────────────────────────────
@@ -426,7 +426,7 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
         onEnd:   ()=>setIsPlaying(false),
         onError: ()=>setIsPlaying(false),
       });
-    }, 500);
+    }, 300);
     return () => clearTimeout(t);
   }, [phaseIdx, stepIdx, voiceOn]);
 
@@ -450,6 +450,7 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
   }
 
   function handleSquareClick(sq) {
+    unlockAudio();
     if (!step) return;
     const tt = step.taskType;
 
@@ -541,6 +542,7 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
   }
 
   function handleLightDark(answer) {
+    unlockAudio();
     if(!quizState?.active) return;
     const qs=step.quizSquares||[], curr=qs[quizIdx];
     if(!curr) return;
@@ -568,6 +570,7 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
   }
 
   function handleFileAnswer(answer) {
+    unlockAudio();
     if(!fileQS?.active) return;
     const curr=fileQS.current; setTotal(t=>t+1);
     if(answer===curr){
@@ -585,6 +588,7 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
   }
 
   function handleContinue() {
+    unlockAudio();
     if(step?.taskType==='speed-intro'){startSpeed();return;}
     if(step?.taskType==='complete'){setLessonDone(true);setTimeout(()=>onComplete?.(),1500);return;}
     nextStep();
@@ -630,6 +634,7 @@ export default function ChessBoardLesson({ childName = 'Student', onComplete }) 
         </div>
         <button className={`bl-voice-toggle ${voiceOn?'vt-on':''}`}
           onClick={()=>{
+            unlockAudio();
             const n=!voiceOn; setVoiceOn(n);
             if(!n) stopSpeech();
             else if(step?.voice){const t=fill(step.voice);applyNeon(t);speakElevenLabs(t,{onStart:()=>setIsPlaying(true),onEnd:()=>setIsPlaying(false)});}
