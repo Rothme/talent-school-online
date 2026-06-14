@@ -145,6 +145,14 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
     return () => clearTimeout(t);
   }, [phaseIdx, stepIdx, voiceOn]);
 
+  // Auto-start speed round when entering a speed-round step
+  useEffect(() => {
+    if (step?.taskType !== 'speed-round') return;
+    if (!step?.targetSquares?.length) return;
+    const t = setTimeout(() => startSpeed(step), 900);
+    return () => { clearTimeout(t); clearInterval(speedRef.current); };
+  }, [phaseIdx, stepIdx]);
+
   const nextStep = useCallback(() => {
     stopSpeech(); clearNeon();
     const nsi = stepIdx + 1;
@@ -238,7 +246,7 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
         const nh = speedState.hits + 1;
         setClicked(p => [...p, sq]); setStreak(s => s + 1);
         const rem = speedState.targets.filter(t => !speedState.done.includes(t) && t !== sq);
-        if (!rem.length) endSpeed(nh);
+        if (!rem.length) endSpeed(nh, step);
         else {
           const next = rem[0];
           setSpeed(p => ({ ...p, hits: nh, currentTarget: next, done: [...p.done, sq] }));
@@ -251,28 +259,29 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
     }
   }
 
-  function startSpeed() {
-    const tgts = step.targetSquares || [];
+  function startSpeed(roundStep) {
+    const tgts = roundStep?.targetSquares || [];
+    if (!tgts.length) return;
     setClicked([]); setStreak(0);
-    setSpeed({ active: true, targets: tgts, currentTarget: tgts[0], hits: 0, done: [], timeLeft: step.timeLimitSecs || 75, totalTime: step.timeLimitSecs || 75 });
+    setSpeed({ active: true, targets: tgts, currentTarget: tgts[0], hits: 0, done: [], timeLeft: roundStep.timeLimitSecs || 75, totalTime: roundStep.timeLimitSecs || 75 });
     setNeonSqs([tgts[0]]);
     showFb(`Find ${tgts[0].toUpperCase()}!`, 'hint');
-    if (voiceOn) speakElevenLabs(`Go! Find ${tgts[0]}!`, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
     speedRef.current = setInterval(() => {
       setSpeed(p => {
         if (!p) return p;
         const tl = p.timeLeft - 1;
-        if (tl <= 0) { clearInterval(speedRef.current); endSpeed(p.hits); return { ...p, timeLeft: 0, active: false }; }
+        if (tl <= 0) { clearInterval(speedRef.current); endSpeed(p.hits, roundStep); return { ...p, timeLeft: 0, active: false }; }
         return { ...p, timeLeft: tl };
       });
     }, 1000);
   }
 
-  function endSpeed(hits) {
+  function endSpeed(hits, roundStep) {
+    const rs = roundStep || step;
     clearInterval(speedRef.current); setSpeed(p => p ? { ...p, active: false } : p); setNeonSqs([]);
-    const tgt = step.targetScore || 12; setScore(hits); setTotal((step.targetSquares || []).length);
+    const tgt = rs.targetScore || 12; setScore(hits); setTotal((rs.targetSquares || []).length);
     if (hits >= tgt) confetti({ particleCount: 100, spread: 70 });
-    let vm = hits >= tgt ? step.successVoice : hits >= tgt * 0.7 ? step.goodVoice : step.tryAgainVoice;
+    let vm = hits >= tgt ? rs.successVoice : hits >= tgt * 0.7 ? rs.goodVoice : rs.tryAgainVoice;
     vm = fill((vm || `You scored ${hits}!`).replace('{score}', hits), childName);
     showFb(vm, hits >= tgt ? 'success' : 'hint', vm);
     setTimeout(nextStep, 3200);
@@ -332,7 +341,7 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
 
   function handleContinue() {
     unlockAudio();
-    if (step?.taskType === 'speed-intro') { startSpeed(); return; }
+    if (step?.taskType === 'speed-intro') { nextStep(); return; }
     if (step?.taskType === 'complete') { setLessonDone(true); confetti({ particleCount: 160, spread: 100 }); setTimeout(() => onComplete?.(), 1500); return; }
     nextStep();
   }
