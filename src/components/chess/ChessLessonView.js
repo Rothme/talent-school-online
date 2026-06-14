@@ -93,6 +93,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const [fileQS, setFileQS] = useState(null);
   const [speedState, setSpeed] = useState(null);
   const [recapAnswer, setRecapAnswer] = useState(null);
+  const [recapFeedbackDone, setRecapFeedbackDone] = useState(false);
   const [lessonDone, setLessonDone] = useState(false);
 
   // Piece-based interaction state (Lesson 2+)
@@ -139,7 +140,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     voiceRef.current = false;
     setClicked([]); setWrongSqs([]); setFeedback(''); setFbType('info');
     setSpeed(null); setIndepIdx(0); clearNeon();
-    setRecapAnswer(null);
+    setRecapAnswer(null); setRecapFeedbackDone(false);
     clearTimeout(voiceFinishTimer.current);
     setVoiceFinished(isTest); // test accounts: always unlocked
 
@@ -249,11 +250,26 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setTimeout(() => onComplete?.(), 4000);
   }, [stepIdx, steps.length, phaseIdx, phases.length, childName]);
 
-  function showFb(msg, type, voice = '') {
+  function showFb(msg, type, voice = '', afterVoice = null) {
     setFeedback(fill(msg, childName)); setFbType(type);
     if (voice && voiceOn) {
       const vt = fill(voice, childName); applyNeon(vt);
-      speakElevenLabs(vt, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+      let done = false;
+      const fire = () => { if (done) return; done = true; afterVoice?.(); };
+      speakElevenLabs(vt, {
+        onStart: () => setIsPlaying(true),
+        onEnd: () => { setIsPlaying(false); fire(); },
+        onError: () => { setIsPlaying(false); fire(); },
+        onBlocked: () => fire(),
+      });
+      // Safety net if onEnd never fires
+      if (afterVoice) {
+        const fallbackMs = Math.max(1800, vt.length * 110) + 1500;
+        setTimeout(fire, fallbackMs);
+      }
+    } else if (afterVoice) {
+      // No voice for this feedback — short pause is enough
+      setTimeout(afterVoice, 1500);
     }
   }
 
@@ -279,8 +295,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           setNeonSqs([]);
           setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
           const notation = step.correctNotation || result.san;
-          showFb(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), 'success', step.successVoice);
-          setTimeout(nextStep, 2400);
+          showFb(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), 'success', step.successVoice, nextStep);
           return true;
         }
         return false;
@@ -305,8 +320,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         const nc = [...clicked, sq]; setClicked(nc); setStreak(s => s + 1);
         if (nc.length === step.targetSquares.length) {
           setScore(s => s + nc.length); setTotal(t => t + nc.length); setTargetSqs([]);
-          showFb(step.successVoice || 'Complete!', 'success', step.successVoice);
-          setTimeout(nextStep, 1800);
+          showFb(step.successVoice || 'Complete!', 'success', step.successVoice, nextStep);
         } else showFb(`${nc.length} of ${step.targetSquares.length} found!`, 'hint');
       } else if (!step.targetSquares?.includes(sq)) {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
@@ -319,8 +333,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       setTotal(t => t + 1);
       if (step.targetSquares?.includes(sq)) {
         setClicked([sq]); setScore(s => s + 1); setStreak(s => s + 1); setTargetSqs([]);
-        showFb(step.successVoice || 'Correct!', 'success', step.successVoice);
-        setTimeout(nextStep, 1800);
+        showFb(step.successVoice || 'Correct!', 'success', step.successVoice, nextStep);
       } else {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
         showFb(step.wrongVoice || 'Not quite - try again!', 'error', step.wrongVoice);
@@ -335,19 +348,18 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       if (sq === curr) {
         setClicked(p => [...p, sq]); setScore(s => s + 1); setStreak(s => s + 1);
         const vm = fill(step.voiceCorrect?.[indepIdx] || 'Correct!', childName);
-        showFb(vm, 'success');
-        if (voiceOn) speakElevenLabs(vm, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
         const ni = indepIdx + 1;
         if (ni >= tgts.length) {
-          setTimeout(() => showFb(fill((step.successVoice || 'Done!').replace('{score}', score + 1), childName), 'success'), 500);
-          setTimeout(nextStep, 2500);
+          showFb(vm, 'success', vm, () => {
+            const vm2 = fill((step.successVoice || 'Done!').replace('{score}', score + 1), childName);
+            showFb(vm2, 'success', vm2, nextStep);
+          });
         } else {
-          setIndepIdx(ni);
-          setTimeout(() => {
+          showFb(vm, 'success', vm, () => {
+            setIndepIdx(ni);
             setNeonSqs([tgts[ni]]);
-            showFb(`Now find: ${tgts[ni].toUpperCase()}`, 'hint');
-            if (voiceOn) speakElevenLabs(`Now find ${tgts[ni]}`, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
-          }, 700);
+            showFb(`Now find: ${tgts[ni].toUpperCase()}`, 'hint', `Now find ${tgts[ni]}`);
+          });
         }
       } else {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
@@ -356,8 +368,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           .replace('{file}', curr[0].toUpperCase())
           .replace('{fileNum}', String(curr.charCodeAt(0) - 96))
           .replace('{rank}', curr[1]), childName);
-        showFb(vm, 'error');
-        if (voiceOn) speakElevenLabs(vm, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+        showFb(vm, 'error', vm);
       }
       return;
     }
@@ -389,8 +400,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           setNeonSqs([]);
           setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
           const notation = step.correctNotation || result.san;
-          showFb(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), 'success', step.successVoice);
-          setTimeout(nextStep, 2400);
+          showFb(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), 'success', step.successVoice, nextStep);
         }
       } else {
         setSelectedSq(null); setNeonSqs([]);
@@ -412,9 +422,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         setScore(s => s + 1); setStreak(s => s + 1);
         if (!rem.length) {
           setTotal(t => t + (step.targetPieces?.length || 0));
-          showFb(step.successVoice || 'Setup complete!', 'success', step.successVoice);
           setMoveDone(true);
-          setTimeout(nextStep, 2600);
+          showFb(step.successVoice || 'Setup complete!', 'success', step.successVoice, nextStep);
         } else {
           showFb(`Placed! ${rem.length} piece${rem.length === 1 ? '' : 's'} left.`, 'hint');
         }
@@ -467,8 +476,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (hits >= tgt) confetti({ particleCount: 100, spread: 70 });
     let vm = hits >= tgt ? rs.successVoice : hits >= tgt * 0.7 ? rs.goodVoice : rs.tryAgainVoice;
     vm = fill((vm || `You scored ${hits}!`).replace('{score}', hits), childName);
-    showFb(vm, hits >= tgt ? 'success' : 'hint', vm);
-    setTimeout(nextStep, 3200);
+    showFb(vm, hits >= tgt ? 'success' : 'hint', vm, nextStep);
   }
 
   function handlePieceLetterAnswer(answer) {
@@ -480,25 +488,26 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setPieceQuizAnswer(answer);
     setTotal(t => t + 1);
     const correct = answer === curr.correctLetter;
-    if (correct) {
-      setScore(s => s + 1); setStreak(s => s + 1);
-      showFb(`Correct - ${curr.correctLetter === '(no letter)' ? 'Pawns get no letter!' : `${curr.correctLetter} is right!`}`, 'success');
-      if (voiceOn) speakElevenLabs('Correct!', { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
-    } else {
-      setStreak(0);
-      showFb(`Not quite - the answer was ${curr.correctLetter}.`, 'error');
-      if (voiceOn) speakElevenLabs(`Not quite. The answer was ${curr.correctLetter}.`, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
-    }
     const ni = pieceQuizIdx + 1;
-    setTimeout(() => {
+
+    const advance = () => {
       if (ni >= items.length) {
-        showFb(fill(step.successVoice || 'Done!', childName), 'success', step.successVoice);
-        setTimeout(nextStep, 2600);
+        showFb(fill(step.successVoice || 'Done!', childName), 'success', step.successVoice, nextStep);
       } else {
         setPieceQuizIdx(ni); setPieceQuizAnswer(null);
         setFeedback(''); setFbType('info');
       }
-    }, 1400);
+    };
+
+    if (correct) {
+      setScore(s => s + 1); setStreak(s => s + 1);
+      const vm = curr.correctLetter === '(no letter)' ? 'Correct! Pawns get no letter!' : `Correct! ${curr.correctLetter} is right!`;
+      showFb(vm, 'success', vm, advance);
+    } else {
+      setStreak(0);
+      const vm = `Not quite. The answer was ${curr.correctLetter}.`;
+      showFb(vm, 'error', vm, advance);
+    }
   }
 
   function handleWriteNotationAnswer(answer) {
@@ -509,12 +518,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     const correct = answer === step.correctNotation;
     if (correct) {
       setScore(s => s + 1); setStreak(s => s + 1);
-      showFb(`${step.correctNotation} is correct!`, 'success', step.successVoice);
+      showFb(`${step.correctNotation} is correct!`, 'success', step.successVoice, nextStep);
     } else {
       setStreak(0);
-      showFb(`Not quite - the correct notation was ${step.correctNotation}.`, 'error', step.wrongVoice);
+      showFb(`Not quite - the correct notation was ${step.correctNotation}.`, 'error', step.wrongVoice, nextStep);
     }
-    setTimeout(nextStep, 2800);
   }
 
   function handleLightDark(answer) {
@@ -526,22 +534,23 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (answer === curr.colour) {
       setScore(s => s + 1); setStreak(s => s + 1); setClicked(p => [...p, curr.sq]);
       const vm = (step.voiceCorrect || 'Correct!').replace('{sq}', curr.sq.toUpperCase()).replace('{colour}', curr.colour);
-      showFb(vm, 'success');
-      if (voiceOn) speakElevenLabs(vm, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
       const ni = quizIdx + 1;
       if (ni >= qs.length) {
         setQuizState({ active: false });
-        const vm2 = fill((step.successVoice || 'Done!').replace('{score}', score + 1), childName);
-        setTimeout(() => showFb(vm2, 'success'), 500); setTimeout(nextStep, 2500);
+        showFb(vm, 'success', vm, () => {
+          const vm2 = fill((step.successVoice || 'Done!').replace('{score}', score + 1), childName);
+          showFb(vm2, 'success', vm2, nextStep);
+        });
       } else {
-        setQuizIdx(ni); setNeonSqs([qs[ni].sq]);
-        setTimeout(() => showFb(`Is ${qs[ni].sq.toUpperCase()} light or dark?`, 'hint'), 700);
+        showFb(vm, 'success', vm, () => {
+          setQuizIdx(ni); setNeonSqs([qs[ni].sq]);
+          showFb(`Is ${qs[ni].sq.toUpperCase()} light or dark?`, 'hint');
+        });
       }
     } else {
       setStreak(0); setWrongSqs([curr.sq]); setTimeout(() => setWrongSqs([]), 800);
       const vm = (step.voiceWrong || `${curr.sq} is ${curr.colour}!`).replace('{sq}', curr.sq.toUpperCase()).replace('{colour}', curr.colour);
-      showFb(vm, 'error');
-      if (voiceOn) speakElevenLabs(vm, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+      showFb(vm, 'error', vm);
     }
   }
 
@@ -557,15 +566,21 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     const curr = fileQS.current; setTotal(t => t + 1);
     if (answer === curr) {
       setScore(s => s + 1); setStreak(s => s + 1);
-      showFb(`Correct! File ${curr.toUpperCase()}!`, 'success');
-      if (voiceOn) speakElevenLabs(`Yes! File ${curr}!`, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+      const vm = `Yes! File ${curr}!`;
       const rem = fileQS.remaining;
-      if (!rem.length) { setFileQS({ active: false }); setNeonFile(null); setTimeout(nextStep, 1800); }
-      else setTimeout(() => { setFileQS({ active: true, remaining: rem.slice(1), current: rem[0] }); setNeonFile(rem[0]); showFb('Which file is this?', 'hint'); }, 900);
+      if (!rem.length) {
+        setFileQS({ active: false }); setNeonFile(null);
+        showFb(vm, 'success', vm, nextStep);
+      } else {
+        showFb(vm, 'success', vm, () => {
+          setFileQS({ active: true, remaining: rem.slice(1), current: rem[0] }); setNeonFile(rem[0]);
+          showFb('Which file is this?', 'hint');
+        });
+      }
     } else {
       setStreak(0);
-      showFb(`Not quite - that was file ${curr.toUpperCase()}!`, 'error');
-      if (voiceOn) speakElevenLabs(`Not quite! That is file ${curr}!`, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+      const vm = `Not quite! That is file ${curr}!`;
+      showFb(vm, 'error', vm);
     }
   }
 
@@ -575,18 +590,16 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setRecapAnswer(idx);
     const correct = idx === step.recapCorrect;
     setTotal(t => t + 1);
+    const unlock = () => setRecapFeedbackDone(true);
     if (correct) {
       setScore(s => s + 1); setStreak(s => s + 1);
       const vm = fill(step.recapCorrectVoice || 'Correct!', childName);
-      showFb(vm, 'success');
-      if (voiceOn) speakElevenLabs(vm, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+      showFb(vm, 'success', vm, unlock);
     } else {
       setStreak(0);
       const vm = fill(step.recapWrongVoice || 'Not quite!', childName);
-      showFb(vm, 'error');
-      if (voiceOn) speakElevenLabs(vm, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+      showFb(vm, 'error', vm, unlock);
     }
-    setTimeout(() => setVoiceFinished(true), 600);
   }
 
   function handleContinue() {
@@ -893,11 +906,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
             const narrationLed = ['observe', 'speed-intro', 'complete', 'notation-demo'].includes(step?.taskType);
             const isRecap = step?.taskType === 'recap-quiz';
             const locked = (narrationLed && !voiceFinished && !isTest)
-              || (isRecap && !isTest && (!voiceFinished || recapAnswer === null));
+              || (isRecap && !isTest && (!voiceFinished || recapAnswer === null || !recapFeedbackDone));
             return (
               <button className="cl-continue" onClick={handleContinue} disabled={locked}>
                 {locked ? (
-                  <>{!voiceFinished ? 'Listen to Ms. Momo first...' : 'Answer the question first...'}</>
+                  <>{!voiceFinished ? 'Listen to Ms. Momo first...' : recapAnswer === null ? 'Answer the question first...' : 'Listen to Ms. Momo...'}</>
                 ) : (
                   <>{contLabel} <ChevronRight size={16} /></>
                 )}
