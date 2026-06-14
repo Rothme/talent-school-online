@@ -11,7 +11,7 @@ let currentAudio = null;
 let userHasInteracted = false;
 let pendingText = null;
 let pendingCallbacks = null;
-const VOICE_ID = 'me1JPr2K6H7KZB9nz2Wk';
+const VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel - default premade voice, free-tier compatible
 
 // Call this on any user click to unlock audio
 export function unlockAudio() {
