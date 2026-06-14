@@ -150,11 +150,15 @@
 .right-panel {
   background:#0a0c14; padding:12px 10px;
   display:flex; flex-direction:column; gap:10px;
-  overflow-y:auto; min-height:0;
+  overflow-y:auto; min-height:0; height:100%;
+  box-sizing:border-box;
 }
 .rp-continue {
   position: sticky;
   bottom: 0;
+  flex-shrink: 0;
+  z-index: 5;
+  box-shadow: 0 -8px 12px -4px rgba(10,12,20,1);
 }
 .rp-phase-chip {
   display:flex; align-items:center; gap:8px;
