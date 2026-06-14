@@ -5,7 +5,7 @@ import {
   getTodaySchedule, getSessionState, saveSessionState, isTestAccount
 } from '../../utils/sessionSchedule';
 import ChessLesson      from '../../components/chess/ChessLesson';
-import ChessBoardLesson from '../../components/chess/ChessBoardLesson';
+import ChessLessonView  from '../../components/chess/ChessLessonView';
 import TypingLesson from '../../components/typing/TypingLesson';
 import CodingLesson from '../../components/coding/CodingLesson';
 import './MainSession.css';
@@ -115,7 +115,7 @@ export default function MainSession() {
 
       <div className="main-session-body">
         {subject === 'chess'  && lessonIndex === 0
-          ? <ChessBoardLesson childName={child.name} onComplete={handleLessonComplete} />
+          ? <ChessLessonView childName={child.name} onComplete={handleLessonComplete} />
           : subject === 'chess'
           ? <ChessLesson lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />
           : null}
