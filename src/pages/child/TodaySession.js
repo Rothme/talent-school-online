@@ -5,6 +5,7 @@ import {
   getTodaySchedule, getGreeting, getSubjectColor, getSubjectPale,
   getSessionState, saveSessionState,
 } from '../../utils/sessionSchedule';
+import { unlockAudio } from '../../utils/elevenlabs';
 import './TodaySession.css';
 
 const TEST_SUBJECTS = [
@@ -40,6 +41,7 @@ export default function TodaySession() {
   }, [navigate]);
 
   function startSubject(subjectId) {
+    unlockAudio();
     if (!child) return;
     const initial = {
       childId: child.id,
@@ -58,6 +60,7 @@ export default function TodaySession() {
   }
 
   function startNormalSession() {
+    unlockAudio();
     if (!child || !schedule) return;
     const initial = {
       childId: child.id,
@@ -74,6 +77,7 @@ export default function TodaySession() {
   }
 
   function continueSession() {
+    unlockAudio();
     if (!sessionState) return;
     if (!sessionState.warmupComplete) navigate('/child/session/warmup');
     else navigate('/child/session/main');
