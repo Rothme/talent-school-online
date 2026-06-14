@@ -247,6 +247,7 @@ function RightPanel({
 }) {
   return (
     <div className="right-panel">
+      <div className="rp-scroll">
 
       <div className="rp-phase-chip">
         <span className="rp-phase-icon">
@@ -321,6 +322,8 @@ function RightPanel({
           </div>
         </div>
       )}
+
+      </div>
 
       {!speedState?.active && !quizState?.active && !fileQuizState?.active && (
         <button className="rp-continue" onClick={onContinue}>
