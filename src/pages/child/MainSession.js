@@ -113,6 +113,16 @@ export default function MainSession() {
           </div>
         </div>
         <div className="msh-warmup-done">✅ Warm-up complete</div>
+        {isTest && subject === 'chess' && (
+          <select
+            className="msh-lesson-picker"
+            value={lessonIndex}
+            onChange={(e) => setLessonIndex(Number(e.target.value))}
+          >
+            <option value={0}>Lesson 1 — The Board</option>
+            <option value={1}>Lesson 2 — Notation</option>
+          </select>
+        )}
       </div>
 
       <div className="main-session-body">
