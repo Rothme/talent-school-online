@@ -37,20 +37,14 @@ export function stopSpeech() {
   try { window.speechSynthesis?.cancel(); } catch(e) {}
 }
 
-export async function speakElevenLabs(text, { onStart, onEnd, onError } = {}) {
+export async function speakElevenLabs(text, { onStart, onEnd, onError, onBlocked } = {}) {
   if (!text?.trim()) return;
   stopSpeech();
 
-  // Queue speech if browser hasn't received a user gesture yet
-  if (!userHasInteracted) {
-    pendingText = text;
-    pendingCallbacks = { onStart, onEnd, onError };
-    // Still try browser speech as fallback — it may work on some browsers
-    browserSpeak(text, { onStart, onEnd });
-    return;
-  }
-
-  const cacheKey = text.trim().slice(0, 150);
+  // Use full text as cache key — truncated prefixes caused collisions
+  // between different steps that happen to start with the same words
+  // (e.g. "Watch this move..." appears in multiple lessons/steps).
+  const cacheKey = text.trim();
 
   try {
     let blobUrl;
@@ -94,14 +88,30 @@ export async function speakElevenLabs(text, { onStart, onEnd, onError } = {}) {
     const playPromise = audio.play();
     if (playPromise) {
       playPromise.catch(e => {
-        console.warn('Audio play blocked:', e.message);
-        browserSpeak(text, { onStart, onEnd });
+        console.warn('Audio play blocked (no user gesture yet):', e.message);
+        currentAudio = null;
+        if (!userHasInteracted) {
+          // Queue for replay the instant the user interacts
+          pendingText = text;
+          pendingCallbacks = { onStart, onEnd, onError, onBlocked };
+          onBlocked?.();
+        } else {
+          // User has interacted before but this play was still blocked —
+          // browser TTS as a last resort.
+          browserSpeak(text, { onStart, onEnd });
+        }
       });
     }
 
   } catch (err) {
     console.warn('ElevenLabs TTS error, falling back to browser:', err.message);
-    browserSpeak(text, { onStart, onEnd });
+    if (!userHasInteracted) {
+      pendingText = text;
+      pendingCallbacks = { onStart, onEnd, onError, onBlocked };
+      onBlocked?.();
+    } else {
+      browserSpeak(text, { onStart, onEnd });
+    }
     onError?.(err);
   }
 }
