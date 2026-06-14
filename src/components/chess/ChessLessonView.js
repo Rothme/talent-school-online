@@ -3,7 +3,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Chessboard } from 'react-chessboard';
 import confetti from 'canvas-confetti';
 import { Volume2, ChevronRight, ChevronLeft, CheckCircle2, BookOpen, Swords, Award } from 'lucide-react';
+import { Chess } from 'chess.js';
 import { LESSON_1 } from '../../data/chessLesson1';
+import { LESSON_2 } from '../../data/chessLesson2';
 import { speakElevenLabs, stopSpeech, parseHighlights, unlockAudio } from '../../utils/elevenlabs';
 import './ChessLessonView.css';
 
@@ -11,6 +13,18 @@ const FILES = ['a','b','c','d','e','f','g','h'];
 
 function fill(text, name) {
   return (text || '').replace(/\{name\}/g, name);
+}
+
+function resolveBoardPosition(boardFen, placedPieces) {
+  if (boardFen === 'empty-custom') {
+    // Convert placedPieces {square: {piece, color}} -> {square: 'wP'}
+    const pos = {};
+    Object.entries(placedPieces || {}).forEach(([sq, p]) => {
+      pos[sq] = `${p.color}${p.piece}`;
+    });
+    return pos;
+  }
+  return boardFen || {};
 }
 
 // ─────────────────────────────────────────────────────
@@ -47,8 +61,8 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
 // ─────────────────────────────────────────────────────
 // MAIN — Chess Lesson View (Lesson 1: board fundamentals)
 // ─────────────────────────────────────────────────────
-export default function ChessLessonView({ childName = 'Student', isTest = false, onComplete }) {
-  const lesson = LESSON_1;
+export default function ChessLessonView({ lessonData, childName = 'Student', isTest = false, onComplete }) {
+  const lesson = lessonData || LESSON_1;
   const phases = lesson.phases;
 
   const [phaseIdx, setPhaseIdx] = useState(0);
@@ -79,6 +93,16 @@ export default function ChessLessonView({ childName = 'Student', isTest = false,
   const [speedState, setSpeed] = useState(null);
   const [recapAnswer, setRecapAnswer] = useState(null);
   const [lessonDone, setLessonDone] = useState(false);
+
+  // Piece-based interaction state (Lesson 2+)
+  const [boardFen, setBoardFen] = useState('start');
+  const [selectedSq, setSelectedSq] = useState(null);
+  const [moveDone, setMoveDone] = useState(false);
+  const [pieceQuizIdx, setPieceQuizIdx] = useState(0);
+  const [pieceQuizAnswer, setPieceQuizAnswer] = useState(null);
+  const [writeAnswer, setWriteAnswer] = useState(null);
+  const [placedPieces, setPlacedPieces] = useState({}); // for notation-puzzle-setup
+  const [pieceTrayOrder, setPieceTrayOrder] = useState([]); // shuffled tray order
 
   const speedRef = useRef(null);
   const voiceRef = useRef(false);
@@ -133,6 +157,33 @@ export default function ChessLessonView({ childName = 'Student', isTest = false,
 
     if (step?.taskType === 'file-name-quiz') startFileQuiz();
     else setFileQS(null);
+
+    // Reset piece-interaction state
+    setSelectedSq(null); setMoveDone(false);
+    setPieceQuizIdx(0); setPieceQuizAnswer(null);
+    setWriteAnswer(null);
+
+    // Compute board FEN for this step
+    if (step?.taskType === 'notation-demo') {
+      setBoardFen(step.demoFen || 'start');
+    } else if (step?.taskType === 'notation-build') {
+      setBoardFen(step.fromFen || 'start');
+    } else if (step?.taskType === 'write-notation') {
+      setBoardFen(step.beforeFen || 'start');
+    } else if (step?.taskType === 'piece-letter-quiz') {
+      setBoardFen('start');
+    } else if (step?.taskType === 'notation-puzzle-setup') {
+      setBoardFen('empty-custom');
+      setPlacedPieces({});
+      const shuffled = [...(step.targetPieces || [])].sort(() => Math.random() - 0.5);
+      setPieceTrayOrder(shuffled);
+    } else if (step?.taskType === 'notation-puzzle-move') {
+      setBoardFen(step.puzzleFen || 'start');
+    } else if (step?.boardState === 'start') {
+      setBoardFen('start');
+    } else if (step?.boardState === 'empty') {
+      setBoardFen('empty-custom');
+    }
   }, [phaseIdx, stepIdx]);
 
   // Auto-play voice
@@ -171,6 +222,13 @@ export default function ChessLessonView({ childName = 'Student', isTest = false,
     const t = setTimeout(() => startSpeed(step), 900);
     return () => { clearTimeout(t); clearInterval(speedRef.current); };
   }, [phaseIdx, stepIdx]);
+
+  // write-notation: reveal the "after" position once voice finishes
+  useEffect(() => {
+    if (step?.taskType !== 'write-notation') return;
+    if (!voiceFinished) return;
+    if (step.afterFen) setBoardFen(step.afterFen);
+  }, [phaseIdx, stepIdx, voiceFinished]);
 
   const nextStep = useCallback(() => {
     stopSpeech(); clearNeon();
@@ -260,6 +318,69 @@ export default function ChessLessonView({ childName = 'Student', isTest = false,
       return;
     }
 
+    if ((tt === 'notation-build' || tt === 'notation-puzzle-move') && !moveDone) {
+      const game = new Chess();
+      if (boardFen !== 'start' && boardFen !== 'empty-custom') game.load(boardFen);
+      const piece = game.get(sq);
+
+      if (!selectedSq) {
+        // First click: must select the correct piece
+        if (sq === step.moveFrom) {
+          setSelectedSq(sq);
+          setNeonSqs([sq]);
+          showFb(`Now click ${step.moveTo.toUpperCase()} to complete the move.`, 'hint');
+        } else if (piece) {
+          showFb('That is not the piece Ms. Momo described - look again!', 'error');
+        }
+        return;
+      }
+
+      // Second click: must be the destination
+      if (sq === step.moveTo) {
+        const result = game.move({ from: selectedSq, to: sq, promotion: 'q' });
+        if (result) {
+          setBoardFen(game.fen());
+          setMoveDone(true);
+          setSelectedSq(null);
+          setNeonSqs([]);
+          setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
+          const notation = step.correctNotation || result.san;
+          showFb(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), 'success', step.successVoice);
+          setTimeout(nextStep, 2400);
+        }
+      } else {
+        setSelectedSq(null); setNeonSqs([]);
+        setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
+        showFb(step.wrongVoice || 'Not quite - try again!', 'error', step.wrongVoice);
+      }
+      return;
+    }
+
+    if (tt === 'notation-puzzle-setup') {
+      if (placedPieces[sq]) return; // already occupied
+      const next = pieceTrayOrder[0];
+      if (!next) return;
+      if (sq === next.square) {
+        const np = { ...placedPieces, [sq]: { piece: next.piece, color: next.color } };
+        setPlacedPieces(np);
+        const rem = pieceTrayOrder.slice(1);
+        setPieceTrayOrder(rem);
+        setScore(s => s + 1); setStreak(s => s + 1);
+        if (!rem.length) {
+          setTotal(t => t + (step.targetPieces?.length || 0));
+          showFb(step.successVoice || 'Setup complete!', 'success', step.successVoice);
+          setMoveDone(true);
+          setTimeout(nextStep, 2600);
+        } else {
+          showFb(`Placed! ${rem.length} piece${rem.length === 1 ? '' : 's'} left.`, 'hint');
+        }
+      } else {
+        setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 500);
+        showFb(`Not that square - look at the description again for where the next piece goes.`, 'error');
+      }
+      return;
+    }
+
     if (tt === 'speed-round' && speedState?.active) {
       if (sq === speedState.currentTarget) {
         const nh = speedState.hits + 1;
@@ -304,6 +425,52 @@ export default function ChessLessonView({ childName = 'Student', isTest = false,
     vm = fill((vm || `You scored ${hits}!`).replace('{score}', hits), childName);
     showFb(vm, hits >= tgt ? 'success' : 'hint', vm);
     setTimeout(nextStep, 3200);
+  }
+
+  function handlePieceLetterAnswer(answer) {
+    unlockAudio();
+    if (pieceQuizAnswer !== null) return;
+    const items = step.quizItems || [];
+    const curr = items[pieceQuizIdx];
+    if (!curr) return;
+    setPieceQuizAnswer(answer);
+    setTotal(t => t + 1);
+    const correct = answer === curr.correctLetter;
+    if (correct) {
+      setScore(s => s + 1); setStreak(s => s + 1);
+      showFb(`Correct - ${curr.correctLetter === '(no letter)' ? 'Pawns get no letter!' : `${curr.correctLetter} is right!`}`, 'success');
+      if (voiceOn) speakElevenLabs('Correct!', { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+    } else {
+      setStreak(0);
+      showFb(`Not quite - the answer was ${curr.correctLetter}.`, 'error');
+      if (voiceOn) speakElevenLabs(`Not quite. The answer was ${curr.correctLetter}.`, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+    }
+    const ni = pieceQuizIdx + 1;
+    setTimeout(() => {
+      if (ni >= items.length) {
+        showFb(fill(step.successVoice || 'Done!', childName), 'success', step.successVoice);
+        setTimeout(nextStep, 2600);
+      } else {
+        setPieceQuizIdx(ni); setPieceQuizAnswer(null);
+        setFeedback(''); setFbType('info');
+      }
+    }, 1400);
+  }
+
+  function handleWriteNotationAnswer(answer) {
+    unlockAudio();
+    if (writeAnswer !== null) return;
+    setWriteAnswer(answer);
+    setTotal(t => t + 1);
+    const correct = answer === step.correctNotation;
+    if (correct) {
+      setScore(s => s + 1); setStreak(s => s + 1);
+      showFb(`${step.correctNotation} is correct!`, 'success', step.successVoice);
+    } else {
+      setStreak(0);
+      showFb(`Not quite - the correct notation was ${step.correctNotation}.`, 'error', step.wrongVoice);
+    }
+    setTimeout(nextStep, 2800);
   }
 
   function handleLightDark(answer) {
@@ -555,6 +722,64 @@ export default function ChessLessonView({ childName = 'Student', isTest = false,
             </div>
           )}
 
+          {/* Piece letter quiz */}
+          {step?.taskType === 'piece-letter-quiz' && voiceFinished && step.quizItems?.[pieceQuizIdx] && (
+            <div className="cl-recap">
+              <div className="cl-recap-q">
+                Item {pieceQuizIdx + 1} of {step.quizItems.length} — what is this piece's letter?
+              </div>
+              <div className="cl-recap-opts">
+                {step.quizItems[pieceQuizIdx].options.map((opt, i) => {
+                  const curr = step.quizItems[pieceQuizIdx];
+                  let cls = 'cl-recap-opt';
+                  if (pieceQuizAnswer !== null) {
+                    if (opt === curr.correctLetter) cls += ' cl-recap-correct';
+                    else if (opt === pieceQuizAnswer) cls += ' cl-recap-wrong';
+                  }
+                  return (
+                    <button key={i} className={cls} onClick={() => handlePieceLetterAnswer(opt)} disabled={pieceQuizAnswer !== null}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Write notation quiz */}
+          {step?.taskType === 'write-notation' && voiceFinished && (
+            <div className="cl-recap">
+              <div className="cl-recap-q">{step.task}</div>
+              <div className="cl-recap-opts">
+                {step.options.map((opt, i) => {
+                  let cls = 'cl-recap-opt cl-recap-mono';
+                  if (writeAnswer !== null) {
+                    if (opt === step.correctNotation) cls += ' cl-recap-correct';
+                    else if (opt === writeAnswer) cls += ' cl-recap-wrong';
+                  }
+                  return (
+                    <button key={i} className={cls} onClick={() => handleWriteNotationAnswer(opt)} disabled={writeAnswer !== null}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Notation puzzle setup — piece tray */}
+          {step?.taskType === 'notation-puzzle-setup' && voiceFinished && pieceTrayOrder.length > 0 && (
+            <div className="cl-tray">
+              <div className="cl-tray-lbl">Next piece to place:</div>
+              <div className="cl-tray-piece">
+                <span className="cl-tray-piece-icon">
+                  {pieceTrayOrder[0].color === 'w' ? '\u25CB' : '\u25CF'} {pieceTrayOrder[0].piece}
+                </span>
+                <span className="cl-tray-piece-sq">→ find its square on the board</span>
+              </div>
+            </div>
+          )}
+
           {/* Speed round */}
           {speedState?.active && (
             <div className="cl-speed">
@@ -566,10 +791,13 @@ export default function ChessLessonView({ childName = 'Student', isTest = false,
           )}
 
           {/* Continue */}
-          {!speedState?.active && !quizState?.active && !fileQS?.active
-            && !(step?.taskType === 'recap-quiz' && voiceFinished && recapAnswer === null)
-            && (() => {
-            const narrationLed = ['observe', 'speed-intro', 'complete'].includes(step?.taskType);
+          {(() => {
+            const selfAdvancing = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'piece-letter-quiz', 'write-notation', 'independent-squares', 'click-square', 'click-file', 'click-rank'].includes(step?.taskType);
+            if (speedState?.active || quizState?.active || fileQS?.active) return null;
+            if (selfAdvancing) return null;
+            if (step?.taskType === 'recap-quiz' && voiceFinished && recapAnswer === null) return null;
+
+            const narrationLed = ['observe', 'speed-intro', 'complete', 'notation-demo'].includes(step?.taskType);
             const isRecap = step?.taskType === 'recap-quiz';
             const locked = (narrationLed && !voiceFinished && !isTest)
               || (isRecap && !isTest && (!voiceFinished || recapAnswer === null));
@@ -591,10 +819,11 @@ export default function ChessLessonView({ childName = 'Student', isTest = false,
           <div className="cl-board-frame" ref={boardWrapRef}>
             <div className="cl-board-inner">
               <Chessboard
-                id="tso-chess-lesson-1"
-                position={{}}
+                id="tso-chess-lesson"
+                position={resolveBoardPosition(boardFen, placedPieces)}
                 boardWidth={Math.max(240, boardWidth - 28)}
-                showAnimations={false}
+                showAnimations={true}
+                animationDuration={300}
                 showBoardNotation={true}
                 arePiecesDraggable={false}
                 customSquareStyles={squareStyles}
