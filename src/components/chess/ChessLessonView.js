@@ -47,7 +47,7 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
 // ─────────────────────────────────────────────────────
 // MAIN — Chess Lesson View (Lesson 1: board fundamentals)
 // ─────────────────────────────────────────────────────
-export default function ChessLessonView({ childName = 'Student', onComplete }) {
+export default function ChessLessonView({ childName = 'Student', isTest = false, onComplete }) {
   const lesson = LESSON_1;
   const phases = lesson.phases;
 
@@ -55,6 +55,8 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
   const [stepIdx, setStepIdx] = useState(0);
   const [voiceOn, setVoiceOn] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [voiceFinished, setVoiceFinished] = useState(false);
+  const voiceFinishTimer = useRef(null);
 
   const [neonFile, setNeonFile] = useState(null);
   const [neonRank, setNeonRank] = useState(null);
@@ -75,6 +77,7 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
   const [quizIdx, setQuizIdx] = useState(0);
   const [fileQS, setFileQS] = useState(null);
   const [speedState, setSpeed] = useState(null);
+  const [recapAnswer, setRecapAnswer] = useState(null);
   const [lessonDone, setLessonDone] = useState(false);
 
   const speedRef = useRef(null);
@@ -111,6 +114,9 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
     voiceRef.current = false;
     setClicked([]); setWrongSqs([]); setFeedback(''); setFbType('info');
     setSpeed(null); setIndepIdx(0); clearNeon();
+    setRecapAnswer(null);
+    clearTimeout(voiceFinishTimer.current);
+    setVoiceFinished(isTest); // test accounts: always unlocked
 
     if (step?.highlightFile) setNeonFile(step.highlightFile);
     if (step?.highlightRank) setNeonRank(String(step.highlightRank));
@@ -131,19 +137,32 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
 
   // Auto-play voice
   useEffect(() => {
-    if (!voiceOn || !step?.voice || voiceRef.current) return;
+    if (isTest) return; // test accounts: gate already open
+    if (!step?.voice) { setVoiceFinished(true); return; }
+
+    if (!voiceOn) {
+      // Voice disabled — use a reading-time fallback (approx 14 chars/sec)
+      const ms = Math.max(2000, Math.min(15000, step.voice.length * 70));
+      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), ms);
+      return () => clearTimeout(voiceFinishTimer.current);
+    }
+
+    if (voiceRef.current) return;
     voiceRef.current = true;
     const text = fill(step.voice, childName);
     const t = setTimeout(() => {
       applyNeon(text);
+      // Fallback in case onEnd never fires (audio error, network issue)
+      const fallbackMs = Math.max(3000, Math.min(18000, text.length * 75));
+      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
       speakElevenLabs(text, {
         onStart: () => setIsPlaying(true),
-        onEnd: () => setIsPlaying(false),
-        onError: () => setIsPlaying(false),
+        onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
       });
     }, 400);
-    return () => clearTimeout(t);
-  }, [phaseIdx, stepIdx, voiceOn]);
+    return () => { clearTimeout(t); clearTimeout(voiceFinishTimer.current); };
+  }, [phaseIdx, stepIdx, voiceOn, isTest]);
 
   // Auto-start speed round when entering a speed-round step
   useEffect(() => {
@@ -339,6 +358,26 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
     }
   }
 
+  function handleRecapAnswer(idx) {
+    unlockAudio();
+    if (recapAnswer !== null) return;
+    setRecapAnswer(idx);
+    const correct = idx === step.recapCorrect;
+    setTotal(t => t + 1);
+    if (correct) {
+      setScore(s => s + 1); setStreak(s => s + 1);
+      const vm = fill(step.recapCorrectVoice || 'Correct!', childName);
+      showFb(vm, 'success');
+      if (voiceOn) speakElevenLabs(vm, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+    } else {
+      setStreak(0);
+      const vm = fill(step.recapWrongVoice || 'Not quite!', childName);
+      showFb(vm, 'error');
+      if (voiceOn) speakElevenLabs(vm, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+    }
+    setTimeout(() => setVoiceFinished(true), 600);
+  }
+
   function handleContinue() {
     unlockAudio();
     if (step?.taskType === 'speed-intro') { nextStep(); return; }
@@ -495,6 +534,27 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
             </div>
           )}
 
+          {/* Recap quiz */}
+          {step?.taskType === 'recap-quiz' && voiceFinished && (
+            <div className="cl-recap">
+              <div className="cl-recap-q">{step.recapQuestion}</div>
+              <div className="cl-recap-opts">
+                {step.recapOptions.map((opt, i) => {
+                  let cls = 'cl-recap-opt';
+                  if (recapAnswer !== null) {
+                    if (i === step.recapCorrect) cls += ' cl-recap-correct';
+                    else if (i === recapAnswer) cls += ' cl-recap-wrong';
+                  }
+                  return (
+                    <button key={i} className={cls} onClick={() => handleRecapAnswer(i)} disabled={recapAnswer !== null}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Speed round */}
           {speedState?.active && (
             <div className="cl-speed">
@@ -506,11 +566,23 @@ export default function ChessLessonView({ childName = 'Student', onComplete }) {
           )}
 
           {/* Continue */}
-          {!speedState?.active && !quizState?.active && !fileQS?.active && (
-            <button className="cl-continue" onClick={handleContinue}>
-              {contLabel} <ChevronRight size={16} />
-            </button>
-          )}
+          {!speedState?.active && !quizState?.active && !fileQS?.active
+            && !(step?.taskType === 'recap-quiz' && voiceFinished && recapAnswer === null)
+            && (() => {
+            const narrationLed = ['observe', 'speed-intro', 'complete'].includes(step?.taskType);
+            const isRecap = step?.taskType === 'recap-quiz';
+            const locked = (narrationLed && !voiceFinished && !isTest)
+              || (isRecap && !isTest && (!voiceFinished || recapAnswer === null));
+            return (
+              <button className="cl-continue" onClick={handleContinue} disabled={locked}>
+                {locked ? (
+                  <>{!voiceFinished ? 'Listen to Ms. Momo first...' : 'Answer the question first...'}</>
+                ) : (
+                  <>{contLabel} <ChevronRight size={16} /></>
+                )}
+              </button>
+            );
+          })()}
 
         </div>
 
