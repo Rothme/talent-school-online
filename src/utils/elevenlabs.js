@@ -66,8 +66,10 @@ export async function speakElevenLabs(text, { onStart, onEnd, onError } = {}) {
 
       if (!res.ok) {
         const errText = await res.text().catch(()=>'');
-        throw new Error(`TTS ${res.status}: ${errText.slice(0,100)}`);
+        console.error('🔴 ElevenLabs TTS FAILED:', res.status, errText);
+        throw new Error(`TTS ${res.status}: ${errText.slice(0,300)}`);
       }
+      console.log('✅ ElevenLabs TTS success, content-type:', res.headers.get('content-type'));
 
       const contentType = res.headers.get('content-type') || '';
       if (!contentType.includes('audio')) {
