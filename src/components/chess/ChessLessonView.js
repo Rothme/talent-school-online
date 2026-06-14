@@ -70,6 +70,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const [voiceOn, setVoiceOn] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [voiceFinished, setVoiceFinished] = useState(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const voiceFinishTimer = useRef(null);
 
   const [neonFile, setNeonFile] = useState(null);
@@ -208,9 +209,14 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       const fallbackMs = Math.max(6000, text.length * 110) + 5000;
       voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
       speakElevenLabs(text, {
-        onStart: () => setIsPlaying(true),
+        onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
         onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
         onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onBlocked: () => {
+          // Browser blocked autoplay — pause the fallback and show "tap to start"
+          clearTimeout(voiceFinishTimer.current);
+          setAudioBlocked(true);
+        },
       });
     }, 400);
     return () => { clearTimeout(t); clearTimeout(voiceFinishTimer.current); };
@@ -615,6 +621,21 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     neonFile, neonRank, neonSquares: boardNeonSqs, clicked, wrong: wrongSqs, targets: targetSqs,
   });
 
+  function handleAudioOverlayTap() {
+    unlockAudio();
+    setAudioBlocked(false);
+    if (step?.voice) {
+      const text = fill(step.voice, childName);
+      const fallbackMs = Math.max(6000, text.length * 110) + 5000;
+      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
+      speakElevenLabs(text, {
+        onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
+        onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+      });
+    }
+  }
+
   if (lessonDone) {
     return (
       <div className="cl-done">
@@ -639,6 +660,15 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   return (
     <div className="cl-root">
+
+      {audioBlocked && !isTest && (
+        <div className="cl-audio-overlay" onClick={handleAudioOverlayTap}>
+          <div className="cl-audio-overlay-card">
+            <Volume2 size={32} />
+            <p>Tap anywhere to start Ms. Momo's voice</p>
+          </div>
+        </div>
+      )}
 
       {/* Scope banner */}
       <div className="cl-banner">
