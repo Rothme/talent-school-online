@@ -88,30 +88,22 @@ export async function speakElevenLabs(text, { onStart, onEnd, onError, onBlocked
     const playPromise = audio.play();
     if (playPromise) {
       playPromise.catch(e => {
-        console.warn('Audio play blocked (no user gesture yet):', e.message);
+        console.warn('Audio play blocked:', e.message);
         currentAudio = null;
-        if (!userHasInteracted) {
-          // Queue for replay the instant the user interacts
-          pendingText = text;
-          pendingCallbacks = { onStart, onEnd, onError, onBlocked };
-          onBlocked?.();
-        } else {
-          // User has interacted before but this play was still blocked —
-          // browser TTS as a last resort.
-          browserSpeak(text, { onStart, onEnd });
-        }
+        // Browser TTS is blocked by the same autoplay policy in this
+        // situation, so don't bother trying it — queue for replay on
+        // the next user gesture (tap-to-start overlay) instead.
+        pendingText = text;
+        pendingCallbacks = { onStart, onEnd, onError, onBlocked };
+        onBlocked?.();
       });
     }
 
   } catch (err) {
-    console.warn('ElevenLabs TTS error, falling back to browser:', err.message);
-    if (!userHasInteracted) {
-      pendingText = text;
-      pendingCallbacks = { onStart, onEnd, onError, onBlocked };
-      onBlocked?.();
-    } else {
-      browserSpeak(text, { onStart, onEnd });
-    }
+    console.warn('ElevenLabs TTS error:', err.message);
+    pendingText = text;
+    pendingCallbacks = { onStart, onEnd, onError, onBlocked };
+    onBlocked?.();
     onError?.(err);
   }
 }
