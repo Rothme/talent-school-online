@@ -5,6 +5,7 @@ import {
   getSessionState, saveSessionState, getTodaySchedule, isTestAccount
 } from '../../utils/sessionSchedule';
 import { WARMUP_PASSAGES } from '../../data/curriculum';
+import { unlockAudio } from '../../utils/elevenlabs';
 import './WarmupSession.css';
 
 const WARMUP_SECS = 10 * 60;
@@ -138,6 +139,7 @@ export default function WarmupSession() {
   }
 
   function startWarmup() {
+    unlockAudio();
     setPhase('active');
     setTimeout(() => inputRef.current?.focus(), 100);
   }
