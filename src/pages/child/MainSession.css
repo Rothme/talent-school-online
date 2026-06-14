@@ -8,6 +8,12 @@
 .msh-subject { color: #fff; font-size: 13px; font-weight: 700; }
 .msh-child { color: rgba(255,255,255,0.5); font-size: 11px; }
 .msh-warmup-done { background: var(--teal-pale); color: var(--teal); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+.msh-lesson-picker {
+  font-size: 11px; font-weight: 700; padding: 4px 8px;
+  border-radius: 8px; border: 1px solid var(--border-color, #ccc);
+  background: var(--card-bg, #fff); color: var(--text-color, #222);
+  margin-left: 8px; cursor: pointer;
+}
 .main-session-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
 .main-session-body > * { flex: 1; min-height: 0; }
 .msh-test-badge {
