@@ -149,7 +149,12 @@
 /* ── Right panel ── */
 .right-panel {
   background:#0a0c14; padding:12px 10px;
-  display:flex; flex-direction:column; gap:10px; overflow-y:auto;
+  display:flex; flex-direction:column; gap:10px;
+  overflow-y:auto; min-height:0;
+}
+.rp-continue {
+  position: sticky;
+  bottom: 0;
 }
 .rp-phase-chip {
   display:flex; align-items:center; gap:8px;
