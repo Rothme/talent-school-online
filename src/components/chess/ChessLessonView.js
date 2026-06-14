@@ -192,8 +192,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (!step?.voice) { setVoiceFinished(true); return; }
 
     if (!voiceOn) {
-      // Voice disabled — use a reading-time fallback (approx 14 chars/sec)
-      const ms = Math.max(2000, Math.min(15000, step.voice.length * 70));
+      // Voice disabled — use a reading-time fallback (~13 chars/sec, no cap)
+      const ms = Math.max(2000, step.voice.length * 75);
       voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), ms);
       return () => clearTimeout(voiceFinishTimer.current);
     }
@@ -203,8 +203,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     const text = fill(step.voice, childName);
     const t = setTimeout(() => {
       applyNeon(text);
-      // Fallback in case onEnd never fires (audio error, network issue)
-      const fallbackMs = Math.max(3000, Math.min(18000, text.length * 75));
+      // Safety net only — generous, so it never cuts off real audio.
+      // ~9 chars/sec (slower than natural speech) + 5s buffer.
+      const fallbackMs = Math.max(6000, text.length * 110) + 5000;
       voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
       speakElevenLabs(text, {
         onStart: () => setIsPlaying(true),
@@ -248,6 +249,43 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       const vt = fill(voice, childName); applyNeon(vt);
       speakElevenLabs(vt, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
     }
+  }
+
+  function handlePieceDrop(sourceSquare, targetSquare, piece) {
+    unlockAudio();
+    if (!step) return false;
+    const tt = step.taskType;
+
+    if ((tt === 'notation-build' || tt === 'notation-puzzle-move') && !moveDone) {
+      if (sourceSquare !== step.moveFrom) {
+        showFb('That is not the piece Ms. Momo described - look again!', 'error');
+        return false;
+      }
+      const game = new Chess();
+      if (boardFen !== 'start' && boardFen !== 'empty-custom') game.load(boardFen);
+
+      if (targetSquare === step.moveTo) {
+        const result = game.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
+        if (result) {
+          setBoardFen(game.fen());
+          setMoveDone(true);
+          setSelectedSq(null);
+          setNeonSqs([]);
+          setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
+          const notation = step.correctNotation || result.san;
+          showFb(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), 'success', step.successVoice);
+          setTimeout(nextStep, 2400);
+          return true;
+        }
+        return false;
+      } else {
+        setWrongSqs([targetSquare]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
+        showFb(step.wrongVoice || 'Not quite - try again!', 'error', step.wrongVoice);
+        return false;
+      }
+    }
+
+    return false; // not a draggable taskType — snap back
   }
 
   function handleSquareClickArgs(square) {
@@ -619,9 +657,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
       <div className="cl-grid">
 
-        {/* LEFT — Tutor column */}
-        <div className="cl-left">
-
+        {/* COLUMN 1 — Compact tutor */}
+        <div className="cl-tutor">
           <div className="cl-tutor-card">
             <div className="cl-tutor-head">
               <div className="cl-tutor-avatar">MM</div>
@@ -659,6 +696,32 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
               </div>
             </div>
           </div>
+        </div>
+
+        {/* COLUMN 2 — Board */}
+        <div className="cl-board-col">
+          <div className="cl-board-frame" ref={boardWrapRef}>
+            <div className="cl-board-inner">
+              <Chessboard
+                id="tso-chess-lesson"
+                position={resolveBoardPosition(boardFen, placedPieces)}
+                boardWidth={Math.max(240, boardWidth - 28)}
+                showAnimations={true}
+                animationDuration={300}
+                showBoardNotation={true}
+                arePiecesDraggable={['notation-build', 'notation-puzzle-move'].includes(step?.taskType) && !moveDone}
+                onPieceDrop={handlePieceDrop}
+                customSquareStyles={squareStyles}
+                customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
+                customDarkSquareStyle={{ backgroundColor: '#b58863' }}
+                onSquareClick={handleSquareClickArgs}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* COLUMN 3 — Exercise / practice engine */}
+        <div className="cl-exercise">
 
           {/* Task card */}
           {step?.task && (
@@ -812,27 +875,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
             );
           })()}
 
-        </div>
-
-        {/* RIGHT — Board */}
-        <div className="cl-right">
-          <div className="cl-board-frame" ref={boardWrapRef}>
-            <div className="cl-board-inner">
-              <Chessboard
-                id="tso-chess-lesson"
-                position={resolveBoardPosition(boardFen, placedPieces)}
-                boardWidth={Math.max(240, boardWidth - 28)}
-                showAnimations={true}
-                animationDuration={300}
-                showBoardNotation={true}
-                arePiecesDraggable={false}
-                customSquareStyles={squareStyles}
-                customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
-                customDarkSquareStyle={{ backgroundColor: '#b58863' }}
-                onSquareClick={handleSquareClickArgs}
-              />
-            </div>
-          </div>
         </div>
 
       </div>
