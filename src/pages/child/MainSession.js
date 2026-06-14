@@ -6,6 +6,8 @@ import {
 } from '../../utils/sessionSchedule';
 import ChessLesson      from '../../components/chess/ChessLesson';
 import ChessLessonView  from '../../components/chess/ChessLessonView';
+import { LESSON_1 } from '../../data/chessLesson1';
+import { LESSON_2 } from '../../data/chessLesson2';
 import TypingLesson from '../../components/typing/TypingLesson';
 import CodingLesson from '../../components/coding/CodingLesson';
 import './MainSession.css';
@@ -114,8 +116,8 @@ export default function MainSession() {
       </div>
 
       <div className="main-session-body">
-        {subject === 'chess'  && lessonIndex === 0
-          ? <ChessLessonView childName={child.name} isTest={isTest} onComplete={handleLessonComplete} />
+        {subject === 'chess'  && (lessonIndex === 0 || lessonIndex === 1)
+          ? <ChessLessonView lessonData={lessonIndex === 0 ? LESSON_1 : LESSON_2} childName={child.name} isTest={isTest} onComplete={handleLessonComplete} />
           : subject === 'chess'
           ? <ChessLesson lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />
           : null}
