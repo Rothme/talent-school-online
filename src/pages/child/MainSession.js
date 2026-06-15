@@ -9,6 +9,8 @@ import ChessLessonView  from '../../components/chess/ChessLessonView';
 import { LESSON_1 } from '../../data/chessLesson1';
 import { LESSON_2 } from '../../data/chessLesson2';
 import { LESSON_3 } from '../../data/chessLesson3';
+import { LESSON_4 } from '../../data/chessLesson4';
+import { LESSON_5 } from '../../data/chessLesson5';
 import TypingLesson from '../../components/typing/TypingLesson';
 import CodingLesson from '../../components/coding/CodingLesson';
 import './MainSession.css';
@@ -123,13 +125,15 @@ export default function MainSession() {
             <option value={0}>Lesson 1 — The Board</option>
             <option value={1}>Lesson 2 — Notation</option>
             <option value={2}>Lesson 3 — Rook and Bishop</option>
+            <option value={3}>Lesson 4 — Queen and King</option>
+            <option value={4}>Lesson 5 — Knight and Pawn</option>
           </select>
         )}
       </div>
 
       <div className="main-session-body">
-        {subject === 'chess'  && (lessonIndex === 0 || lessonIndex === 1 || lessonIndex === 2)
-          ? <ChessLessonView lessonData={lessonIndex === 0 ? LESSON_1 : lessonIndex === 1 ? LESSON_2 : LESSON_3} childName={child.name} isTest={isTest} onComplete={handleLessonComplete} />
+        {subject === 'chess'  && lessonIndex >= 0 && lessonIndex <= 4
+          ? <ChessLessonView lessonData={[LESSON_1, LESSON_2, LESSON_3, LESSON_4, LESSON_5][lessonIndex]} childName={child.name} isTest={isTest} onComplete={handleLessonComplete} />
           : subject === 'chess'
           ? <ChessLesson lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />
           : null}
