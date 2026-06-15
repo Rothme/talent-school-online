@@ -148,7 +148,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (step?.highlightRank) setNeonRank(String(step.highlightRank));
     if (step?.highlights?.length) setNeonSqs(step.highlights);
 
-    if (['click-file', 'click-rank', 'click-square'].includes(step?.taskType))
+    if (['click-file', 'click-rank', 'click-square', 'piece-range'].includes(step?.taskType))
       setTargetSqs(step.targetSquares || []);
     else setTargetSqs([]);
 
@@ -181,6 +181,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       setPieceTrayOrder(shuffled);
     } else if (step?.taskType === 'notation-puzzle-move') {
       setBoardFen(step.puzzleFen || 'start');
+    } else if (step?.taskType === 'piece-range') {
+      setBoardFen(step.pieceRangeFen || 'start');
     } else if (step?.boardState === 'start') {
       setBoardFen('start');
     } else if (step?.boardState === 'empty') {
@@ -315,7 +317,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (!step) return;
     const tt = step.taskType;
 
-    if (tt === 'click-file' || tt === 'click-rank') {
+    if (tt === 'click-file' || tt === 'click-rank' || tt === 'piece-range') {
       if (step.targetSquares?.includes(sq) && !clicked.includes(sq)) {
         const nc = [...clicked, sq]; setClicked(nc); setStreak(s => s + 1);
         if (nc.length === step.targetSquares.length) {
@@ -324,7 +326,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         } else showFb(`${nc.length} of ${step.targetSquares.length} found!`, 'hint');
       } else if (!step.targetSquares?.includes(sq)) {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
-        showFb(`That square is not in this ${tt === 'click-file' ? 'file' : 'rank'} - try the glowing one!`, 'error');
+        const msg = tt === 'piece-range'
+          ? `That square is not reachable - try one of the glowing squares!`
+          : `That square is not in this ${tt === 'click-file' ? 'file' : 'rank'} - try the glowing one!`;
+        showFb(msg, 'error');
       }
       return;
     }
@@ -901,7 +906,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
           {/* Continue */}
           {(() => {
-            const selfAdvancing = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'piece-letter-quiz', 'piece-spot-quiz', 'write-notation', 'independent-squares', 'click-square', 'click-file', 'click-rank'].includes(step?.taskType);
+            const selfAdvancing = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'piece-letter-quiz', 'piece-spot-quiz', 'write-notation', 'independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range'].includes(step?.taskType);
             if (speedState?.active || quizState?.active || fileQS?.active) return null;
             if (selfAdvancing) return null;
             if (step?.taskType === 'recap-quiz' && voiceFinished && recapAnswer === null) return null;
