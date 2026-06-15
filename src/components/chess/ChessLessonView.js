@@ -487,7 +487,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (!curr) return;
     setPieceQuizAnswer(answer);
     setTotal(t => t + 1);
-    const correct = answer === curr.correctLetter;
+    const correctValue = curr.correctLetter !== undefined ? curr.correctLetter : curr.pieceName;
+    const correct = answer === correctValue;
     const ni = pieceQuizIdx + 1;
 
     const advance = () => {
@@ -501,11 +502,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
     if (correct) {
       setScore(s => s + 1); setStreak(s => s + 1);
-      const vm = curr.correctLetter === '(no letter)' ? 'Correct! Pawns get no letter!' : `Correct! ${curr.correctLetter} is right!`;
+      const vm = correctValue === '(no letter)' ? 'Correct! Pawns get no letter!' : `Correct! ${correctValue} is right!`;
       showFb(vm, 'success', vm, advance);
     } else {
       setStreak(0);
-      const vm = `Not quite. The answer was ${curr.correctLetter}.`;
+      const vm = `Not quite. The answer was ${correctValue}.`;
       showFb(vm, 'error', vm, advance);
     }
   }
@@ -614,6 +615,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     ...(step?.taskType === 'independent-squares' ? [step.targetSquares?.[indepIdx]].filter(Boolean) : []),
     ...(step?.taskType === 'colour-quiz' && quizState?.active ? [step.quizSquares?.[quizIdx]?.sq].filter(Boolean) : []),
     ...(step?.taskType === 'speed-round' && speedState?.active ? [speedState.currentTarget].filter(Boolean) : []),
+    ...(['piece-letter-quiz', 'piece-spot-quiz'].includes(step?.taskType) ? [step.quizItems?.[pieceQuizIdx]?.square].filter(Boolean) : []),
   ];
 
   // Responsive board width
@@ -655,9 +657,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         <div className="cl-done-card">
           <Award size={56} className="cl-done-icon" />
           <h2>Lesson 1 complete!</h2>
-          <p className="cl-done-sub">The board - files, ranks and squares</p>
+          <p className="cl-done-sub">The board, the squares, and the chess army</p>
           <p className="cl-done-msg">
-            Outstanding work {childName}! You know every square on the chess board. You are ready for Lesson 2!
+            Outstanding work {childName}! You know every square on the chess board, and you can recognise all six chess pieces. You are ready for Lesson 2 — the language of chess!
           </p>
           <div className="cl-done-score">
             <span className="cl-done-n">{score}</span>
@@ -828,18 +830,19 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
             </div>
           )}
 
-          {/* Piece letter quiz */}
-          {step?.taskType === 'piece-letter-quiz' && voiceFinished && step.quizItems?.[pieceQuizIdx] && (
+          {/* Piece letter quiz / piece spot quiz */}
+          {['piece-letter-quiz', 'piece-spot-quiz'].includes(step?.taskType) && voiceFinished && step.quizItems?.[pieceQuizIdx] && (
             <div className="cl-recap">
               <div className="cl-recap-q">
-                Item {pieceQuizIdx + 1} of {step.quizItems.length} — what is this piece's letter?
+                Item {pieceQuizIdx + 1} of {step.quizItems.length} — {step.taskType === 'piece-spot-quiz' ? 'which piece is highlighted?' : "what is this piece's letter?"}
               </div>
               <div className="cl-recap-opts">
                 {step.quizItems[pieceQuizIdx].options.map((opt, i) => {
                   const curr = step.quizItems[pieceQuizIdx];
+                  const correctValue = curr.correctLetter !== undefined ? curr.correctLetter : curr.pieceName;
                   let cls = 'cl-recap-opt';
                   if (pieceQuizAnswer !== null) {
-                    if (opt === curr.correctLetter) cls += ' cl-recap-correct';
+                    if (opt === correctValue) cls += ' cl-recap-correct';
                     else if (opt === pieceQuizAnswer) cls += ' cl-recap-wrong';
                   }
                   return (
@@ -898,7 +901,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
           {/* Continue */}
           {(() => {
-            const selfAdvancing = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'piece-letter-quiz', 'write-notation', 'independent-squares', 'click-square', 'click-file', 'click-rank'].includes(step?.taskType);
+            const selfAdvancing = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'piece-letter-quiz', 'piece-spot-quiz', 'write-notation', 'independent-squares', 'click-square', 'click-file', 'click-rank'].includes(step?.taskType);
             if (speedState?.active || quizState?.active || fileQS?.active) return null;
             if (selfAdvancing) return null;
             if (step?.taskType === 'recap-quiz' && voiceFinished && recapAnswer === null) return null;
