@@ -9,7 +9,7 @@ export const LESSON_1 = {
   id: 'chess-lesson-1',
   title: 'The Board — Files, Ranks and Squares',
   subtitle: 'Lesson 1 of 24 · Beginner Module',
-  totalMinutes: 50,
+  totalMinutes: 55,
 
   phases: [
 
@@ -20,7 +20,7 @@ export const LESSON_1 = {
       id: 'welcome',
       title: 'Welcome to Chess!',
       type: 'story',
-      durationMins: 6,
+      durationMins: 4,
       steps: [
         {
           id: 'w1',
@@ -525,7 +525,7 @@ export const LESSON_1 = {
       id: 'speedchallenge',
       title: 'Speed Challenge!',
       type: 'speed',
-      durationMins: 8,
+      durationMins: 7,
       steps: [
         {
           id: 'sp1',
@@ -595,23 +595,136 @@ export const LESSON_1 = {
           voice: `{name}, let us recap what you have learned today! The chess board has 64 squares arranged in 8 columns and 8 rows. The columns are called FILES — and they are named with letters from a to h. The rows are called RANKS — numbered 1 to 8 from bottom to top. Every square has a unique name made of its file letter followed by its rank number — like e4, d5, or a1. The bottom left corner a1 is always dark. And light and dark squares alternate across the entire board. You have learned all of this in just one lesson! You should be very proud of yourself!`,
           task: null,
           taskType: 'recap-quiz',
-          continueLabel: 'What is next?',
+          continueLabel: 'One more thing before we finish...',
           recapQuestion: 'Which letter-number combination correctly names a square?',
           recapOptions: ['e4', '4e', 'e-4'],
           recapCorrect: 0,
           recapCorrectVoice: `Yes! e4 — file letter first, then rank number. You really did learn this!`,
           recapWrongVoice: `Not quite. Remember — the file letter always comes first, then the rank number, like e4.`,
         },
+      ],
+    },
+
+    // ═══════════════════════════════════════════════════════════
+    // PHASE 8 — MEET THE CHESS ARMY (8 minutes)
+    // Visual/conceptual introduction to the six piece types.
+    // No movement practice yet — that comes in Lessons 3-5.
+    // Prepares the ground for Lesson 2 (piece letters + notation).
+    // ═══════════════════════════════════════════════════════════
+    {
+      id: 'meetpieces',
+      title: 'Meet the Chess Army',
+      type: 'teach',
+      durationMins: 8,
+      steps: [
+
         {
-          id: 'wu2',
+          id: 'mp1',
+          type: 'observe',
+          boardState: 'start',
+          highlights: [],
+          voice: `Before you go, {name}, let's do one more fun thing — let's meet the chess army! Every game starts with sixteen pieces on each side — sixteen for you, and sixteen for your opponent. Look at the board — the back two rows are full of pieces, all lined up and ready. There are six different TYPES of pieces, and once you know them, you will recognise them anywhere — on a real board, on a screen, or even in a book!`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: "Let's meet them!",
+        },
+
+        {
+          id: 'mp2',
+          type: 'observe',
+          boardState: 'start',
+          highlights: ['e1', 'e8'],
+          voice: `First — the KING. Look at e1 for White and e8 for Black. See the little cross on top of his crown? That is how you spot a King. The King is the MOST IMPORTANT piece on the board — if your King is ever trapped with no escape, the game is over. The King can move only ONE square in any direction — forward, backward, sideways, or diagonally — but always just one step at a time, like someone walking very carefully.`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: 'Next piece — the Queen',
+        },
+
+        {
+          id: 'mp3',
+          type: 'observe',
+          boardState: 'start',
+          highlights: ['d1', 'd8'],
+          voice: `Next — the QUEEN! She stands right next to the King, on d1 for White and d8 for Black. You can spot her by the crown of points on top — like a little sun. The Queen is the MOST POWERFUL piece in the whole game. She can move in any direction — forward, backward, sideways, AND diagonally — and as far as she likes, as long as nothing is blocking her path. Powerful, but she needs to be protected — losing your Queen is a big disadvantage!`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: 'Next piece — the Rook',
+        },
+
+        {
+          id: 'mp4',
+          type: 'observe',
+          boardState: 'start',
+          highlights: ['a1', 'h1', 'a8', 'h8'],
+          voice: `Now — the ROOK! Look at the four corners of the board — a1, h1, a8, and h8. The Rook looks like a little castle tower, with a flat, blocky top. Rooks move in straight lines only — up, down, left, or right — as far as the board allows, like a tower watching down a long, straight hallway. They cannot move diagonally at all.`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: 'Next piece — the Bishop',
+        },
+
+        {
+          id: 'mp5',
+          type: 'observe',
+          boardState: 'start',
+          highlights: ['c1', 'f1', 'c8', 'f8'],
+          voice: `Next — the BISHOP. You'll find Bishops on c1 and f1 for White, and c8 and f8 for Black — right next to the King and Queen. A Bishop has a tall, rounded top, often with a little notch or slit near the top — like a hat. Bishops move only DIAGONALLY, in straight diagonal lines, as far as the board allows. Here is something amazing — a Bishop stays on the SAME COLOUR square for its entire life! A Bishop that starts on a light square can NEVER, EVER reach a dark square. We will explore that secret more in a future lesson!`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: 'Next piece — the Knight',
+        },
+
+        {
+          id: 'mp6',
+          type: 'observe',
+          boardState: 'start',
+          highlights: ['b1', 'g1', 'b8', 'g8'],
+          voice: `Now — the KNIGHT! Look at b1 and g1 for White, and b8 and g8 for Black. The Knight looks like a horse's head — it's usually the easiest piece to recognise! The Knight moves in a special L-shape — like the letter L drawn on the board. It is the ONLY piece that can JUMP over other pieces, like a horse leaping over a fence. We will practise the Knight's jump properly very soon — it feels like magic the first time you try it!`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: 'Last one — the Pawn',
+        },
+
+        {
+          id: 'mp7',
+          type: 'observe',
+          boardState: 'start',
+          highlights: ['e2', 'e7'],
+          voice: `And finally — the PAWN! Look at the entire second row for White, and the entire seventh row for Black — eight little pawns standing in a line, like a wall of tiny soldiers. The Pawn is the smallest piece, with a round head and no special shape. Pawns move forward only — usually one square at a time — and they capture diagonally. They are the foot soldiers of the chess army, and even though each one looks small, pawns can become VERY powerful later in the game. We'll see how, in a future lesson!`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: 'Quick piece check!',
+        },
+
+        {
+          id: 'mp8',
+          type: 'piece-spot-quiz',
+          boardState: 'start',
+          highlights: [],
+          voice: `Let's see if you can spot each piece by its SHAPE. I'll highlight a square — you tell me which piece is standing there, just by looking at its shape. Ready?`,
+          task: 'Which piece is on the highlighted square?',
+          taskType: 'piece-spot-quiz',
+          quizItems: [
+            { square: 'g1', pieceName: 'Knight', options: ['Knight', 'Bishop', 'Rook'] },
+            { square: 'd1', pieceName: 'Queen', options: ['King', 'Queen', 'Bishop'] },
+            { square: 'a1', pieceName: 'Rook', options: ['Rook', 'Knight', 'Pawn'] },
+            { square: 'f1', pieceName: 'Bishop', options: ['Rook', 'Bishop', 'Queen'] },
+            { square: 'e1', pieceName: 'King', options: ['Queen', 'King', 'Knight'] },
+            { square: 'd2', pieceName: 'Pawn', options: ['Pawn', 'Bishop', 'Rook'] },
+          ],
+          successVoice: `Wonderful, {name}! You can now recognise every piece on the board just by its shape — King, Queen, Rook, Bishop, Knight, and Pawn.`,
+        },
+
+        {
+          id: 'mp9',
           type: 'wrapup',
           boardState: 'empty',
           highlights: [],
-          voice: `Next session, {name}, we learn the secret LANGUAGE of chess — called Algebraic Notation. This is how every chess move in history has been written down. When you can read and write chess notation, you can look at ANY chess game ever played — even games from 100 years ago — and understand exactly what happened! It is like learning to read a new language. I cannot wait to teach you! See you next time, and keep practising those square names between now and then!`,
+          voice: `Now that you know WHO is on the board, {name}, next session we learn the secret LANGUAGE of chess — called Algebraic Notation. This is how every chess move in history has been written down. You already know King, Queen, Rook, Bishop, Knight, and Pawn — next time, you'll learn each piece's special LETTER, and how to read and write real chess moves. I cannot wait to teach you! See you next time, and keep practising those square names between now and then!`,
           task: null,
           taskType: 'complete',
           continueLabel: 'Finish lesson!',
         },
+
       ],
     },
   ],
