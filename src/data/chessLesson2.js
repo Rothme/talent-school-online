@@ -27,7 +27,7 @@ export const LESSON_2 = {
           type: 'observe',
           boardState: 'empty',
           highlights: [],
-          voice: `Welcome back, {name}! Today we learn something amazing — the secret LANGUAGE of chess, called algebraic notation. But first, let's warm up our brains with the squares you learned last time. I am going to highlight some squares, and I want you to say their names out loud before clicking them. Ready? Here comes the first one!`,
+          voice: `Welcome back, {name}! Last time you met the whole chess army — King, Queen, Rook, Bishop, Knight, and Pawn. Today we learn something amazing — the secret LANGUAGE of chess, called algebraic notation, so you can read and write about all of them! But first, let's warm up our brains with the squares you learned. I am going to highlight some squares, and I want you to say their names out loud before clicking them. Ready? Here comes the first one!`,
           task: null,
           taskType: 'observe',
           continueLabel: "Let's go!",
