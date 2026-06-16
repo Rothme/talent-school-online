@@ -28,6 +28,9 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
+// Shared state for progressive highlighting callbacks from boundary events
+let onBoundaryCallback = null;
+
 // Call this on any user click to unlock audio
 export function unlockAudio() {
   userHasInteracted = true;
@@ -52,7 +55,7 @@ export function stopSpeech() {
   try { window.speechSynthesis?.cancel(); } catch(e) {}
 }
 
-export async function speakElevenLabs(text, { onStart, onEnd, onError, onBlocked } = {}) {
+export async function speakElevenLabs(text, { onStart, onEnd, onError, onBlocked, onBoundary } = {}) {
   if (!text?.trim()) return;
   stopSpeech();
 
@@ -63,7 +66,7 @@ export async function speakElevenLabs(text, { onStart, onEnd, onError, onBlocked
 
   // ── Browser TTS is primary while ElevenLabs is disabled ──
   if (!ELEVENLABS_ENABLED) {
-    speakBrowserPrimary(text, { onStart, onEnd, onBlocked });
+    speakBrowserPrimary(text, { onStart, onEnd, onBlocked, onBoundary });
     return;
   }
 
@@ -123,11 +126,9 @@ export async function speakElevenLabs(text, { onStart, onEnd, onError, onBlocked
 // speechSynthesis is also subject to autoplay-gesture restrictions
 // in some browsers, so if speaking fails immediately we queue for
 // the tap-to-start overlay just like the ElevenLabs path used to.
-function speakBrowserPrimary(text, { onStart, onEnd, onBlocked } = {}) {
+function speakBrowserPrimary(text, { onStart, onEnd, onBlocked, onBoundary } = {}) {
   try {
     if (!window.speechSynthesis) {
-      // No TTS available at all in this browser - skip narration
-      // gracefully rather than blocking lesson progression forever.
       onEnd?.();
       return;
     }
@@ -145,15 +146,22 @@ function speakBrowserPrimary(text, { onStart, onEnd, onBlocked } = {}) {
     u.onend   = () => onEnd?.();
     u.onerror = () => onEnd?.();
 
+    // Progressive word highlighting — fires as each word is spoken
+    if (onBoundary) {
+      u.onboundary = (e) => {
+        if (e.name === 'word') {
+          const word = text.slice(e.charIndex, e.charIndex + e.charLength).trim();
+          onBoundary(word, e.charIndex);
+        }
+      };
+    }
+
     window.speechSynthesis.speak(u);
 
-    // Some browsers silently drop speak() calls outside a user
-    // gesture without firing onerror. Detect this and surface the
-    // tap-to-start overlay so the user can unlock it with one tap.
     setTimeout(() => {
       if (!started && window.speechSynthesis.paused === false && !window.speechSynthesis.speaking) {
         pendingText = text;
-        pendingCallbacks = { onStart, onEnd, onBlocked };
+        pendingCallbacks = { onStart, onEnd, onBlocked, onBoundary };
         onBlocked?.();
       }
     }, 250);
