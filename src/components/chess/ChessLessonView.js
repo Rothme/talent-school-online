@@ -15,6 +15,33 @@ function fill(text, name) {
   return (text || '').replace(/\{name\}/g, name);
 }
 
+// Convert a FEN string to a react-chessboard position object
+// so position changes can be diffed and animated piece-by-piece
+function fenToPositionObj(fen) {
+  if (!fen || fen === 'start') {
+    return 'start'; // react-chessboard handles 'start' natively
+  }
+  if (typeof fen === 'object') return fen; // already a position obj
+  try {
+    const c = new Chess(fen);
+    const board = c.board();
+    const pos = {};
+    const pieceMap = { k:'K', q:'Q', r:'R', b:'B', n:'N', p:'P' };
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const sq = board[r][f];
+        if (sq) {
+          const sqName = 'abcdefgh'[f] + (8 - r);
+          pos[sqName] = (sq.color === 'w' ? 'w' : 'b') + pieceMap[sq.type];
+        }
+      }
+    }
+    return pos;
+  } catch(e) {
+    return fen; // fallback to raw FEN if parsing fails
+  }
+}
+
 function resolveBoardPosition(boardFen, placedPieces) {
   if (boardFen === 'empty-custom') {
     // Convert placedPieces {square: {piece, color}} -> {square: 'wP'}
@@ -24,7 +51,8 @@ function resolveBoardPosition(boardFen, placedPieces) {
     });
     return pos;
   }
-  return boardFen || {};
+  // Convert FEN to position object for smooth animation
+  return fenToPositionObj(boardFen || 'start');
 }
 
 // ─────────────────────────────────────────────────────
@@ -226,7 +254,14 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
     // Compute board FEN for this step
     if (step?.taskType === 'notation-demo') {
-      setBoardFen(step.demoFen || 'start');
+      // Keep the PREVIOUS position briefly so player can see
+      // where the piece starts before it slides to the new square.
+      // The animation fires ~800ms after voice begins.
+      const prevFen = boardFen;
+      const demoTimer = setTimeout(() => {
+        setBoardFen(step.demoFen || 'start');
+      }, 800);
+      return () => clearTimeout(demoTimer);
     } else if (step?.taskType === 'notation-build') {
       setBoardFen(step.fromFen || 'start');
     } else if (step?.taskType === 'write-notation') {
@@ -246,9 +281,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       setBoardFen('start');
     } else if (step?.boardState === 'empty') {
       setBoardFen('empty-custom');
-    } else if (step?.boardState && step.boardState !== 'custom') {
-      // Treat any other boardState value as a literal FEN string
-      setBoardFen(step.boardState);
+    } else if (step?.boardState && step.boardState !== 'custom' && step.boardState !== 'start' && step.boardState !== 'empty') {
+      // Literal FEN string — animate the transition with a brief delay
+      const t = setTimeout(() => setBoardFen(step.boardState), 200);
+      return () => clearTimeout(t);
     }
   }, [phaseIdx, stepIdx]);
 
@@ -859,7 +895,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 position={resolveBoardPosition(boardFen, placedPieces)}
                 boardWidth={Math.max(240, boardWidth - 28)}
                 showAnimations={true}
-                animationDuration={300}
+                animationDuration={500}
                 showBoardNotation={true}
                 arePiecesDraggable={['notation-build', 'notation-puzzle-move'].includes(step?.taskType) && !moveDone}
                 onPieceDrop={handlePieceDrop}
