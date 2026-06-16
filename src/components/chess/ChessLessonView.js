@@ -113,13 +113,32 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   // Timer — counts up from 0, shown as time elapsed / total lesson time
   const lessonStartTime = useRef(Date.now());
   const [elapsedSecs, setElapsedSecs] = useState(0);
+  const [timerPaused, setTimerPaused] = useState(false);
+  const pausedElapsed = useRef(0); // elapsed at the moment of pause
+  const pauseStartTime = useRef(null); // wall-clock when paused
   useEffect(() => {
     lessonStartTime.current = Date.now();
     const id = setInterval(() => {
+      if (pauseStartTime.current !== null) return; // paused — don't tick
       setElapsedSecs(Math.floor((Date.now() - lessonStartTime.current) / 1000));
     }, 1000);
     return () => clearInterval(id);
   }, []);
+
+  function handleTimerPause() {
+    if (!timerPaused) {
+      // Pause: freeze elapsed, record wall-clock
+      pausedElapsed.current = elapsedSecs;
+      pauseStartTime.current = Date.now();
+      setTimerPaused(true);
+    } else {
+      // Resume: shift lessonStartTime forward by however long we were paused
+      const pausedDuration = Date.now() - pauseStartTime.current;
+      lessonStartTime.current += pausedDuration;
+      pauseStartTime.current = null;
+      setTimerPaused(false);
+    }
+  }
 
   // Repeat — replay current step's voice narration from the beginning
   const currentVoiceText = useRef('');
@@ -912,9 +931,14 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           <h2 className="cl-banner-title">{lesson.title}</h2>
         </div>
         <div className="cl-banner-right">
-          <div className={`cl-timer ${timerWarning ? 'cl-timer-warn' : ''}`}>
-            <Clock size={13} />
-            <span>{timerStr}</span>
+          <div className="cl-timer-row">
+            <div className={`cl-timer ${timerWarning ? 'cl-timer-warn' : ''} ${timerPaused ? 'cl-timer-paused' : ''}`}>
+              <Clock size={13} />
+              <span>{timerStr}</span>
+            </div>
+            <button className="cl-timer-pause-btn" onClick={handleTimerPause} title={timerPaused ? 'Resume timer' : 'Pause timer'}>
+              {timerPaused ? '▶' : '⏸'}
+            </button>
           </div>
           <div className="cl-progress">
             <div className="cl-progress-track"><div className="cl-progress-fill" style={{ width: `${pct}%` }} /></div>
