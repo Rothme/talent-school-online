@@ -75,12 +75,10 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     backgroundColor: 'rgba(255,210,0,0.85)',
     boxShadow: 'inset 0 0 0 3px rgba(255,210,0,1)',
   }));
-  // Colour-quiz square: BLINKING border only, absolutely no colour change
-  // so the student always sees the square's true dark/light colour
+  // Colour-quiz square: white blinking border ONLY — no yellow, no colour change at all
   if (colourQuizSq) {
     setStyle(colourQuizSq, {
-      boxShadow: 'inset 0 0 0 4px rgba(255,255,255,0.95)',
-      animation: 'cl-sq-blink 0.8s step-end infinite',
+      animation: 'cl-sq-blink 0.9s step-end infinite',
     });
   }
   (targets || []).forEach(sq => {
@@ -239,31 +237,50 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   }
 
   // Progressive word highlighting — called per word boundary as Ms. Momo speaks.
-  // Only highlights when the spoken word is a specific chess reference.
+  // Strict rules to prevent false highlights:
+  // - Single letters only trigger file highlight when the PREVIOUS word was 'file'
+  // - Rank numbers only trigger when the PREVIOUS word was 'rank'
+  // - Square coordinates (e4, d5 etc) always highlight
+  // - Suppressed entirely for test/challenge taskTypes
+  const lastSpokenWord = useRef('');
   function applyNeonWord(word) {
     if (!word) return;
+    // Suppress during test/challenge steps
+    const suppressTypes = ['independent-squares', 'speed-round', 'colour-quiz',
+                          'piece-letter-quiz', 'piece-spot-quiz', 'recap-quiz'];
+    if (suppressTypes.includes(step?.taskType)) { lastSpokenWord.current = word.toLowerCase(); return; }
+
     const w = word.toLowerCase().replace(/[^a-z0-9]/g, '');
-    // Square: e.g. "e4", "a1", "h8"
+
+    // Square: e.g. "e4", "a1" — always highlight
     if (/^[a-h][1-8]$/.test(w)) {
       setNeonSqs([w]);
       clearTimeout(neonTimer.current);
-      neonTimer.current = setTimeout(() => setNeonSqs([]), 2000);
+      neonTimer.current = setTimeout(() => setNeonSqs([]), 2500);
+      lastSpokenWord.current = w;
       return;
     }
-    // Single file letter spoken in context (e.g. "a", "b"... only when short)
-    if (/^[a-h]$/.test(w)) {
+
+    // File letter: ONLY highlight when preceded by the word "file"
+    // This prevents random file highlights when Ms. Momo says any letter
+    if (/^[a-h]$/.test(w) && lastSpokenWord.current === 'file') {
       setNeonFile(w);
       clearTimeout(neonTimer.current);
-      neonTimer.current = setTimeout(() => setNeonFile(null), 1500);
+      neonTimer.current = setTimeout(() => setNeonFile(null), 2000);
+      lastSpokenWord.current = w;
       return;
     }
-    // Rank number 1-8
-    if (/^[1-8]$/.test(w)) {
+
+    // Rank number: ONLY highlight when preceded by "rank"
+    if (/^[1-8]$/.test(w) && lastSpokenWord.current === 'rank') {
       setNeonRank(w);
       clearTimeout(neonTimer.current);
-      neonTimer.current = setTimeout(() => setNeonRank(null), 1500);
+      neonTimer.current = setTimeout(() => setNeonRank(null), 2000);
+      lastSpokenWord.current = w;
       return;
     }
+
+    lastSpokenWord.current = w;
   }
 
   function clearNeon() { setNeonFile(null); setNeonRank(null); setNeonSqs([]); setGlowPieces([]); }
@@ -281,7 +298,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (step?.highlightRank) setNeonRank(String(step.highlightRank));
     if (step?.highlights?.length) setNeonSqs(step.highlights);
 
-    if (['click-file', 'click-rank', 'click-square', 'piece-range'].includes(step?.taskType))
+    // Only pre-highlight targets for click-square (single target is fine)
+    // click-file and click-rank: column glow (neonFile/neonRank) is enough
+    // piece-range: no pre-highlighting — student finds squares from instruction
+    if (['click-square'].includes(step?.taskType))
       setTargetSqs(step.targetSquares || []);
     else setTargetSqs([]);
 
@@ -620,9 +640,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         else {
           const next = rem[0];
           setSpeed(p => ({ ...p, hits: nh, currentTarget: next, done: [...p.done, sq] }));
-          const msg = `${sq.toUpperCase()} ✓ — find ${next.toUpperCase()}!`;
-          setCurrentNarration(`Find ${next.toUpperCase()}!`);
-          showFb(msg, 'success');
+          const voiceMsg = `Find ${next.toUpperCase()}!`;
+          setCurrentNarration(voiceMsg);
+          showFb(`${sq.toUpperCase()} ✓`, 'success', voiceMsg);
         }
       } else {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 400);
@@ -635,8 +655,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (!tgts.length) return;
     setClicked([]); setStreak(0);
     setSpeed({ active: true, targets: tgts, currentTarget: tgts[0], hits: 0, done: [], timeLeft: roundStep.timeLimitSecs || 75, totalTime: roundStep.timeLimitSecs || 75 });
-    setCurrentNarration(`Find ${tgts[0].toUpperCase()}!`);
-    showFb(`Find ${tgts[0].toUpperCase()}!`, 'hint');
+    const startVoice = `Find ${tgts[0].toUpperCase()}!`;
+    setCurrentNarration(startVoice);
+    showFb(startVoice, 'hint', startVoice);
     speedRef.current = setInterval(() => {
       setSpeed(p => {
         if (!p) return p;
