@@ -113,32 +113,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   // Timer — counts up from 0, shown as time elapsed / total lesson time
   const lessonStartTime = useRef(Date.now());
   const [elapsedSecs, setElapsedSecs] = useState(0);
-  const [timerPaused, setTimerPaused] = useState(false);
-  const pausedElapsed = useRef(0); // elapsed at the moment of pause
-  const pauseStartTime = useRef(null); // wall-clock when paused
   useEffect(() => {
     lessonStartTime.current = Date.now();
     const id = setInterval(() => {
-      if (pauseStartTime.current !== null) return; // paused — don't tick
       setElapsedSecs(Math.floor((Date.now() - lessonStartTime.current) / 1000));
     }, 1000);
     return () => clearInterval(id);
   }, []);
-
-  function handleTimerPause() {
-    if (!timerPaused) {
-      // Pause: freeze elapsed, record wall-clock
-      pausedElapsed.current = elapsedSecs;
-      pauseStartTime.current = Date.now();
-      setTimerPaused(true);
-    } else {
-      // Resume: shift lessonStartTime forward by however long we were paused
-      const pausedDuration = Date.now() - pauseStartTime.current;
-      lessonStartTime.current += pausedDuration;
-      pauseStartTime.current = null;
-      setTimerPaused(false);
-    }
-  }
 
   // Repeat — replay current step's voice narration from the beginning
   const currentVoiceText = useRef('');
@@ -147,6 +128,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     const text = currentVoiceText.current || fill(step?.voice || '', childName);
     if (!text) return;
     stopSpeech();
+    // Reset position — repeat always starts from the beginning
+    pauseCharPos.current = 0;
+    pausedRemainingText.current = text;
     setIsPlaying(false); setIsPaused(false);
     speakElevenLabs(text, {
       onStart: () => { setIsPlaying(true); setIsPaused(false); },
@@ -160,14 +144,44 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   }
 
   // Pause / Resume Ms. Momo mid-sentence
+  // Track character position so pause/resume works reliably
+  // Chrome drops utterances on speechSynthesis.resume() — so we
+  // instead stop speech and create a NEW utterance from the remaining text.
+  const pauseCharPos = useRef(0);
+  const pausedRemainingText = useRef('');
+
   function handlePauseResume() {
     unlockAudio();
     if (isPaused) {
-      window.speechSynthesis?.resume();
-      setIsPaused(false); setIsPlaying(true);
+      // RESUME — speak remaining text from where we paused
+      const remaining = pausedRemainingText.current;
+      if (!remaining?.trim()) {
+        setIsPaused(false);
+        return;
+      }
+      setIsPaused(false);
+      speakElevenLabs(remaining, {
+        onStart: () => { setIsPlaying(true); setIsPaused(false); },
+        onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onBoundary: (word, charIdx) => {
+          // Update remaining text as speech progresses
+          pauseCharPos.current = charIdx;
+          pausedRemainingText.current = remaining.slice(charIdx);
+          const noHighlight = ['independent-squares','speed-round'].includes(step?.taskType);
+          if (!noHighlight) applyNeonWord(word);
+        },
+      });
     } else {
-      window.speechSynthesis?.pause();
-      setIsPaused(true); setIsPlaying(false);
+      // PAUSE — stop speech, save remaining text from current position
+      const fullText = currentVoiceText.current || '';
+      const remaining = pauseCharPos.current > 0
+        ? fullText.slice(pauseCharPos.current)
+        : fullText;
+      pausedRemainingText.current = remaining;
+      window.speechSynthesis?.cancel();
+      setIsPaused(true);
+      setIsPlaying(false);
     }
   }
 
@@ -179,6 +193,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (step?.voice) {
       const text = fill(step.voice, childName);
       currentVoiceText.current = text;
+      pauseCharPos.current = 0;
+      pausedRemainingText.current = text;
       setCurrentNarration(text);
       applyNeon(text);
       voiceRef.current = true;
@@ -388,6 +404,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     voiceRef.current = true;
     const text = fill(step.voice, childName);
     currentVoiceText.current = text;
+    pauseCharPos.current = 0; // reset position tracking for new step
+    pausedRemainingText.current = text;
     setCurrentNarration(text);
     applyNeon(text);
     const fallbackMs = Math.max(6000, text.length * 110) + 5000;
@@ -397,7 +415,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
       onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
       onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); },
-      onBoundary: (word) => {
+      onBoundary: (word, charIdx) => {
+        // Track position for pause/resume
+        if (charIdx !== undefined) {
+          pauseCharPos.current = charIdx;
+          pausedRemainingText.current = text.slice(charIdx);
+        }
         // Suppress word highlights during test/challenge steps
         const noHighlight = ['independent-squares','speed-round'].includes(step?.taskType);
         if (!noHighlight) applyNeonWord(word);
@@ -931,14 +954,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           <h2 className="cl-banner-title">{lesson.title}</h2>
         </div>
         <div className="cl-banner-right">
-          <div className="cl-timer-row">
-            <div className={`cl-timer ${timerWarning ? 'cl-timer-warn' : ''} ${timerPaused ? 'cl-timer-paused' : ''}`}>
-              <Clock size={13} />
-              <span>{timerStr}</span>
-            </div>
-            <button className="cl-timer-pause-btn" onClick={handleTimerPause} title={timerPaused ? 'Resume timer' : 'Pause timer'}>
-              {timerPaused ? '▶' : '⏸'}
-            </button>
+          <div className={`cl-timer ${timerWarning ? 'cl-timer-warn' : ''}`}>
+            <Clock size={13} />
+            <span>{timerStr}</span>
           </div>
           <div className="cl-progress">
             <div className="cl-progress-track"><div className="cl-progress-fill" style={{ width: `${pct}%` }} /></div>
