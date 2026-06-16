@@ -75,11 +75,12 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     backgroundColor: 'rgba(255,210,0,0.85)',
     boxShadow: 'inset 0 0 0 3px rgba(255,210,0,1)',
   }));
-  // Colour-quiz square: pulsing border only, no colour change
+  // Colour-quiz square: BLINKING border only, absolutely no colour change
+  // so the student always sees the square's true dark/light colour
   if (colourQuizSq) {
     setStyle(colourQuizSq, {
-      boxShadow: 'inset 0 0 0 4px rgba(255,255,255,0.9)',
-      outline: '3px solid rgba(255,210,0,0.9)',
+      boxShadow: 'inset 0 0 0 4px rgba(255,255,255,0.95)',
+      animation: 'cl-sq-blink 0.8s step-end infinite',
     });
   }
   (targets || []).forEach(sq => {
@@ -104,8 +105,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const [stepIdx, setStepIdx] = useState(0);
   const [voiceOn, setVoiceOn] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [classStarted, setClassStarted] = useState(false);
   const [voiceFinished, setVoiceFinished] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [currentNarration, setCurrentNarration] = useState('');
   const voiceFinishTimer = useRef(null);
 
   // Timer — counts up from 0, shown as time elapsed / total lesson time
@@ -119,17 +123,58 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     return () => clearInterval(id);
   }, []);
 
-  // Repeat — replay current step's voice narration
+  // Repeat — replay current step's voice narration from the beginning
   const currentVoiceText = useRef('');
   function handleRepeat() {
     unlockAudio();
-    if (!voiceOn || !currentVoiceText.current) return;
+    const text = currentVoiceText.current || fill(step?.voice || '', childName);
+    if (!text) return;
     stopSpeech();
-    speakElevenLabs(currentVoiceText.current, {
-      onStart: () => setIsPlaying(true),
+    setIsPlaying(false); setIsPaused(false);
+    speakElevenLabs(text, {
+      onStart: () => { setIsPlaying(true); setIsPaused(false); },
       onEnd: () => setIsPlaying(false),
       onError: () => setIsPlaying(false),
+      onBoundary: (word) => {
+        const noHighlight = ['independent-squares','speed-round'].includes(step?.taskType);
+        if (!noHighlight) applyNeonWord(word);
+      },
     });
+  }
+
+  // Pause / Resume Ms. Momo mid-sentence
+  function handlePauseResume() {
+    unlockAudio();
+    if (isPaused) {
+      window.speechSynthesis?.resume();
+      setIsPaused(false); setIsPlaying(true);
+    } else {
+      window.speechSynthesis?.pause();
+      setIsPaused(true); setIsPlaying(false);
+    }
+  }
+
+  // Start Class — clicked by student on very first step
+  function handleStartClass() {
+    unlockAudio();
+    setClassStarted(true);
+    setAudioBlocked(false);
+    if (step?.voice) {
+      const text = fill(step.voice, childName);
+      currentVoiceText.current = text;
+      setCurrentNarration(text);
+      applyNeon(text);
+      voiceRef.current = true;
+      const fallbackMs = Math.max(6000, text.length * 110) + 5000;
+      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
+      speakElevenLabs(text, {
+        onStart: () => { setIsPlaying(true); setIsPaused(false); setAudioBlocked(false); },
+        onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); },
+        onBoundary: (word) => applyNeonWord(word),
+      });
+    }
   }
 
   const [neonFile, setNeonFile] = useState(null);
@@ -168,6 +213,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const speedRef = useRef(null);
   const voiceRef = useRef(false);
   const neonTimer = useRef(null);
+  const seqTimers = useRef([]);
 
   const phase = phases[phaseIdx];
   const steps = phase?.steps || [];
@@ -288,13 +334,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     }
   }, [phaseIdx, stepIdx]);
 
-  // Auto-play voice
+  // Auto-play voice — only fires after student clicks "Start Class"
   useEffect(() => {
-    if (isTest) return; // test accounts: gate already open
-    if (!step?.voice) { setVoiceFinished(true); return; }
+    if (isTest) { setVoiceFinished(true); return; }
+    if (!classStarted) return; // wait for Start Class click
 
     if (!voiceOn) {
-      // Voice disabled — use a reading-time fallback (~13 chars/sec, no cap)
       const ms = Math.max(2000, step.voice.length * 75);
       voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), ms);
       return () => clearTimeout(voiceFinishTimer.current);
@@ -304,21 +349,34 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     voiceRef.current = true;
     const text = fill(step.voice, childName);
     currentVoiceText.current = text;
+    setCurrentNarration(text);
     applyNeon(text);
     const fallbackMs = Math.max(6000, text.length * 110) + 5000;
     voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
     speakElevenLabs(text, {
-      onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
+      onStart: () => { setIsPlaying(true); setIsPaused(false); setAudioBlocked(false); },
       onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
       onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-      onBlocked: () => {
-        clearTimeout(voiceFinishTimer.current);
-        setAudioBlocked(true);
+      onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); },
+      onBoundary: (word) => {
+        // Suppress word highlights during test/challenge steps
+        const noHighlight = ['independent-squares','speed-round'].includes(step?.taskType);
+        if (!noHighlight) applyNeonWord(word);
       },
-      onBoundary: (word) => applyNeonWord(word),
     });
     return () => { clearTimeout(voiceFinishTimer.current); };
-  }, [phaseIdx, stepIdx, voiceOn, isTest]);
+  }, [phaseIdx, stepIdx, voiceOn, isTest, classStarted]);
+
+  // Highlight sequence — fires timed setNeonSqs calls for steps with highlightSequence
+  useEffect(() => {
+    seqTimers.current.forEach(t => clearTimeout(t));
+    seqTimers.current = [];
+    if (!step?.highlightSequence?.length || !classStarted) return;
+    step.highlightSequence.forEach(({ delay, squares }) => {
+      seqTimers.current.push(setTimeout(() => setNeonSqs(squares), delay));
+    });
+    return () => seqTimers.current.forEach(t => clearTimeout(t));
+  }, [phaseIdx, stepIdx, classStarted]);
 
   // Auto-start speed round when entering a speed-round step
   useEffect(() => {
@@ -476,6 +534,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
             setIndepIdx(ni);
             // Don't proactively glow the next target — student finds it from narration only
             const nextVoice = fill(`Now find: ${tgts[ni].toUpperCase()}`, childName);
+            setCurrentNarration(nextVoice);
             showFb(`Find: ${tgts[ni].toUpperCase()}`, 'hint', nextVoice);
           });
         }
@@ -561,8 +620,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         else {
           const next = rem[0];
           setSpeed(p => ({ ...p, hits: nh, currentTarget: next, done: [...p.done, sq] }));
-          setNeonSqs([next]);
-          showFb(`${sq.toUpperCase()} correct - find ${next.toUpperCase()}!`, 'success');
+          const msg = `${sq.toUpperCase()} ✓ — find ${next.toUpperCase()}!`;
+          setCurrentNarration(`Find ${next.toUpperCase()}!`);
+          showFb(msg, 'success');
         }
       } else {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 400);
@@ -575,7 +635,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (!tgts.length) return;
     setClicked([]); setStreak(0);
     setSpeed({ active: true, targets: tgts, currentTarget: tgts[0], hits: 0, done: [], timeLeft: roundStep.timeLimitSecs || 75, totalTime: roundStep.timeLimitSecs || 75 });
-    setNeonSqs([tgts[0]]);
+    setCurrentNarration(`Find ${tgts[0].toUpperCase()}!`);
     showFb(`Find ${tgts[0].toUpperCase()}!`, 'hint');
     speedRef.current = setInterval(() => {
       setSpeed(p => {
@@ -859,7 +919,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
               <span className="cl-listen-label">
                 {isPlaying ? 'Ms. Momo is speaking...' : 'Listen to Ms. Momo'}
               </span>
-              <p className="cl-dialogue-text">"{fill(step?.voice || '', childName)}"</p>
+              <p className="cl-dialogue-text">"{currentNarration || fill(step?.voice || '', childName)}"</p>
 
               <div className="cl-dialogue-actions">
                 <button
@@ -867,17 +927,19 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                   onClick={() => {
                     unlockAudio();
                     const n = !voiceOn; setVoiceOn(n);
-                    if (!n) stopSpeech();
-                    else if (step?.voice) {
-                      const t = fill(step.voice, childName); applyNeon(t);
-                      speakElevenLabs(t, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
-                    }
+                    if (!n) { stopSpeech(); setIsPlaying(false); setIsPaused(false); }
+                    else handleRepeat();
                   }}
                 >
                   <Volume2 size={14} /> {voiceOn ? 'Voice on' : 'Voice off'}
                 </button>
+                {voiceOn && isPlaying && (
+                  <button className="cl-pause-btn" onClick={handlePauseResume} title="Pause Ms. Momo">
+                    {isPaused ? '▶ Resume' : '⏸ Pause'}
+                  </button>
+                )}
                 {voiceOn && (
-                  <button className="cl-repeat-btn" onClick={handleRepeat} title="Repeat Ms. Momo">
+                  <button className="cl-repeat-btn" onClick={handleRepeat} title="Repeat from beginning">
                     <RotateCcw size={13} /> Repeat
                   </button>
                 )}
@@ -903,20 +965,34 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
                 customDarkSquareStyle={{ backgroundColor: '#b58863' }}
                 onSquareClick={handleSquareClickArgs}
+                customSquareRenderer={(() => {
+                  // Show square name label ONLY on highlighted teaching squares
+                  // (guided examples during instruction — NOT during tests/quizzes)
+                  const isTeaching = ['click-square','observe'].includes(step?.taskType);
+                  const labelSqs = isTeaching ? (neonSqs || []) : [];
+                  if (!labelSqs.length) return undefined;
+                  return ({ square, squareColor, children }) => (
+                    <div style={{position:'relative', width:'100%', height:'100%'}}>
+                      {children}
+                      {labelSqs.includes(square) && (
+                        <div style={{
+                          position:'absolute', bottom:2, right:3,
+                          fontSize: Math.max(9, (boardWidth - 56) / 8 * 0.28) + 'px',
+                          fontWeight:900, color:'#fff',
+                          textShadow:'0 1px 3px rgba(0,0,0,0.9)',
+                          pointerEvents:'none', lineHeight:1,
+                          fontFamily:'var(--font-main)',
+                        }}>
+                          {square.toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               />
-              {/* Start Class button — only on the very first step, before voice starts */}
-              {phaseIdx === 0 && stepIdx === 0 && !voiceFinished && !isPlaying && !isTest && (
-                <div className="cl-start-overlay" onClick={() => {
-                  unlockAudio();
-                  if (step?.voice) {
-                    const t = fill(step.voice, childName); applyNeon(t);
-                    speakElevenLabs(t, {
-                      onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
-                      onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-                      onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-                    });
-                  }
-                }}>
+              {/* Start Class button — shows until student clicks it */}
+              {!classStarted && !isTest && (
+                <div className="cl-start-overlay" onClick={handleStartClass}>
                   <div className="cl-start-btn">
                     <span className="cl-start-icon">▶</span>
                     <span>Start Class</span>
