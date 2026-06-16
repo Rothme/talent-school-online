@@ -6,3 +6,4 @@
 <!-- sync: Lesson 1 test fixes round 2 -->
 <!-- sync: responsive layout clamp -->
 <!-- sync: board fit fix -->
+<!-- sync: voice fix + lesson 1 fixes batch 3 -->
