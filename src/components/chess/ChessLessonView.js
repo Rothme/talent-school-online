@@ -164,6 +164,34 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     }, 9000);
   }
 
+  // Progressive word highlighting — called per word boundary as Ms. Momo speaks.
+  // Only highlights when the spoken word is a specific chess reference.
+  function applyNeonWord(word) {
+    if (!word) return;
+    const w = word.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Square: e.g. "e4", "a1", "h8"
+    if (/^[a-h][1-8]$/.test(w)) {
+      setNeonSqs([w]);
+      clearTimeout(neonTimer.current);
+      neonTimer.current = setTimeout(() => setNeonSqs([]), 2000);
+      return;
+    }
+    // Single file letter spoken in context (e.g. "a", "b"... only when short)
+    if (/^[a-h]$/.test(w)) {
+      setNeonFile(w);
+      clearTimeout(neonTimer.current);
+      neonTimer.current = setTimeout(() => setNeonFile(null), 1500);
+      return;
+    }
+    // Rank number 1-8
+    if (/^[1-8]$/.test(w)) {
+      setNeonRank(w);
+      clearTimeout(neonTimer.current);
+      neonTimer.current = setTimeout(() => setNeonRank(null), 1500);
+      return;
+    }
+  }
+
   function clearNeon() { setNeonFile(null); setNeonRank(null); setNeonSqs([]); setGlowPieces([]); }
 
   // Reset on step change
@@ -251,6 +279,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         clearTimeout(voiceFinishTimer.current);
         setAudioBlocked(true);
       },
+      onBoundary: (word) => applyNeonWord(word),
     });
     return () => { clearTimeout(voiceFinishTimer.current); };
   }, [phaseIdx, stepIdx, voiceOn, isTest]);
@@ -387,15 +416,31 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         const vm = fill(step.voiceCorrect?.[indepIdx] || 'Correct!', childName);
         const ni = indepIdx + 1;
         if (ni >= tgts.length) {
+          const finalScore = score + 1;
           showFb(vm, 'success', vm, () => {
-            const vm2 = fill((step.successVoice || 'Done!').replace('{score}', score + 1), childName);
-            showFb(vm2, 'success', vm2, nextStep);
+            const vm2 = fill((step.successVoice || 'Done!').replace('{score}', finalScore), childName);
+            const threshold = step.retryThreshold || 0;
+            if (threshold > 0 && finalScore < threshold) {
+              // Below threshold — offer retry
+              const retryVoice = fill(
+                (step.retryVoice || `You scored {score} out of ${tgts.length}. Let me remind you how squares work, then try again!`)
+                  .replace('{score}', finalScore), childName);
+              showFb(vm2, 'hint', retryVoice, () => {
+                // Reset for retry
+                setScore(0); setTotal(0); setIndepIdx(0); setClicked([]);
+                const hint = fill(step.retryHintVoice || `Remember — file letter first, then rank number. Let's try again! Find: ${tgts[0].toUpperCase()}!`, childName);
+                showFb(hint, 'hint', hint);
+              });
+            } else {
+              showFb(vm2, 'success', vm2, nextStep);
+            }
           });
         } else {
           showFb(vm, 'success', vm, () => {
             setIndepIdx(ni);
-            setNeonSqs([tgts[ni]]);
-            showFb(`Now find: ${tgts[ni].toUpperCase()}`, 'hint', `Now find ${tgts[ni]}`);
+            // Don't proactively glow the next target — student finds it from narration only
+            const nextVoice = fill(`Now find: ${tgts[ni].toUpperCase()}`, childName);
+            showFb(`Find: ${tgts[ni].toUpperCase()}`, 'hint', nextVoice);
           });
         }
       } else {
@@ -649,7 +694,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   const boardNeonSqs = [
     ...neonSqs,
-    ...(step?.taskType === 'independent-squares' ? [step.targetSquares?.[indepIdx]].filter(Boolean) : []),
+    // independent-squares: only reveal target square AFTER a wrong answer
+    ...(step?.taskType === 'independent-squares' && wrongSqs.length > 0
+      ? [step.targetSquares?.[indepIdx]].filter(Boolean) : []),
     // Don't neon-highlight the colour-quiz square — the point of the
     // quiz is for the student to identify colour from the board's own
     // appearance. A bright yellow overlay makes dark squares look light.
@@ -806,7 +853,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         {/* COLUMN 2 — Board */}
         <div className="cl-board-col">
           <div className="cl-board-frame" ref={boardWrapRef}>
-            <div className="cl-board-inner">
+            <div className="cl-board-inner" style={{position:'relative'}}>
               <Chessboard
                 id="tso-chess-lesson"
                 position={resolveBoardPosition(boardFen, placedPieces)}
@@ -821,6 +868,25 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 customDarkSquareStyle={{ backgroundColor: '#b58863' }}
                 onSquareClick={handleSquareClickArgs}
               />
+              {/* Start Class button — only on the very first step, before voice starts */}
+              {phaseIdx === 0 && stepIdx === 0 && !voiceFinished && !isPlaying && !isTest && (
+                <div className="cl-start-overlay" onClick={() => {
+                  unlockAudio();
+                  if (step?.voice) {
+                    const t = fill(step.voice, childName); applyNeon(t);
+                    speakElevenLabs(t, {
+                      onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
+                      onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+                      onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+                    });
+                  }
+                }}>
+                  <div className="cl-start-btn">
+                    <span className="cl-start-icon">▶</span>
+                    <span>Start Class</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
