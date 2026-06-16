@@ -807,14 +807,16 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const boardWrapRef = useRef(null);
   const [boardWidth, setBoardWidth] = useState(560);
   useEffect(() => {
-    function measure() {
-      if (boardWrapRef.current) {
-        setBoardWidth(Math.floor(boardWrapRef.current.offsetWidth));
+    const el = boardWrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setBoardWidth(Math.floor(entry.contentRect.width));
       }
-    }
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    });
+    ro.observe(el);
+    setBoardWidth(Math.floor(el.offsetWidth));
+    return () => ro.disconnect();
   }, []);
 
   const squareStyles = buildSquareStyles({
