@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Chessboard } from 'react-chessboard';
 import confetti from 'canvas-confetti';
-import { Volume2, ChevronRight, ChevronLeft, CheckCircle2, BookOpen, Swords, Award } from 'lucide-react';
+import { Volume2, ChevronRight, ChevronLeft, CheckCircle2, BookOpen, Swords, Award, Clock, RotateCcw } from 'lucide-react';
 import { Chess } from 'chess.js';
 import { LESSON_1 } from '../../data/chessLesson1';
 import { LESSON_2 } from '../../data/chessLesson2';
@@ -72,6 +72,30 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const [voiceFinished, setVoiceFinished] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const voiceFinishTimer = useRef(null);
+
+  // Timer — counts up from 0, shown as time elapsed / total lesson time
+  const lessonStartTime = useRef(Date.now());
+  const [elapsedSecs, setElapsedSecs] = useState(0);
+  useEffect(() => {
+    lessonStartTime.current = Date.now();
+    const id = setInterval(() => {
+      setElapsedSecs(Math.floor((Date.now() - lessonStartTime.current) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Repeat — replay current step's voice narration
+  const currentVoiceText = useRef('');
+  function handleRepeat() {
+    unlockAudio();
+    if (!voiceOn || !currentVoiceText.current) return;
+    stopSpeech();
+    speakElevenLabs(currentVoiceText.current, {
+      onStart: () => setIsPlaying(true),
+      onEnd: () => setIsPlaying(false),
+      onError: () => setIsPlaying(false),
+    });
+  }
 
   const [neonFile, setNeonFile] = useState(null);
   const [neonRank, setNeonRank] = useState(null);
@@ -205,10 +229,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (voiceRef.current) return;
     voiceRef.current = true;
     const text = fill(step.voice, childName);
+    currentVoiceText.current = text;
     const t = setTimeout(() => {
       applyNeon(text);
-      // Safety net only — generous, so it never cuts off real audio.
-      // ~9 chars/sec (slower than natural speech) + 5s buffer.
+      unlockAudio(); // unlock inside the timeout so gesture is still "fresh"
       const fallbackMs = Math.max(6000, text.length * 110) + 5000;
       voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
       speakElevenLabs(text, {
@@ -216,12 +240,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
         onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
         onBlocked: () => {
-          // Browser blocked autoplay — pause the fallback and show "tap to start"
           clearTimeout(voiceFinishTimer.current);
           setAudioBlocked(true);
         },
       });
-    }, 400);
+    }, 300);
     return () => { clearTimeout(t); clearTimeout(voiceFinishTimer.current); };
   }, [phaseIdx, stepIdx, voiceOn, isTest]);
 
@@ -677,6 +700,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   const pct = Math.round((phaseIdx / phases.length) * 100);
   const contLabel = step?.taskType === 'speed-intro' ? 'Start speed challenge!' : step?.continueLabel || 'Continue';
+  const totalSecs = (lesson.totalMinutes || 55) * 60;
+  const remainSecs = Math.max(0, totalSecs - elapsedSecs);
+  const timerMins = Math.floor(remainSecs / 60);
+  const timerSecs = remainSecs % 60;
+  const timerStr = `${timerMins}:${String(timerSecs).padStart(2,'0')}`;
+  const timerWarning = remainSecs < 300; // red when under 5 min
 
   return (
     <div className="cl-root">
@@ -699,9 +728,15 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           </div>
           <h2 className="cl-banner-title">{lesson.title}</h2>
         </div>
-        <div className="cl-progress">
-          <div className="cl-progress-track"><div className="cl-progress-fill" style={{ width: `${pct}%` }} /></div>
-          <span className="cl-progress-label">{phase?.title} · {pct}%</span>
+        <div className="cl-banner-right">
+          <div className={`cl-timer ${timerWarning ? 'cl-timer-warn' : ''}`}>
+            <Clock size={13} />
+            <span>{timerStr}</span>
+          </div>
+          <div className="cl-progress">
+            <div className="cl-progress-track"><div className="cl-progress-fill" style={{ width: `${pct}%` }} /></div>
+            <span className="cl-progress-label">{phase?.title} · {pct}%</span>
+          </div>
         </div>
       </div>
 
@@ -743,6 +778,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 >
                   <Volume2 size={14} /> {voiceOn ? 'Voice on' : 'Voice off'}
                 </button>
+                {voiceOn && (
+                  <button className="cl-repeat-btn" onClick={handleRepeat} title="Repeat Ms. Momo">
+                    <RotateCcw size={13} /> Repeat
+                  </button>
+                )}
               </div>
             </div>
           </div>
