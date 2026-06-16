@@ -359,29 +359,3 @@
 .cl-done-n { font-size: clamp(28px, 2.8vw, 40px); font-weight: 900; color: #5dcaa5; }
 .cl-done-l { font-size: clamp(10px, 0.8vw, 12px); color: #94a3b8; font-weight: 700; }
 
-/* ── Timer pause control ── */
-.cl-timer-row {
-  display: flex; align-items: center; gap: 5px;
-}
-.cl-timer-paused {
-  color: #fbbf24 !important;
-  background: rgba(251,191,36,.12) !important;
-  border-color: rgba(251,191,36,.3) !important;
-  opacity: 0.85;
-}
-.cl-timer-pause-btn {
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.15);
-  color: #94a3b8;
-  border-radius: 6px;
-  padding: 2px 7px;
-  font-size: clamp(10px, 0.8vw, 12px);
-  cursor: pointer;
-  font-family: var(--font-main);
-  transition: all .12s;
-  line-height: 1.4;
-}
-.cl-timer-pause-btn:hover {
-  background: rgba(255,255,255,.16);
-  color: #fff;
-}
