@@ -30,7 +30,7 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // ─────────────────────────────────────────────────────
 // Build square style overrides for neon highlights
 // ─────────────────────────────────────────────────────
-function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets }) {
+function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets, colourQuizSq }) {
   const styles = {};
 
   function setStyle(sq, style) {
@@ -47,6 +47,13 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     backgroundColor: 'rgba(255,210,0,0.85)',
     boxShadow: 'inset 0 0 0 3px rgba(255,210,0,1)',
   }));
+  // Colour-quiz square: pulsing border only, no colour change
+  if (colourQuizSq) {
+    setStyle(colourQuizSq, {
+      boxShadow: 'inset 0 0 0 4px rgba(255,255,255,0.9)',
+      outline: '3px solid rgba(255,210,0,0.9)',
+    });
+  }
   (targets || []).forEach(sq => {
     if (!(clicked || []).includes(sq)) {
       setStyle(sq, { backgroundColor: 'rgba(60,220,90,0.55)', boxShadow: 'inset 0 0 0 3px rgba(50,210,80,0.95)' });
@@ -211,6 +218,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       setBoardFen('start');
     } else if (step?.boardState === 'empty') {
       setBoardFen('empty-custom');
+    } else if (step?.boardState && step.boardState !== 'custom') {
+      // Treat any other boardState value as a literal FEN string
+      setBoardFen(step.boardState);
     }
   }, [phaseIdx, stepIdx]);
 
@@ -230,22 +240,19 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     voiceRef.current = true;
     const text = fill(step.voice, childName);
     currentVoiceText.current = text;
-    const t = setTimeout(() => {
-      applyNeon(text);
-      unlockAudio(); // unlock inside the timeout so gesture is still "fresh"
-      const fallbackMs = Math.max(6000, text.length * 110) + 5000;
-      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
-      speakElevenLabs(text, {
-        onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
-        onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-        onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-        onBlocked: () => {
-          clearTimeout(voiceFinishTimer.current);
-          setAudioBlocked(true);
-        },
-      });
-    }, 300);
-    return () => { clearTimeout(t); clearTimeout(voiceFinishTimer.current); };
+    applyNeon(text);
+    const fallbackMs = Math.max(6000, text.length * 110) + 5000;
+    voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
+    speakElevenLabs(text, {
+      onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
+      onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+      onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+      onBlocked: () => {
+        clearTimeout(voiceFinishTimer.current);
+        setAudioBlocked(true);
+      },
+    });
+    return () => { clearTimeout(voiceFinishTimer.current); };
   }, [phaseIdx, stepIdx, voiceOn, isTest]);
 
   // Auto-start speed round when entering a speed-round step
@@ -338,6 +345,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     unlockAudio();
     const sq = square;
     if (!step) return;
+    // Block interaction until Ms. Momo has finished her instructions
+    if (!voiceFinished && !isTest) return;
     const tt = step.taskType;
 
     if (tt === 'click-file' || tt === 'click-rank' || tt === 'piece-range') {
@@ -641,8 +650,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const boardNeonSqs = [
     ...neonSqs,
     ...(step?.taskType === 'independent-squares' ? [step.targetSquares?.[indepIdx]].filter(Boolean) : []),
-    ...(step?.taskType === 'colour-quiz' && quizState?.active ? [step.quizSquares?.[quizIdx]?.sq].filter(Boolean) : []),
-    ...(step?.taskType === 'speed-round' && speedState?.active ? [speedState.currentTarget].filter(Boolean) : []),
+    // Don't neon-highlight the colour-quiz square — the point of the
+    // quiz is for the student to identify colour from the board's own
+    // appearance. A bright yellow overlay makes dark squares look light.
+    ...(step?.taskType === 'colour-quiz' && quizState?.active ? [] : []),
+    // Speed-round squares are NOT highlighted — student must find them
+    // independently. Highlighting would remove the challenge.
+    // (neonSquares already handles regular teaching highlights above)
     ...(['piece-letter-quiz', 'piece-spot-quiz'].includes(step?.taskType) ? [step.quizItems?.[pieceQuizIdx]?.square].filter(Boolean) : []),
   ];
 
@@ -662,6 +676,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   const squareStyles = buildSquareStyles({
     neonFile, neonRank, neonSquares: boardNeonSqs, clicked, wrong: wrongSqs, targets: targetSqs,
+    colourQuizSq: step?.taskType === 'colour-quiz' && quizState?.active ? step.quizSquares?.[quizIdx]?.sq : null,
   });
 
   function handleAudioOverlayTap() {
