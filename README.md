@@ -3,3 +3,4 @@
 <!-- redeploy trigger: ensure Lessons 4-5 + routing build is live (top of Production) -->
 <!-- sync: colour fixes + timer + repeat button -->
 <!-- sync: Lesson 2 restructure + piece animation -->
+<!-- sync: Lesson 1 test fixes round 2 -->
