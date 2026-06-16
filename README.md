@@ -5,3 +5,4 @@
 <!-- sync: Lesson 2 restructure + piece animation -->
 <!-- sync: Lesson 1 test fixes round 2 -->
 <!-- sync: responsive layout clamp -->
+<!-- sync: board fit fix -->
