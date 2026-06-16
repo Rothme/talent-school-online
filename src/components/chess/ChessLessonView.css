@@ -15,6 +15,25 @@
   position: relative;
 }
 
+.cl-banner-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+.cl-timer {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 13px; font-weight: 900; color: #5dcaa5;
+  background: rgba(93,202,165,.12); border: 1px solid rgba(93,202,165,.25);
+  border-radius: 8px; padding: 3px 10px;
+}
+.cl-timer.cl-timer-warn { color: #f97316; background: rgba(249,115,22,.12); border-color: rgba(249,115,22,.25); }
+
+.cl-repeat-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05); color: #94a3b8; font-size: 11px;
+  font-weight: 700; cursor: pointer; font-family: var(--font-main);
+  transition: all .12s;
+}
+.cl-repeat-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+
 .cl-audio-overlay {
   position: absolute; inset: 0; z-index: 50;
   background: rgba(10,15,30,.78);
