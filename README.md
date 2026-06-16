@@ -7,3 +7,4 @@
 <!-- sync: responsive layout clamp -->
 <!-- sync: board fit fix -->
 <!-- sync: voice fix + lesson 1 fixes batch 3 -->
+<!-- sync: timer pause -->
