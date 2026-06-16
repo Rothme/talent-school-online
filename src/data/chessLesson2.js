@@ -27,7 +27,7 @@ export const LESSON_2 = {
           type: 'observe',
           boardState: 'empty',
           highlights: [],
-          voice: `Welcome back, {name}! Last time you met the whole chess army — King, Queen, Rook, Bishop, Knight, and Pawn. Today we learn something amazing — the secret LANGUAGE of chess, called algebraic notation, so you can read and write about all of them! But first, let's warm up our brains with the squares you learned. I am going to highlight some squares, and I want you to say their names out loud before clicking them. Ready? Here comes the first one!`,
+          voice: `Welcome back, {name}! Last time you met the whole chess army — King, Queen, Rook, Bishop, Knight, and Pawn. Today we learn something amazing — the secret LANGUAGE of chess, called algebraic notation, so you can read and write about all of them! But first, let's warm up our brains with the squares you learned. I am going to CALL OUT square names and you must find them on the board — NO glowing hints this time! Say the square name out loud first, then click it. Ready? Let's go!`,
           task: null,
           taskType: 'observe',
           continueLabel: "Let's go!",
@@ -77,7 +77,7 @@ export const LESSON_2 = {
         {
           id: 'pl2',
           type: 'observe',
-          boardState: 'start',
+          boardState: '4k3/8/8/8/8/8/8/4K3 w - - 0 1',
           highlights: ['e1'],
           voice: `Let's look at the King first. The King starts on e1 for White, and e8 for Black. His letter is K. Whenever you see a capital K in a chess move, it means the King moved.`,
           task: null,
@@ -87,7 +87,7 @@ export const LESSON_2 = {
         {
           id: 'pl3',
           type: 'observe',
-          boardState: 'start',
+          boardState: '3qk3/8/8/8/8/8/8/3QK3 w - - 0 1',
           highlights: ['d1'],
           voice: `Next is the Queen — the most powerful piece! Her letter is Q. She starts on d1 for White and d8 for Black. Remember: Queen starts on her OWN colour. The white Queen is on a light square... wait, is d1 light or dark? Think about it — you learned this in Lesson 1!`,
           task: null,
@@ -97,7 +97,7 @@ export const LESSON_2 = {
         {
           id: 'pl4',
           type: 'observe',
-          boardState: 'start',
+          boardState: '4k3/8/8/8/8/8/8/R3K2R w - - 0 1',
           highlights: ['a1', 'h1'],
           voice: `Now the Rooks — they guard the corners! Their letter is R. White has Rooks on a1 and h1. Rooks move in straight lines, like a castle tower watching down a long hallway.`,
           task: null,
@@ -107,7 +107,7 @@ export const LESSON_2 = {
         {
           id: 'pl5',
           type: 'observe',
-          boardState: 'start',
+          boardState: '4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1',
           highlights: ['c1', 'f1'],
           voice: `The Bishops stand next to the Queen and King — on c1 and f1 for White. Their letter is B. Bishops glide diagonally, like a bishop walking sideways down a church aisle.`,
           task: null,
@@ -117,7 +117,7 @@ export const LESSON_2 = {
         {
           id: 'pl6',
           type: 'observe',
-          boardState: 'start',
+          boardState: '4k3/8/8/8/8/8/8/1N2K1N1 w - - 0 1',
           highlights: ['b1', 'g1'],
           voice: `And the Knights — on b1 and g1. Here is the tricky part: the Knight's letter is N, not K! Why? Because the King ALREADY took K. So we use N — think of "kNight" with a silent k, but we write the N. Knights jump in an L-shape, like a horse galloping and leaping over fences!`,
           task: null,
@@ -127,7 +127,7 @@ export const LESSON_2 = {
         {
           id: 'pl7',
           type: 'observe',
-          boardState: 'start',
+          boardState: '4k3/pppppppp/8/8/8/8/PPPPPPPP/4K3 w - - 0 1',
           highlights: [],
           voice: `Finally — the Pawns. They have NO letter at all. If you see a move written as just "e4" with no capital letter in front, that always means a Pawn moved to e4. Simple, right? No letter equals Pawn!`,
           task: null,
@@ -187,9 +187,9 @@ export const LESSON_2 = {
         {
           id: 'wm3',
           type: 'observe',
-          boardState: 'empty',
-          highlights: [],
-          voice: `When a piece CAPTURES an enemy piece, we add a small "x" before the destination square. If a Knight captures something on e5, we write "Nxe5" — N, then x for capture, then e5. If a Bishop captures on f7, that's "Bxf7". The x means "captures"!`,
+          boardState: '4k3/8/8/4p3/8/5N2/8/4K3 w - - 0 1',
+          highlights: ['f3','e5'],
+          voice: `When a piece CAPTURES an enemy piece, we add a small "x" before the destination square. Look at the board — White has a Knight on f3, and there is a Black Pawn on e5 that the Knight can capture! If the Knight captures it, we write "Nxe5" — N for Knight, x for captures, e5 for the destination square. The x means "captures"! The captured piece is simply removed from the board.`,
           task: null,
           taskType: 'observe',
           continueLabel: 'What about check?',
@@ -197,9 +197,9 @@ export const LESSON_2 = {
         {
           id: 'wm4',
           type: 'observe',
-          boardState: 'empty',
-          highlights: [],
-          voice: `When a move puts the enemy King in CHECK — meaning the King is under attack and must respond — we add a plus sign at the end. "Qh5+" means the Queen moved to h5 and now the King is in check! And if a move is CHECKMATE — game over, no escape — we use a hash symbol instead: "Qh5#".`,
+          boardState: '4k3/8/8/8/4Q3/8/8/K7 w - - 0 1',
+          highlights: ['e4','e8'],
+          voice: `When a move puts the enemy King in CHECK — meaning the King is under attack and must respond — we add a plus sign at the end. Look at the board — White has a Queen on e4 and the Black King is on e8. If the Queen moves to e7, it lands on the same file as the King and puts it in check! That move is written "Qe7+" — Q for Queen, e7 for the square, and + for check! And if a move is CHECKMATE — game over, no escape — we use a hash symbol instead: like "Qe7#".`,
           task: null,
           taskType: 'observe',
           continueLabel: "Let's see real moves!",
