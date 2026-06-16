@@ -809,13 +809,15 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   useEffect(() => {
     const el = boardWrapRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        setBoardWidth(Math.floor(entry.contentRect.width));
-      }
-    });
+    const measure = () => {
+      const w = Math.floor(el.offsetWidth);
+      const h = Math.floor(el.offsetHeight);
+      // Board must be a square — use the smaller of width and height
+      setBoardWidth(Math.min(w, h));
+    };
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    setBoardWidth(Math.floor(el.offsetWidth));
+    measure();
     return () => ro.disconnect();
   }, []);
 
@@ -957,7 +959,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
               <Chessboard
                 id="tso-chess-lesson"
                 position={resolveBoardPosition(boardFen, placedPieces)}
-                boardWidth={Math.max(240, boardWidth - 28)}
+                boardWidth={Math.max(200, boardWidth - 32)}
                 showAnimations={true}
                 animationDuration={500}
                 showBoardNotation={true}
