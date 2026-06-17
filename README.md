@@ -10,3 +10,4 @@
 <!-- sync: timer pause -->
 <!-- sync: pause-resume rebuild -->
 <!-- sync: start class test fix -->
+<!-- sync: voice gesture fix -->
