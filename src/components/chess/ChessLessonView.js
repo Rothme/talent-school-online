@@ -320,6 +320,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   // so the browser gesture window is still active when speak() fires.
   // IMPORTANT: Do NOT call stopSpeech() before this — Chrome treats cancel()
   // as ending the gesture window. speakBrowserPrimary handles cancel internally.
+  // Store speakStep in a ref so useCallback closures always get the latest version
+  const speakStepRef = useRef(null);
+
   function speakStep(targetStep) {
     if (!targetStep?.voice) { setVoiceFinished(true); return; }
     if (isTest) { setVoiceFinished(true); return; }
@@ -356,6 +359,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       },
     });
   }
+
+  // Keep ref always pointing to latest speakStep
+  speakStepRef.current = speakStep;
 
   function clearNeon() { setNeonFile(null); setNeonRank(null); setNeonSqs([]); setGlowPieces([]); }
 
@@ -435,10 +441,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (!classStarted) return;
     if (isTest) { setVoiceFinished(true); return; }
     if (voiceRef.current) return; // already handled by nextStep/handleStartClass
-    // This effect handles the very first step (Start Class) only —
-    // subsequent steps are spoken by nextStep() within the click gesture.
     if (!step?.voice) { setVoiceFinished(true); return; }
-    speakStep(step);
+    speakStepRef.current(step);
     voiceRef.current = true;
   }, [phaseIdx, stepIdx, voiceOn, isTest, classStarted]);
 
@@ -493,7 +497,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     const nextPhase = phases[npi];
     const nextStepData = (nextPhase?.steps || [])[nsi];
     voiceRef.current = true; // mark as handled so useEffect doesn't double-speak
-    speakStep(nextStepData);
+    speakStepRef.current(nextStepData);
   }, [stepIdx, steps, phaseIdx, phases, childName, voiceOn, isTest]);
 
   function showFb(msg, type, voice = '', afterVoice = null) {
