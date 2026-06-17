@@ -284,20 +284,44 @@
 
 .cl-continue {
   width: 100%; padding: clamp(9px, 1vh, 14px);
-  background: linear-gradient(135deg, #f97316, #fbbf24);
-  color: #1f1207; border: none; border-radius: 11px;
+  border: none; border-radius: 11px;
   font-size: clamp(11px, 0.9vw, 14px); font-weight: 900; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 5px;
-  font-family: var(--font-main); transition: transform .12s;
-  box-shadow: 0 5px 18px rgba(249,115,22,.25);
+  font-family: var(--font-main); transition: all .25s ease;
 }
-.cl-continue:hover { transform: scale(1.02); }
-.cl-continue:disabled {
-  background: rgba(255,255,255,.06); color: #64748b;
-  cursor: not-allowed; box-shadow: none; transform: none;
-  font-size: clamp(9px, 0.75vw, 12px); font-weight: 700;
+/* Grey — Ms. Momo is speaking, button dormant */
+.cl-continue-locked {
+  background: rgba(100,116,139,.25);
+  color: #64748b;
+  cursor: not-allowed;
+  box-shadow: none;
 }
-.cl-continue:disabled:hover { transform: none; }
+.cl-continue-locked:hover { transform: none; }
+
+/* Orange — Ms. Momo finished, button active and inviting */
+.cl-continue-ready {
+  background: linear-gradient(135deg, #f97316, #fbbf24);
+  color: #1f1207;
+  box-shadow: 0 5px 18px rgba(249,115,22,.4);
+  animation: cl-btn-pulse 1.5s ease-in-out infinite;
+}
+.cl-continue-ready:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(249,115,22,.6);
+}
+@keyframes cl-btn-pulse {
+  0%, 100% { box-shadow: 0 5px 18px rgba(249,115,22,.4); }
+  50% { box-shadow: 0 5px 28px rgba(249,115,22,.7); }
+}
+.cl-continue-listening {
+  display: flex; align-items: center; gap: 6px;
+  color: #fb923c; font-size: clamp(9px, 0.75vw, 11px);
+  animation: cl-listening-pulse 1s ease-in-out infinite;
+}
+@keyframes cl-listening-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
 
 /* ── Audio blocked overlay ── */
 .cl-audio-overlay {
