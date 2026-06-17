@@ -325,9 +325,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   function speakStep(targetStep) {
     if (!targetStep?.voice) { setVoiceFinished(true); return; }
-    // Test accounts: speak voice BUT also set voiceFinished immediately
-    // so they can click through without waiting for narration to finish
-    if (isTest) { setVoiceFinished(true); }
     if (!voiceOn) {
       const ms = Math.max(2000, targetStep.voice.length * 75);
       clearTimeout(voiceFinishTimer.current);
@@ -374,7 +371,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setSpeed(null); setIndepIdx(0); clearNeon();
     setRecapAnswer(null); setRecapFeedbackDone(false);
     clearTimeout(voiceFinishTimer.current);
-    setVoiceFinished(isTest); // test accounts: always unlocked
+    setVoiceFinished(false); // always start grey — speakStep sets true when Ms. Momo finishes
 
     if (step?.highlightFile) setNeonFile(step.highlightFile);
     if (step?.highlightRank) setNeonRank(String(step.highlightRank));
@@ -441,7 +438,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   // voiceRef.current will be true and we skip to avoid double-speak.
   useEffect(() => {
     if (!classStarted) return;
-    if (isTest) setVoiceFinished(true); // test accounts can click through immediately
     if (voiceRef.current) return; // already handled by nextStep/handleStartClass
     if (!step?.voice) { setVoiceFinished(true); return; }
     speakStepRef.current(step);
@@ -1250,14 +1246,19 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
             if (selfAdvancing) return null;
             if (step?.taskType === 'recap-quiz' && voiceFinished && recapAnswer === null) return null;
 
-            const narrationLed = ['observe', 'speed-intro', 'complete', 'notation-demo'].includes(step?.taskType);
             const isRecap = step?.taskType === 'recap-quiz';
-            const locked = (narrationLed && !voiceFinished && !isTest)
-              || (isRecap && !isTest && (!voiceFinished || recapAnswer === null || !recapFeedbackDone));
+            const locked = !voiceFinished
+              || (isRecap && (recapAnswer === null || !recapFeedbackDone));
             return (
-              <button className="cl-continue" onClick={handleContinue} disabled={locked}>
+              <button
+                className={`cl-continue ${locked ? 'cl-continue-locked' : 'cl-continue-ready'}`}
+                onClick={locked ? undefined : handleContinue}
+                disabled={locked}
+              >
                 {locked ? (
-                  <>{!voiceFinished ? 'Listen to Ms. Momo first...' : recapAnswer === null ? 'Answer the question first...' : 'Listen to Ms. Momo...'}</>
+                  isPlaying
+                    ? <><span className="cl-continue-listening">◉ Ms. Momo is speaking...</span></>
+                    : <>{!voiceFinished ? 'Please wait...' : recapAnswer === null ? 'Answer the question first...' : 'Listen to Ms. Momo...'}</>
                 ) : (
                   <>{contLabel} <ChevronRight size={16} /></>
                 )}
