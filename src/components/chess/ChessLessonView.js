@@ -324,10 +324,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const speakStepRef = useRef(null);
 
   function speakStep(targetStep) {
-    console.log('[speakStep] called, voice:', targetStep?.voice?.slice(0,50));
-    console.log('[speakStep] isTest:', isTest, 'voiceOn:', voiceOn, 'classStarted:', classStarted);
-    if (!targetStep?.voice) { console.log('[speakStep] no voice, setting finished'); setVoiceFinished(true); return; }
-    if (isTest) { console.log('[speakStep] isTest, setting finished'); setVoiceFinished(true); return; }
+    if (!targetStep?.voice) { setVoiceFinished(true); return; }
+    // Test accounts: speak voice BUT also set voiceFinished immediately
+    // so they can click through without waiting for narration to finish
+    if (isTest) { setVoiceFinished(true); }
     if (!voiceOn) {
       const ms = Math.max(2000, targetStep.voice.length * 75);
       clearTimeout(voiceFinishTimer.current);
@@ -441,7 +441,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   // voiceRef.current will be true and we skip to avoid double-speak.
   useEffect(() => {
     if (!classStarted) return;
-    if (isTest) { setVoiceFinished(true); return; }
+    if (isTest) setVoiceFinished(true); // test accounts can click through immediately
     if (voiceRef.current) return; // already handled by nextStep/handleStartClass
     if (!step?.voice) { setVoiceFinished(true); return; }
     speakStepRef.current(step);
@@ -496,8 +496,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     // Speak the next step's voice directly within this gesture
     const nextPhase = phases[npi];
     const nextStepData = (nextPhase?.steps || [])[nsi];
-    console.log('[nextStep] navigating to', npi, nsi, 'voice:', nextStepData?.voice?.slice(0,50));
-    console.log('[nextStep] speakStepRef:', speakStepRef.current ? 'set' : 'NULL');
     voiceRef.current = true;
     speakStepRef.current(nextStepData);
   }, [stepIdx, steps, phaseIdx, phases, childName, voiceOn, isTest]);
