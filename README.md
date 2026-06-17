@@ -20,3 +20,4 @@
 <!-- sync: remove stopSpeech before speak -->
 <!-- sync: remove elevenlabs dead code -->
 <!-- sync: speak-before-setstate -->
+<!-- sync: handleContinue direct speak -->
