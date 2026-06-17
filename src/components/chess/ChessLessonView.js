@@ -244,6 +244,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const speedRef = useRef(null);
   const voiceRef = useRef(false);
   const continueSpoke = useRef(false); // true when handleContinue already spoke this step
+  const [taskComplete, setTaskComplete] = useState(false); // true when a board task is done, shows Continue
   const neonTimer = useRef(null);
   const seqTimers = useRef([]);
 
@@ -367,6 +368,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setClicked([]); setWrongSqs([]); setFeedback(''); setFbType('info');
     setSpeed(null); setIndepIdx(0); clearNeon();
     setRecapAnswer(null); setRecapFeedbackDone(false);
+    setTaskComplete(false);
     clearTimeout(voiceFinishTimer.current);
     setVoiceFinished(false);
 
@@ -511,14 +513,35 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         onError: () => { setIsPlaying(false); fire(); },
         onBlocked: () => fire(),
       });
-      // Safety net if onEnd never fires
       if (afterVoice) {
         const fallbackMs = Math.max(1800, vt.length * 110) + 1500;
         setTimeout(fire, fallbackMs);
       }
     } else if (afterVoice) {
-      // No voice for this feedback — short pause is enough
       setTimeout(afterVoice, 1500);
+    }
+  }
+
+  // Called when a board task (click-file, piece-range etc.) is completed.
+  // Plays the success feedback voice, then UNLOCKS the orange Continue button
+  // instead of auto-advancing. The student's click on Continue then drives
+  // the next step's voice within a real user gesture — the only reliable way
+  // to satisfy the browser's audio gesture policy.
+  function completeTask(successMsg, successVoice) {
+    setTaskComplete(true);          // makes Continue button appear
+    setFeedback(fill(successMsg, childName)); setFbType('success');
+    if (successVoice) {
+      const vt = fill(successVoice, childName); applyNeon(vt);
+      speakElevenLabs(vt, {
+        onStart: () => setIsPlaying(true),
+        onEnd: () => { setIsPlaying(false); setVoiceFinished(true); },
+        onError: () => { setIsPlaying(false); setVoiceFinished(true); },
+        onBlocked: () => setVoiceFinished(true),
+      });
+      const fallbackMs = Math.max(1800, vt.length * 110) + 1500;
+      setTimeout(() => setVoiceFinished(true), fallbackMs);
+    } else {
+      setVoiceFinished(true);
     }
   }
 
@@ -544,7 +567,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           setNeonSqs([]);
           setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
           const notation = step.correctNotation || result.san;
-          showFb(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), 'success', step.successVoice, nextStep);
+          completeTask(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), step.successVoice);
           return true;
         }
         return false;
@@ -571,7 +594,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         const nc = [...clicked, sq]; setClicked(nc); setStreak(s => s + 1);
         if (nc.length === step.targetSquares.length) {
           setScore(s => s + nc.length); setTotal(t => t + nc.length); setTargetSqs([]);
-          showFb(step.successVoice || 'Complete!', 'success', step.successVoice, nextStep);
+          completeTask(step.successVoice || 'Complete!', step.successVoice);
         } else showFb(`${nc.length} of ${step.targetSquares.length} found!`, 'hint');
       } else if (!step.targetSquares?.includes(sq)) {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
@@ -587,7 +610,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       setTotal(t => t + 1);
       if (step.targetSquares?.includes(sq)) {
         setClicked([sq]); setScore(s => s + 1); setStreak(s => s + 1); setTargetSqs([]);
-        showFb(step.successVoice || 'Correct!', 'success', step.successVoice, nextStep);
+        completeTask(step.successVoice || 'Correct!', step.successVoice);
       } else {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
         showFb(step.wrongVoice || 'Not quite - try again!', 'error', step.wrongVoice);
@@ -620,7 +643,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 showFb(hint, 'hint', hint);
               });
             } else {
-              showFb(vm2, 'success', vm2, nextStep);
+              completeTask(vm2, vm2);
             }
           });
         } else {
@@ -671,7 +694,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           setNeonSqs([]);
           setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
           const notation = step.correctNotation || result.san;
-          showFb(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), 'success', step.successVoice, nextStep);
+          completeTask(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), step.successVoice);
         }
       } else {
         setSelectedSq(null); setNeonSqs([]);
@@ -694,7 +717,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         if (!rem.length) {
           setTotal(t => t + (step.targetPieces?.length || 0));
           setMoveDone(true);
-          showFb(step.successVoice || 'Setup complete!', 'success', step.successVoice, nextStep);
+          completeTask(step.successVoice || 'Setup complete!', step.successVoice);
         } else {
           showFb(`Placed! ${rem.length} piece${rem.length === 1 ? '' : 's'} left.`, 'hint');
         }
@@ -749,7 +772,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (hits >= tgt) confetti({ particleCount: 100, spread: 70 });
     let vm = hits >= tgt ? rs.successVoice : hits >= tgt * 0.7 ? rs.goodVoice : rs.tryAgainVoice;
     vm = fill((vm || `You scored ${hits}!`).replace('{score}', hits), childName);
-    showFb(vm, hits >= tgt ? 'success' : 'hint', vm, nextStep);
+    completeTask(vm, vm);
   }
 
   function handlePieceLetterAnswer(answer) {
@@ -766,7 +789,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
     const advance = () => {
       if (ni >= items.length) {
-        showFb(fill(step.successVoice || 'Done!', childName), 'success', step.successVoice, nextStep);
+        completeTask(fill(step.successVoice || 'Done!', childName), step.successVoice);
       } else {
         setPieceQuizIdx(ni); setPieceQuizAnswer(null);
         setFeedback(''); setFbType('info');
@@ -792,10 +815,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     const correct = answer === step.correctNotation;
     if (correct) {
       setScore(s => s + 1); setStreak(s => s + 1);
-      showFb(`${step.correctNotation} is correct!`, 'success', step.successVoice, nextStep);
+      completeTask(`${step.correctNotation} is correct!`, step.successVoice);
     } else {
       setStreak(0);
-      showFb(`Not quite - the correct notation was ${step.correctNotation}.`, 'error', step.wrongVoice, nextStep);
+      completeTask(`Not quite - the correct notation was ${step.correctNotation}.`, step.wrongVoice);
     }
   }
 
@@ -813,7 +836,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         setQuizState({ active: false });
         showFb(vm, 'success', vm, () => {
           const vm2 = fill((step.successVoice || 'Done!').replace('{score}', score + 1), childName);
-          showFb(vm2, 'success', vm2, nextStep);
+          completeTask(vm2, vm2);
         });
       } else {
         showFb(vm, 'success', vm, () => {
@@ -844,7 +867,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       const rem = fileQS.remaining;
       if (!rem.length) {
         setFileQS({ active: false }); setNeonFile(null);
-        showFb(vm, 'success', vm, nextStep);
+        completeTask(vm, vm);
       } else {
         showFb(vm, 'success', vm, () => {
           setFileQS({ active: true, remaining: rem.slice(1), current: rem[0] }); setNeonFile(rem[0]);
@@ -1006,7 +1029,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   }
 
   const pct = Math.round((phaseIdx / phases.length) * 100);
-  const contLabel = step?.taskType === 'speed-intro' ? 'Start speed challenge!' : step?.continueLabel || 'Continue';
+  const boardTaskTypes = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'speed-round', 'file-name-quiz'];
+  const contLabel = step?.taskType === 'speed-intro'
+    ? 'Start speed challenge!'
+    : step?.continueLabel
+      || (boardTaskTypes.includes(step?.taskType) ? 'Next!' : 'Continue');
   const totalSecs = (lesson.totalMinutes || 55) * 60;
   const remainSecs = Math.max(0, totalSecs - elapsedSecs);
   const timerMins = Math.floor(remainSecs / 60);
@@ -1275,9 +1302,16 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
           {/* Continue */}
           {(() => {
-            const selfAdvancing = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'piece-letter-quiz', 'piece-spot-quiz', 'write-notation', 'independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range'].includes(step?.taskType);
+            // Steps that advance via their own in-panel controls (quizzes with
+            // their own option buttons) never show the Continue button.
+            const ownControls = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'piece-letter-quiz', 'piece-spot-quiz', 'write-notation'].includes(step?.taskType);
+            // Board-interaction tasks: Continue is hidden UNTIL the task is done,
+            // then it appears (orange) so the student's click drives the next voice.
+            const boardTask = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'speed-round', 'file-name-quiz'].includes(step?.taskType);
+
             if (speedState?.active || quizState?.active || fileQS?.active) return null;
-            if (selfAdvancing) return null;
+            if (ownControls) return null;
+            if (boardTask && !taskComplete) return null; // wait for task completion
             if (step?.taskType === 'recap-quiz' && voiceFinished && recapAnswer === null) return null;
 
             const isRecap = step?.taskType === 'recap-quiz';
