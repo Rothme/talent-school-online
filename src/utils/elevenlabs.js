@@ -48,10 +48,6 @@ export function speakElevenLabs(text, {
   const synth = window.speechSynthesis;
   if (!synth) { onEnd?.(); return; }
 
-  // Cancel any current speech — this is safe because we immediately
-  // call speak() in the same synchronous block
-  synth.cancel();
-
   const u = new SpeechSynthesisUtterance(text);
   u.rate  = 0.92;
   u.pitch = 1.05;
@@ -59,25 +55,13 @@ export function speakElevenLabs(text, {
   if (selectedVoice) u.voice = selectedVoice;
 
   currentUtterance = u;
-
   let started = false;
 
-  u.onstart = () => {
-    started = true;
-    onStart?.();
-  };
-
-  u.onend = () => {
-    currentUtterance = null;
-    onEnd?.();
-  };
-
+  u.onstart = () => { started = true; onStart?.(); };
+  u.onend   = () => { currentUtterance = null; onEnd?.(); };
   u.onerror = (e) => {
     currentUtterance = null;
-    // 'interrupted' fires when cancel() is called — not a real error
-    if (e?.error !== 'interrupted' && e?.error !== 'canceled') {
-      onEnd?.();
-    }
+    if (e?.error !== 'interrupted' && e?.error !== 'canceled') onEnd?.();
   };
 
   if (onBoundary) {
@@ -89,10 +73,9 @@ export function speakElevenLabs(text, {
     };
   }
 
+  // speak() — no cancel() before this, caller must handle stopping previous speech
   synth.speak(u);
 
-  // Detect if browser silently blocked speak() without firing onstart
-  // This happens when called outside a user gesture
   setTimeout(() => {
     if (!started && !synth.speaking && !synth.pending) {
       onBlocked?.();
