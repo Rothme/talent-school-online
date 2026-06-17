@@ -66,7 +66,9 @@ export function stopSpeech() {
 
 export async function speakElevenLabs(text, { onStart, onEnd, onError, onBlocked, onBoundary } = {}) {
   if (!text?.trim()) { onEnd?.(); return; }
-  stopSpeech();
+  // DO NOT call stopSpeech() here — synth.cancel() consumes Chrome's gesture
+  // window, blocking the subsequent synth.speak() call. Cancel happens inside
+  // speakBrowserPrimary just before speak() so they're in the same micro-task.
 
   if (!ELEVENLABS_ENABLED) {
     speakBrowserPrimary(text, { onStart, onEnd, onBlocked, onBoundary });
