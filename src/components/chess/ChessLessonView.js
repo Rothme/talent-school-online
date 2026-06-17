@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Chessboard } from 'react-chessboard';
 import confetti from 'canvas-confetti';
-import { Volume2, ChevronRight, ChevronLeft, CheckCircle2, BookOpen, Swords, Award, Clock, RotateCcw } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, BookOpen, Swords, Award, Clock, RotateCcw } from 'lucide-react';
 import { Chess } from 'chess.js';
 import { LESSON_1 } from '../../data/chessLesson1';
 import { LESSON_2 } from '../../data/chessLesson2';
@@ -101,7 +101,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [stepIdx, setStepIdx] = useState(0);
-  const [voiceOn, setVoiceOn] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [classStarted, setClassStarted] = useState(false);
@@ -325,12 +324,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   function speakStep(targetStep) {
     if (!targetStep?.voice) { setVoiceFinished(true); return; }
-    if (!voiceOn) {
-      const ms = Math.max(2000, targetStep.voice.length * 75);
-      clearTimeout(voiceFinishTimer.current);
-      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), ms);
-      return;
-    }
     const text = fill(targetStep.voice, childName);
     currentVoiceText.current = text;
     pauseCharPos.current = 0;
@@ -442,7 +435,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (!step?.voice) { setVoiceFinished(true); return; }
     speakStepRef.current(step);
     voiceRef.current = true;
-  }, [phaseIdx, stepIdx, voiceOn, isTest, classStarted]);
+  }, [phaseIdx, stepIdx, isTest, classStarted]);
 
   // Highlight sequence — fires timed setNeonSqs calls for steps with highlightSequence
   useEffect(() => {
@@ -494,11 +487,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     const nextStepData = (nextPhase?.steps || [])[nsi];
     voiceRef.current = true;
     speakStepRef.current(nextStepData);
-  }, [stepIdx, steps, phaseIdx, phases, childName, voiceOn, isTest]);
+  }, [stepIdx, steps, phaseIdx, phases, childName, isTest]);
 
   function showFb(msg, type, voice = '', afterVoice = null) {
     setFeedback(fill(msg, childName)); setFbType(type);
-    if (voice && voiceOn) {
+    if (voice) {
       const vt = fill(voice, childName); applyNeon(vt);
       let done = false;
       const fire = () => { if (done) return; done = true; afterVoice?.(); };
@@ -973,7 +966,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       {audioBlocked && !isTest && (
         <div className="cl-audio-overlay" onClick={handleAudioOverlayTap}>
           <div className="cl-audio-overlay-card">
-            <Volume2 size={32} />
+            <span style={{fontSize:'32px'}}>🔊</span>
             <p>Tap anywhere to start Ms. Momo's voice</p>
           </div>
         </div>
