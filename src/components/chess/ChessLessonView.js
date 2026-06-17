@@ -318,6 +318,43 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     lastSpokenWord.current = w;
   }
 
+  // Speak a step's voice directly — called synchronously within click handlers
+  // so the browser gesture window is still active when speak() fires.
+  function speakStep(targetStep) {
+    if (!targetStep?.voice) { setVoiceFinished(true); return; }
+    if (isTest) { setVoiceFinished(true); return; }
+    if (!voiceOn) {
+      const ms = Math.max(2000, targetStep.voice.length * 75);
+      clearTimeout(voiceFinishTimer.current);
+      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), ms);
+      return;
+    }
+    const text = fill(targetStep.voice, childName);
+    currentVoiceText.current = text;
+    pauseCharPos.current = 0;
+    pausedRemainingText.current = text;
+    setCurrentNarration(text);
+    applyNeon(text);
+    setVoiceFinished(false);
+    clearTimeout(voiceFinishTimer.current);
+    const fallbackMs = Math.max(6000, text.length * 110) + 5000;
+    voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
+    speakElevenLabs(text, {
+      onStart: () => { setIsPlaying(true); setIsPaused(false); setAudioBlocked(false); },
+      onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+      onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+      onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); },
+      onBoundary: (word, charIdx) => {
+        if (charIdx !== undefined) {
+          pauseCharPos.current = charIdx;
+          pausedRemainingText.current = text.slice(charIdx);
+        }
+        const noHighlight = ['independent-squares','speed-round'].includes(targetStep?.taskType);
+        if (!noHighlight) applyNeonWord(word);
+      },
+    });
+  }
+
   function clearNeon() { setNeonFile(null); setNeonRank(null); setNeonSqs([]); setGlowPieces([]); }
 
   // Reset on step change
@@ -389,44 +426,18 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     }
   }, [phaseIdx, stepIdx]);
 
-  // Auto-play voice — only fires after student clicks "Start Class"
+  // Auto-play voice — fires on step change.
+  // If nextStep() already called speakStep() within the click gesture,
+  // voiceRef.current will be true and we skip to avoid double-speak.
   useEffect(() => {
-    if (!classStarted) return; // always wait for Start Class click
-    if (isTest) { setVoiceFinished(true); return; } // test: skip voice, allow clicking through
-
-    if (!voiceOn) {
-      const ms = Math.max(2000, step.voice.length * 75);
-      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), ms);
-      return () => clearTimeout(voiceFinishTimer.current);
-    }
-
-    if (voiceRef.current) return;
+    if (!classStarted) return;
+    if (isTest) { setVoiceFinished(true); return; }
+    if (voiceRef.current) return; // already handled by nextStep/handleStartClass
+    // This effect handles the very first step (Start Class) only —
+    // subsequent steps are spoken by nextStep() within the click gesture.
+    if (!step?.voice) { setVoiceFinished(true); return; }
+    speakStep(step);
     voiceRef.current = true;
-    const text = fill(step.voice, childName);
-    currentVoiceText.current = text;
-    pauseCharPos.current = 0; // reset position tracking for new step
-    pausedRemainingText.current = text;
-    setCurrentNarration(text);
-    applyNeon(text);
-    const fallbackMs = Math.max(6000, text.length * 110) + 5000;
-    voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
-    speakElevenLabs(text, {
-      onStart: () => { setIsPlaying(true); setIsPaused(false); setAudioBlocked(false); },
-      onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-      onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-      onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); },
-      onBoundary: (word, charIdx) => {
-        // Track position for pause/resume
-        if (charIdx !== undefined) {
-          pauseCharPos.current = charIdx;
-          pausedRemainingText.current = text.slice(charIdx);
-        }
-        // Suppress word highlights during test/challenge steps
-        const noHighlight = ['independent-squares','speed-round'].includes(step?.taskType);
-        if (!noHighlight) applyNeonWord(word);
-      },
-    });
-    return () => { clearTimeout(voiceFinishTimer.current); };
   }, [phaseIdx, stepIdx, voiceOn, isTest, classStarted]);
 
   // Highlight sequence — fires timed setNeonSqs calls for steps with highlightSequence
@@ -455,17 +466,33 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (step.afterFen) setBoardFen(step.afterFen);
   }, [phaseIdx, stepIdx, voiceFinished]);
 
-  const nextStep = useCallback(() => {
+  const nextStep = useCallback((overridePhase, overrideStep) => {
     stopSpeech(); clearNeon();
-    const nsi = stepIdx + 1;
-    if (nsi < steps.length) { setStepIdx(nsi); return; }
-    const npi = phaseIdx + 1;
-    if (npi < phases.length) { setPhaseIdx(npi); setStepIdx(0); return; }
-    setLessonDone(true);
-    confetti({ particleCount: 160, spread: 100 });
-    speakElevenLabs(`Congratulations ${childName}! You have completed your first chess lesson! You are amazing!`);
-    setTimeout(() => onComplete?.(), 4000);
-  }, [stepIdx, steps.length, phaseIdx, phases.length, childName]);
+    let npi = overridePhase !== undefined ? overridePhase : phaseIdx;
+    let nsi = overrideStep !== undefined ? overrideStep : stepIdx + 1;
+    if (overridePhase === undefined && nsi >= steps.length) {
+      npi = phaseIdx + 1;
+      nsi = 0;
+    }
+    if (npi >= phases.length) {
+      setLessonDone(true);
+      confetti({ particleCount: 160, spread: 100 });
+      const doneText = `Congratulations ${childName}! You have completed your first chess lesson! You are amazing!`;
+      speakElevenLabs(doneText, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+      setTimeout(() => onComplete?.(), 4000);
+      return;
+    }
+    // Navigate to next step
+    if (npi !== phaseIdx) { setPhaseIdx(npi); setStepIdx(0); }
+    else { setStepIdx(nsi); }
+    // Speak the next step's voice directly within this gesture
+    const nextPhase = phases[npi];
+    const nextStepData = (nextPhase?.steps || [])[nsi];
+    if (nextStepData?.voice) {
+      voiceRef.current = true; // mark as handled so useEffect doesn't double-speak
+      speakStep(nextStepData);
+    }
+  }, [stepIdx, steps, phaseIdx, phases, childName, voiceOn, isTest]);
 
   function showFb(msg, type, voice = '', afterVoice = null) {
     setFeedback(fill(msg, childName)); setFbType(type);
@@ -846,8 +873,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   function handleContinue() {
     unlockAudio();
-    if (step?.taskType === 'speed-intro') { nextStep(); return; }
-    if (step?.taskType === 'complete') { setLessonDone(true); confetti({ particleCount: 160, spread: 100 }); setTimeout(() => onComplete?.(), 1500); return; }
+    if (step?.taskType === 'complete') {
+      setLessonDone(true);
+      confetti({ particleCount: 160, spread: 100 });
+      setTimeout(() => onComplete?.(), 1500);
+      return;
+    }
     nextStep();
   }
 
@@ -1000,8 +1031,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 >
                   <Volume2 size={14} /> {voiceOn ? 'Voice on' : 'Voice off'}
                 </button>
-                {voiceOn && isPlaying && (
-                  <button className="cl-pause-btn" onClick={handlePauseResume} title="Pause Ms. Momo">
+                {voiceOn && (isPlaying || isPaused) && (
+                  <button className="cl-pause-btn" onClick={handlePauseResume} title={isPaused ? 'Resume Ms. Momo' : 'Pause Ms. Momo'}>
                     {isPaused ? '▶ Resume' : '⏸ Pause'}
                   </button>
                 )}
