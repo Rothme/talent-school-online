@@ -1024,27 +1024,14 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
               <p className="cl-dialogue-text">"{currentNarration || fill(step?.voice || '', childName)}"</p>
 
               <div className="cl-dialogue-actions">
-                <button
-                  className="cl-voice-btn"
-                  onClick={() => {
-                    unlockAudio();
-                    const n = !voiceOn; setVoiceOn(n);
-                    if (!n) { stopSpeech(); setIsPlaying(false); setIsPaused(false); }
-                    else handleRepeat();
-                  }}
-                >
-                  <Volume2 size={14} /> {voiceOn ? 'Voice on' : 'Voice off'}
-                </button>
-                {voiceOn && (isPlaying || isPaused) && (
+                {(isPlaying || isPaused) && (
                   <button className="cl-pause-btn" onClick={handlePauseResume} title={isPaused ? 'Resume Ms. Momo' : 'Pause Ms. Momo'}>
                     {isPaused ? '▶ Resume' : '⏸ Pause'}
                   </button>
                 )}
-                {voiceOn && (
-                  <button className="cl-repeat-btn" onClick={handleRepeat} title="Repeat from beginning">
-                    <RotateCcw size={13} /> Repeat
-                  </button>
-                )}
+                <button className="cl-repeat-btn" onClick={handleRepeat} title="Repeat from beginning">
+                  <RotateCcw size={13} /> Repeat
+                </button>
               </div>
             </div>
           </div>
