@@ -391,8 +391,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   // Auto-play voice — only fires after student clicks "Start Class"
   useEffect(() => {
-    if (isTest) { setVoiceFinished(true); return; }
-    if (!classStarted) return; // wait for Start Class click
+    if (!classStarted) return; // always wait for Start Class click
+    if (isTest) { setVoiceFinished(true); return; } // test: skip voice, allow clicking through
 
     if (!voiceOn) {
       const ms = Math.max(2000, step.voice.length * 75);
@@ -1058,7 +1058,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 })()}
               />
               {/* Start Class button — shows until student clicks it */}
-              {!classStarted && !isTest && (
+              {!classStarted && (
                 <div className="cl-start-overlay" onClick={handleStartClass}>
                   <div className="cl-start-btn">
                     <span className="cl-start-icon">▶</span>
