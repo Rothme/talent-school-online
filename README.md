@@ -22,3 +22,4 @@
 <!-- sync: speak-before-setstate -->
 <!-- sync: handleContinue direct speak -->
 <!-- sync: cancel-outside-speak -->
+<!-- sync: fix double speak -->
