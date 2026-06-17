@@ -243,6 +243,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   const speedRef = useRef(null);
   const voiceRef = useRef(false);
+  const continueSpoke = useRef(false); // true when handleContinue already spoke this step
   const neonTimer = useRef(null);
   const seqTimers = useRef([]);
 
@@ -367,7 +368,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setSpeed(null); setIndepIdx(0); clearNeon();
     setRecapAnswer(null); setRecapFeedbackDone(false);
     clearTimeout(voiceFinishTimer.current);
-    setVoiceFinished(false); // always start grey — speakStep sets true when Ms. Momo finishes
+    setVoiceFinished(false);
 
     if (step?.highlightFile) setNeonFile(step.highlightFile);
     if (step?.highlightRank) setNeonRank(String(step.highlightRank));
@@ -430,11 +431,15 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   }, [phaseIdx, stepIdx]);
 
   // Auto-play voice — fires on step change.
-  // If nextStep() already called speakStep() within the click gesture,
-  // voiceRef.current will be true and we skip to avoid double-speak.
+  // Skipped if handleContinue already spoke (continueSpoke ref),
+  // or if Start Class already spoke (voiceRef).
   useEffect(() => {
     if (!classStarted) return;
-    if (voiceRef.current) return; // already handled by nextStep/handleStartClass
+    if (continueSpoke.current) {
+      continueSpoke.current = false; // consume the flag, don't speak again
+      return;
+    }
+    if (voiceRef.current) return;
     if (!step?.voice) { setVoiceFinished(true); return; }
     speakStepRef.current(step);
     voiceRef.current = true;
@@ -895,6 +900,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     // This is the ONLY place cancel() should be called before speak()
     window.speechSynthesis?.cancel();
     if (text) {
+      continueSpoke.current = true; // tell useEffect not to speak again for this step
       currentVoiceText.current = text;
       pauseCharPos.current = 0;
       pausedRemainingText.current = text;
