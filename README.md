@@ -18,3 +18,4 @@
 <!-- sync: isTest voice fix -->
 <!-- sync: grey-orange button -->
 <!-- sync: remove stopSpeech before speak -->
+<!-- sync: remove elevenlabs dead code -->
