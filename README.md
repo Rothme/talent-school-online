@@ -14,3 +14,4 @@
 <!-- sync: voice gesture chain fix -->
 <!-- force-sync: ensure 49791fb6 is top of production -->
 <!-- sync: stale closure fix -->
+<!-- sync: voice debug logging -->
