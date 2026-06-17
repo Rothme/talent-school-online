@@ -46,6 +46,12 @@ export function unlockAudio() {
   }
 }
 
+// Clear pending audio without replaying it — use before speaking new content
+export function pendingAudioClear() {
+  pendingText = null;
+  pendingCallbacks = null;
+}
+
 function getTTSUrl() {
   return `${window.location.origin}/api/tts`;
 }
