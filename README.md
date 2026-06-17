@@ -9,3 +9,4 @@
 <!-- sync: voice fix + lesson 1 fixes batch 3 -->
 <!-- sync: timer pause -->
 <!-- sync: pause-resume rebuild -->
+<!-- sync: start class test fix -->
