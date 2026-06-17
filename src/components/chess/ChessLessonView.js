@@ -6,7 +6,7 @@ import { Volume2, ChevronRight, ChevronLeft, CheckCircle2, BookOpen, Swords, Awa
 import { Chess } from 'chess.js';
 import { LESSON_1 } from '../../data/chessLesson1';
 import { LESSON_2 } from '../../data/chessLesson2';
-import { speakElevenLabs, stopSpeech, parseHighlights, unlockAudio } from '../../utils/elevenlabs';
+import { speakElevenLabs, stopSpeech, parseHighlights, unlockAudio, pendingAudioClear } from '../../utils/elevenlabs';
 import './ChessLessonView.css';
 
 const FILES = ['a','b','c','d','e','f','g','h'];
@@ -124,11 +124,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   // Repeat — replay current step's voice narration from the beginning
   const currentVoiceText = useRef('');
   function handleRepeat() {
-    unlockAudio();
     const text = currentVoiceText.current || fill(step?.voice || '', childName);
     if (!text) return;
-    stopSpeech();
-    // Reset position — repeat always starts from the beginning
+    pendingAudioClear();
     pauseCharPos.current = 0;
     pausedRemainingText.current = text;
     setIsPlaying(false); setIsPaused(false);
@@ -320,6 +318,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   // Speak a step's voice directly — called synchronously within click handlers
   // so the browser gesture window is still active when speak() fires.
+  // IMPORTANT: Do NOT call stopSpeech() before this — Chrome treats cancel()
+  // as ending the gesture window. speakBrowserPrimary handles cancel internally.
   function speakStep(targetStep) {
     if (!targetStep?.voice) { setVoiceFinished(true); return; }
     if (isTest) { setVoiceFinished(true); return; }
@@ -334,16 +334,18 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     pauseCharPos.current = 0;
     pausedRemainingText.current = text;
     setCurrentNarration(text);
-    applyNeon(text);
     setVoiceFinished(false);
+    setIsPlaying(false);
+    setIsPaused(false);
+    applyNeon(text);
     clearTimeout(voiceFinishTimer.current);
     const fallbackMs = Math.max(6000, text.length * 110) + 5000;
     voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
     speakElevenLabs(text, {
-      onStart: () => { setIsPlaying(true); setIsPaused(false); setAudioBlocked(false); },
+      onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
       onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
       onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-      onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); },
+      onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); setVoiceFinished(true); },
       onBoundary: (word, charIdx) => {
         if (charIdx !== undefined) {
           pauseCharPos.current = charIdx;
@@ -467,7 +469,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   }, [phaseIdx, stepIdx, voiceFinished]);
 
   const nextStep = useCallback((overridePhase, overrideStep) => {
-    stopSpeech(); clearNeon();
+    clearNeon();
     let npi = overridePhase !== undefined ? overridePhase : phaseIdx;
     let nsi = overrideStep !== undefined ? overrideStep : stepIdx + 1;
     if (overridePhase === undefined && nsi >= steps.length) {
@@ -477,7 +479,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (npi >= phases.length) {
       setLessonDone(true);
       confetti({ particleCount: 160, spread: 100 });
-      const doneText = `Congratulations ${childName}! You have completed your first chess lesson! You are amazing!`;
+      const doneText = `Congratulations ${childName}! You have completed this chess lesson! You are amazing!`;
       speakElevenLabs(doneText, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
       setTimeout(() => onComplete?.(), 4000);
       return;
@@ -486,12 +488,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (npi !== phaseIdx) { setPhaseIdx(npi); setStepIdx(0); }
     else { setStepIdx(nsi); }
     // Speak the next step's voice directly within this gesture
+    // NOTE: do NOT call stopSpeech() before this — cancelling speech
+    // invalidates Chrome's gesture window and blocks the next speak() call
     const nextPhase = phases[npi];
     const nextStepData = (nextPhase?.steps || [])[nsi];
-    if (nextStepData?.voice) {
-      voiceRef.current = true; // mark as handled so useEffect doesn't double-speak
-      speakStep(nextStepData);
-    }
+    voiceRef.current = true; // mark as handled so useEffect doesn't double-speak
+    speakStep(nextStepData);
   }, [stepIdx, steps, phaseIdx, phases, childName, voiceOn, isTest]);
 
   function showFb(msg, type, voice = '', afterVoice = null) {
@@ -872,7 +874,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   }
 
   function handleContinue() {
-    unlockAudio();
+    // Clear any pending/blocked audio from previous step
+    // Don't call unlockAudio() - it might replay old speech and consume the gesture
+    pendingAudioClear();
     if (step?.taskType === 'complete') {
       setLessonDone(true);
       confetti({ particleCount: 160, spread: 100 });
