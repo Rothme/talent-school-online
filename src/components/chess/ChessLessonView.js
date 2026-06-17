@@ -324,8 +324,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const speakStepRef = useRef(null);
 
   function speakStep(targetStep) {
-    if (!targetStep?.voice) { setVoiceFinished(true); return; }
-    if (isTest) { setVoiceFinished(true); return; }
+    console.log('[speakStep] called, voice:', targetStep?.voice?.slice(0,50));
+    console.log('[speakStep] isTest:', isTest, 'voiceOn:', voiceOn, 'classStarted:', classStarted);
+    if (!targetStep?.voice) { console.log('[speakStep] no voice, setting finished'); setVoiceFinished(true); return; }
+    if (isTest) { console.log('[speakStep] isTest, setting finished'); setVoiceFinished(true); return; }
     if (!voiceOn) {
       const ms = Math.max(2000, targetStep.voice.length * 75);
       clearTimeout(voiceFinishTimer.current);
@@ -492,11 +494,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (npi !== phaseIdx) { setPhaseIdx(npi); setStepIdx(0); }
     else { setStepIdx(nsi); }
     // Speak the next step's voice directly within this gesture
-    // NOTE: do NOT call stopSpeech() before this — cancelling speech
-    // invalidates Chrome's gesture window and blocks the next speak() call
     const nextPhase = phases[npi];
     const nextStepData = (nextPhase?.steps || [])[nsi];
-    voiceRef.current = true; // mark as handled so useEffect doesn't double-speak
+    console.log('[nextStep] navigating to', npi, nsi, 'voice:', nextStepData?.voice?.slice(0,50));
+    console.log('[nextStep] speakStepRef:', speakStepRef.current ? 'set' : 'NULL');
+    voiceRef.current = true;
     speakStepRef.current(nextStepData);
   }, [stepIdx, steps, phaseIdx, phases, childName, voiceOn, isTest]);
 
