@@ -891,8 +891,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     const nextPhase = phases[npi];
     const nextStepData = (nextPhase?.steps || [])[nsi];
     const text = nextStepData?.voice ? fill(nextStepData.voice, childName) : '';
-    // Call speakElevenLabs DIRECTLY as first action — exactly like Start Class
-    // This keeps synth.speak() within the click gesture window
+    // Stop previous speech then speak new — both in same synchronous block
+    // This is the ONLY place cancel() should be called before speak()
+    window.speechSynthesis?.cancel();
     if (text) {
       currentVoiceText.current = text;
       pauseCharPos.current = 0;
@@ -918,7 +919,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     } else {
       setVoiceFinished(true);
     }
-    // State updates AFTER speak() is queued
+    // State updates after speak()
     setCurrentNarration(text);
     setVoiceFinished(false);
     clearNeon();
