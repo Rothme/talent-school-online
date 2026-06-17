@@ -872,16 +872,58 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   }
 
   function handleContinue() {
-    // Clear any pending/blocked audio from previous step
-    // Don't call unlockAudio() - it might replay old speech and consume the gesture
-    pendingAudioClear();
     if (step?.taskType === 'complete') {
       setLessonDone(true);
       confetti({ particleCount: 160, spread: 100 });
       setTimeout(() => onComplete?.(), 1500);
       return;
     }
-    nextStep();
+    // Compute next step
+    let npi = phaseIdx;
+    let nsi = stepIdx + 1;
+    if (nsi >= steps.length) { npi = phaseIdx + 1; nsi = 0; }
+    if (npi >= phases.length) {
+      setLessonDone(true);
+      confetti({ particleCount: 160, spread: 100 });
+      setTimeout(() => onComplete?.(), 4000);
+      return;
+    }
+    const nextPhase = phases[npi];
+    const nextStepData = (nextPhase?.steps || [])[nsi];
+    const text = nextStepData?.voice ? fill(nextStepData.voice, childName) : '';
+    // Call speakElevenLabs DIRECTLY as first action — exactly like Start Class
+    // This keeps synth.speak() within the click gesture window
+    if (text) {
+      currentVoiceText.current = text;
+      pauseCharPos.current = 0;
+      pausedRemainingText.current = text;
+      voiceRef.current = true;
+      clearTimeout(voiceFinishTimer.current);
+      const fallbackMs = Math.max(6000, text.length * 110) + 5000;
+      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
+      speakElevenLabs(text, {
+        onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
+        onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); setVoiceFinished(true); },
+        onBoundary: (word, charIdx) => {
+          if (charIdx !== undefined) {
+            pauseCharPos.current = charIdx;
+            pausedRemainingText.current = text.slice(charIdx);
+          }
+          const noHighlight = ['independent-squares','speed-round'].includes(nextStepData?.taskType);
+          if (!noHighlight) applyNeonWord(word);
+        },
+      });
+    } else {
+      setVoiceFinished(true);
+    }
+    // State updates AFTER speak() is queued
+    setCurrentNarration(text);
+    setVoiceFinished(false);
+    clearNeon();
+    if (npi !== phaseIdx) { setPhaseIdx(npi); setStepIdx(0); }
+    else { setStepIdx(nsi); }
   }
 
   const boardNeonSqs = [
