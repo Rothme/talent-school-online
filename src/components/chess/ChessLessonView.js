@@ -184,17 +184,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   // Start Class — clicked by student on very first step
   function handleStartClass() {
-    unlockAudio();
-    setClassStarted(true);
-    setAudioBlocked(false);
     if (step?.voice) {
       const text = fill(step.voice, childName);
       currentVoiceText.current = text;
       pauseCharPos.current = 0;
       pausedRemainingText.current = text;
-      setCurrentNarration(text);
-      applyNeon(text);
       voiceRef.current = true;
+      // SPEAK FIRST — before any setState calls
       const fallbackMs = Math.max(6000, text.length * 110) + 5000;
       voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
       speakElevenLabs(text, {
@@ -204,7 +200,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); },
         onBoundary: (word) => applyNeonWord(word),
       });
+      // State updates AFTER speak() — these trigger re-renders but speak is already queued
+      setCurrentNarration(text);
+      applyNeon(text);
     }
+    setClassStarted(true);
+    setAudioBlocked(false);
   }
 
   const [neonFile, setNeonFile] = useState(null);
@@ -328,14 +329,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     currentVoiceText.current = text;
     pauseCharPos.current = 0;
     pausedRemainingText.current = text;
-    setCurrentNarration(text);
-    setVoiceFinished(false);
-    setIsPlaying(false);
-    setIsPaused(false);
-    applyNeon(text);
     clearTimeout(voiceFinishTimer.current);
     const fallbackMs = Math.max(6000, text.length * 110) + 5000;
     voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
+    // SPEAK FIRST — before any setState calls to keep inside gesture window
     speakElevenLabs(text, {
       onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
       onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
@@ -350,6 +347,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         if (!noHighlight) applyNeonWord(word);
       },
     });
+    // State updates after speak() — React re-renders don't affect already-queued speech
+    setCurrentNarration(text);
+    setVoiceFinished(false);
+    setIsPlaying(false);
+    setIsPaused(false);
+    applyNeon(text);
   }
 
   // Keep ref always pointing to latest speakStep
@@ -479,14 +482,16 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       setTimeout(() => onComplete?.(), 4000);
       return;
     }
-    // Navigate to next step
-    if (npi !== phaseIdx) { setPhaseIdx(npi); setStepIdx(0); }
-    else { setStepIdx(nsi); }
-    // Speak the next step's voice directly within this gesture
+    // Get next step data BEFORE any state updates
     const nextPhase = phases[npi];
     const nextStepData = (nextPhase?.steps || [])[nsi];
+    // SPEAK FIRST — must happen before setState calls which trigger
+    // React re-renders that push speak() outside the gesture window
     voiceRef.current = true;
     speakStepRef.current(nextStepData);
+    // Navigate AFTER speaking — state updates happen async anyway
+    if (npi !== phaseIdx) { setPhaseIdx(npi); setStepIdx(0); }
+    else { setStepIdx(nsi); }
   }, [stepIdx, steps, phaseIdx, phases, childName, isTest]);
 
   function showFb(msg, type, voice = '', afterVoice = null) {
