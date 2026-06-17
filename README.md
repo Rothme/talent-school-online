@@ -17,3 +17,4 @@
 <!-- sync: voice debug logging -->
 <!-- sync: isTest voice fix -->
 <!-- sync: grey-orange button -->
+<!-- sync: remove stopSpeech before speak -->
