@@ -11,3 +11,4 @@
 <!-- sync: pause-resume rebuild -->
 <!-- sync: start class test fix -->
 <!-- sync: voice gesture fix -->
+<!-- sync: voice gesture chain fix -->
