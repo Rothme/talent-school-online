@@ -42,3 +42,4 @@
 <!-- sync: correct piece movement sequences -->
 <!-- sync: pieces from real squares -->
 <!-- sync: verified piece movements + path dots -->
+<!-- sync: bishop knight final fix -->
