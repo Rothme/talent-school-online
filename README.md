@@ -37,3 +37,4 @@
 <!-- sync: bonus round + lesson end fix -->
 <!-- sync: meetpieces correct squares -->
 <!-- sync: test phase jumper -->
+<!-- sync: full movement sequences -->
