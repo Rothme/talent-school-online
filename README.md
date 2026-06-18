@@ -50,3 +50,4 @@
 <!-- sync: rm5 board+move display fix -->
 <!-- sync: lesson2 full rewrite zero violations -->
 <!-- sync: curriculum rules codified -->
+<!-- sync: lessons 3-5 rebuilt to codified rules -->
