@@ -33,3 +33,4 @@
 <!-- sync: two-style highlight standard -->
 <!-- sync: indep squares target display -->
 <!-- sync: meetpieces rebuild -->
+<!-- sync: meetpieces solo drag-drop -->
