@@ -25,3 +25,4 @@
 <!-- sync: fix double speak -->
 <!-- sync: completeTask gesture fix -->
 <!-- sync: file-context highlight window -->
+<!-- sync: file quiz glow fixes -->
