@@ -43,3 +43,4 @@
 <!-- sync: pieces from real squares -->
 <!-- sync: verified piece movements + path dots -->
 <!-- sync: bishop knight final fix -->
+<!-- sync: speakingFb all buttons locked -->
