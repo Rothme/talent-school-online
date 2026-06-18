@@ -121,8 +121,23 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   }, []);
 
   // Repeat — replay current step's voice narration from the beginning
+  // Special case: during file-name-quiz, repeats CURRENT question with glow
   const currentVoiceText = useRef('');
   function handleRepeat() {
+    // file-name-quiz: repeat current question + re-glow current file
+    if (step?.taskType === 'file-name-quiz' && fileQS?.active && fileQS?.current) {
+      pendingAudioClear();
+      // Re-glow the current file
+      setNeonFile(null);
+      setTimeout(() => setNeonFile(fileQS.current), 50);
+      const repeatText = `Which file is this one glowing now?`;
+      speakElevenLabs(repeatText, {
+        onStart: () => setIsPlaying(true),
+        onEnd: () => setIsPlaying(false),
+        onError: () => setIsPlaying(false),
+      });
+      return;
+    }
     const text = currentVoiceText.current || fill(step?.voice || '', childName);
     if (!text) return;
     pendingAudioClear();
@@ -333,9 +348,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     // File letter: highlight if within file context window OR preceded directly by "file"
     if (/^[a-h]$/.test(w)) {
       if (fileContextActive.current || lastSpokenWord.current === 'file') {
-        setNeonFile(w);
-        clearTimeout(neonTimer.current);
-        neonTimer.current = setTimeout(() => setNeonFile(null), 2200);
+        // Clear first then set — forces React to re-render even if same file letter
+        setNeonFile(null);
+        setTimeout(() => {
+          setNeonFile(w);
+          clearTimeout(neonTimer.current);
+          neonTimer.current = setTimeout(() => setNeonFile(null), 2200);
+        }, 50);
         // Keep context active for sequential letters like "a, b, c, d, e, f, g, h"
         fileContextCount.current = 0;
       }
@@ -346,9 +365,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     // Rank number: highlight if within rank context window OR preceded by "rank"
     if (/^[1-8]$/.test(w)) {
       if (rankContextActive.current || lastSpokenWord.current === 'rank') {
-        setNeonRank(w);
-        clearTimeout(neonTimer.current);
-        neonTimer.current = setTimeout(() => setNeonRank(null), 2200);
+        // Clear first then set — forces React to re-render even if same rank number
+        setNeonRank(null);
+        setTimeout(() => {
+          setNeonRank(w);
+          clearTimeout(neonTimer.current);
+          neonTimer.current = setTimeout(() => setNeonRank(null), 2200);
+        }, 50);
         rankContextCount.current = 0;
       }
       lastSpokenWord.current = w;
@@ -908,6 +931,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   function startFileQuiz() {
     const shuffled = [...FILES].sort(() => Math.random() - 0.5).slice(0, 6);
     setFileQS({ active: true, remaining: shuffled.slice(1), current: shuffled[0] });
+    // Glow stays persistent — no timeout. Student clicks answer to clear it.
     setNeonFile(shuffled[0]); setNeonRank(null); setNeonSqs([]);
   }
 
@@ -924,7 +948,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         completeTask(vm, vm);
       } else {
         showFb(vm, 'success', vm, () => {
-          setFileQS({ active: true, remaining: rem.slice(1), current: rem[0] }); setNeonFile(rem[0]);
+          // Show next file — glow persists until answered
+          setFileQS({ active: true, remaining: rem.slice(1), current: rem[0] });
+          setNeonFile(null);
+          setTimeout(() => setNeonFile(rem[0]), 80); // clear+set to force re-render
           showFb('Which file is this?', 'hint');
         });
       }
@@ -932,6 +959,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       setStreak(0);
       const vm = `Not quite! That is file ${curr}!`;
       showFb(vm, 'error', vm);
+      // Keep glow on after wrong answer so student can see correct file
     }
   }
 
