@@ -59,7 +59,7 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // Build square style overrides for neon highlights
 // ─────────────────────────────────────────────────────
 function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets,
-  colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive }) {
+  colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive, pathSqs }) {
   const styles = {};
 
   function setStyle(sq, style) {
@@ -136,6 +136,15 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
       }
     });
   }
+
+  // Movement path dots — yellow circle in centre of each path square
+  // Shows the route the piece travels during demonstration
+  (pathSqs || []).forEach(sq => {
+    styles[sq] = {
+      ...(styles[sq] || {}),
+      background: `radial-gradient(circle, rgba(255,210,0,0.9) 0%, rgba(255,210,0,0.9) 22%, transparent 23%)`,
+    };
+  });
 
   (clicked || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(29,158,117,0.65)' }));
   (wrong || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(226,75,74,0.7)' }));
@@ -316,7 +325,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const speedRef = useRef(null);
   const voiceRef = useRef(false);
   const continueSpoke = useRef(false); // true when handleContinue already spoke this step
-  const [taskComplete, setTaskComplete] = useState(false); // true when a board task is done, shows Continue
+  const [taskComplete, setTaskComplete] = useState(false);
+  const [pathSqs, setPathSqs] = useState([]); // yellow dots along movement path // true when a board task is done, shows Continue
   const neonTimer = useRef(null);
   const seqTimers = useRef([]);
 
@@ -517,7 +527,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setSpeed(null); setIndepIdx(0); clearNeon();
     setRecapAnswer(null); setRecapFeedbackDone(false);
     setTaskComplete(false);
-    fileContextActive.current = false;
+    setPathSqs([]);
     fileContextCount.current = 0;
     rankContextActive.current = false;
     rankContextCount.current = 0;
@@ -559,30 +569,35 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       }, 800);
       return () => clearTimeout(demoTimer);
     } else if (step?.demoSequence?.length) {
-      // Sequential movement demo — plays each FEN in order, loops back to start
-      // Used for meetpieces to show all movement directions one by one
+      // Sequential movement demo — plays each FEN in order
+      // Each frame shows the piece in a new position with path dots
       const startFen = step.boardState || 'start';
       setBoardFen(startFen);
+      setPathSqs([]);
       const timers = [];
-      let cumDelay = step.demoSequence[0].delay || 2500;
+      let cumDelay = 1800; // initial pause before first move
 
       step.demoSequence.forEach((frame, i) => {
-        const t = setTimeout(() => setBoardFen(frame.fen + ' w - - 0 1'), cumDelay);
-        timers.push(t);
-        const nextDelay = step.demoSequence[i + 1]?.delay || 2000;
-        cumDelay += nextDelay;
-        // After each move, briefly return to start before next move
-        if (i < step.demoSequence.length - 1) {
-          const ret = setTimeout(() => setBoardFen(startFen), cumDelay - 600);
-          timers.push(ret);
-        }
+        // Show the move
+        const t1 = setTimeout(() => {
+          setBoardFen(frame.fen);
+          setPathSqs(frame.path || []);
+        }, cumDelay);
+        timers.push(t1);
+        cumDelay += (frame.delay || 2200);
+
+        // Return to start, clear path dots before next move
+        const t2 = setTimeout(() => {
+          setBoardFen(startFen);
+          setPathSqs([]);
+        }, cumDelay - 600);
+        timers.push(t2);
       });
 
-      // Loop back to start after last move, then restart sequence
-      const loopBack = setTimeout(() => setBoardFen(startFen), cumDelay + 500);
-      timers.push(loopBack);
-
-      return () => timers.forEach(t => clearTimeout(t));
+      return () => {
+        timers.forEach(t => clearTimeout(t));
+        setPathSqs([]);
+      };
     } else if (step?.demoFen) {
       // Single movement demo
       setBoardFen(step.boardState && step.boardState !== 'start' && step.boardState !== 'empty'
@@ -1248,6 +1263,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     boardPosition: resolveBoardPosition(boardFen, placedPieces),
     borderOnlySquares,
     speedActive: speedState?.active,
+    pathSqs,
   });
 
   function handleAudioOverlayTap() {
