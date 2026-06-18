@@ -58,7 +58,7 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // ─────────────────────────────────────────────────────
 // Build square style overrides for neon highlights
 // ─────────────────────────────────────────────────────
-function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets, colourQuizSq }) {
+function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets, colourQuizSq, glowPieces, boardPosition }) {
   const styles = {};
 
   function setStyle(sq, style) {
@@ -75,6 +75,17 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     backgroundColor: 'rgba(255,210,0,0.85)',
     boxShadow: 'inset 0 0 0 3px rgba(255,210,0,1)',
   }));
+  // Piece glow: highlight every square containing a piece of the named type
+  if (glowPieces?.length && boardPosition) {
+    Object.entries(boardPosition).forEach(([sq, piece]) => {
+      if (glowPieces.includes(piece)) {
+        setStyle(sq, {
+          backgroundColor: 'rgba(249,115,22,0.55)',
+          boxShadow: 'inset 0 0 0 3px rgba(249,115,22,0.95)',
+        });
+      }
+    });
+  }
   // Colour-quiz square: white blinking border ONLY — no yellow, no colour change at all
   if (colourQuizSq) {
     setStyle(colourQuizSq, {
@@ -287,16 +298,26 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   }
 
   // Progressive word highlighting — called per word boundary as Ms. Momo speaks.
-  // Strict rules to prevent false highlights:
-  // - Single letters only trigger file highlight when the PREVIOUS word was 'file'
-  // - Rank numbers only trigger when the PREVIOUS word was 'rank'
-  // - Square coordinates (e4, d5 etc) always highlight
-  // - Suppressed entirely for test/challenge taskTypes
+  // Four highlight systems: files, ranks, squares, pieces.
+  // Context windows stay open after keywords so sequences like
+  // "1, 2, 3, 4, 5, 6, 7, 8" all glow after "rank" is spoken.
+  // clear+set pattern forces React to re-render even for repeated same value.
+  // All highlights suppressed during student exercises and tests.
   const lastSpokenWord = useRef('');
-  const fileContextActive = useRef(false);  // true after "file" is spoken, lasts several words
-  const fileContextCount = useRef(0);        // counts words since "file" was spoken
+  const fileContextActive = useRef(false);
+  const fileContextCount = useRef(0);
   const rankContextActive = useRef(false);
   const rankContextCount = useRef(0);
+
+  // Piece name → piece codes for glowing on board
+  const PIECE_CODES = {
+    king:   ['wK','bK'],
+    queen:  ['wQ','bQ'],
+    rook:   ['wR','bR'],
+    bishop: ['wB','bB'],
+    knight: ['wN','bN'],
+    pawn:   ['wP','bP'],
+  };
 
   function applyNeonWord(word) {
     if (!word) return;
@@ -316,18 +337,22 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     const w = word.toLowerCase().replace(/[^a-z0-9]/g, '');
     if (!w) return;
 
-    // Square coordinate e.g. "e4", "a1" — always highlight immediately
+    // ── Square coordinate e.g. "e4", "a1" ──
+    // Always highlight. Clear+set to handle repeats.
     if (/^[a-h][1-8]$/.test(w)) {
-      setNeonSqs([w]);
-      clearTimeout(neonTimer.current);
-      neonTimer.current = setTimeout(() => setNeonSqs([]), 2500);
+      setNeonSqs([]);
+      setTimeout(() => {
+        setNeonSqs([w]);
+        clearTimeout(neonTimer.current);
+        neonTimer.current = setTimeout(() => setNeonSqs([]), 2500);
+      }, 50);
       lastSpokenWord.current = w;
       fileContextActive.current = false;
       rankContextActive.current = false;
       return;
     }
 
-    // "file" keyword — open file context window for next 8 words
+    // ── "file" / "files" keyword — open file context window ──
     if (w === 'file' || w === 'files') {
       fileContextActive.current = true;
       fileContextCount.current = 0;
@@ -336,7 +361,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       return;
     }
 
-    // "rank" keyword — open rank context window for next 8 words
+    // ── "rank" / "ranks" keyword — open rank context window ──
     if (w === 'rank' || w === 'ranks') {
       rankContextActive.current = true;
       rankContextCount.current = 0;
@@ -345,40 +370,53 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       return;
     }
 
-    // File letter: highlight if within file context window OR preceded directly by "file"
+    // ── File letter a–h ──
+    // Highlight within file context window OR immediately after "file"
     if (/^[a-h]$/.test(w)) {
       if (fileContextActive.current || lastSpokenWord.current === 'file') {
-        // Clear first then set — forces React to re-render even if same file letter
         setNeonFile(null);
         setTimeout(() => {
           setNeonFile(w);
           clearTimeout(neonTimer.current);
           neonTimer.current = setTimeout(() => setNeonFile(null), 2200);
         }, 50);
-        // Keep context active for sequential letters like "a, b, c, d, e, f, g, h"
-        fileContextCount.current = 0;
+        fileContextCount.current = 0; // reset — keeps window alive for sequences
       }
       lastSpokenWord.current = w;
       return;
     }
 
-    // Rank number: highlight if within rank context window OR preceded by "rank"
+    // ── Rank number 1–8 ──
+    // Highlight within rank context window OR immediately after "rank"
     if (/^[1-8]$/.test(w)) {
       if (rankContextActive.current || lastSpokenWord.current === 'rank') {
-        // Clear first then set — forces React to re-render even if same rank number
         setNeonRank(null);
         setTimeout(() => {
           setNeonRank(w);
           clearTimeout(neonTimer.current);
           neonTimer.current = setTimeout(() => setNeonRank(null), 2200);
         }, 50);
-        rankContextCount.current = 0;
+        rankContextCount.current = 0; // reset — keeps window alive for sequences
       }
       lastSpokenWord.current = w;
       return;
     }
 
-    // Count words that pass without a file/rank letter — close context after 6 non-matching words
+    // ── Piece names ──
+    // Highlight all squares containing that piece type on the board.
+    // Glow for 2.5s then clear. Clear+set handles repeated mentions.
+    if (PIECE_CODES[w]) {
+      setGlowPieces([]);
+      setTimeout(() => {
+        setGlowPieces(PIECE_CODES[w]);
+        clearTimeout(neonTimer.current);
+        neonTimer.current = setTimeout(() => setGlowPieces([]), 2500);
+      }, 50);
+      lastSpokenWord.current = w;
+      return;
+    }
+
+    // ── Count non-matching words — close context after 6 ──
     if (fileContextActive.current) {
       fileContextCount.current++;
       if (fileContextCount.current > 6) fileContextActive.current = false;
@@ -1074,6 +1112,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const squareStyles = buildSquareStyles({
     neonFile, neonRank, neonSquares: boardNeonSqs, clicked, wrong: wrongSqs, targets: targetSqs,
     colourQuizSq: step?.taskType === 'colour-quiz' && quizState?.active ? step.quizSquares?.[quizIdx]?.sq : null,
+    glowPieces,
+    boardPosition: resolveBoardPosition(boardFen, placedPieces),
   });
 
   function handleAudioOverlayTap() {
