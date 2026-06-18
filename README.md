@@ -48,3 +48,4 @@
 <!-- sync: piece-letter-quiz continue fix -->
 <!-- sync: lesson2 visual learning panels -->
 <!-- sync: rm5 board+move display fix -->
+<!-- sync: lesson2 full rewrite zero violations -->
