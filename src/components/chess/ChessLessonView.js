@@ -59,7 +59,7 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // Build square style overrides for neon highlights
 // ─────────────────────────────────────────────────────
 function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets,
-  colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive, pathSqs }) {
+  colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive, pathSqs, extraRanks }) {
   const styles = {};
 
   function setStyle(sq, style) {
@@ -73,12 +73,19 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     }
   }
 
-  // STYLE 1 — Full fill: entire rank row in neon yellow
+  // STYLE 1 — Full fill: primary rank row in neon yellow
   if (neonRank) {
     FILES.forEach(f => {
       setStyle(`${f}${neonRank}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
     });
   }
+
+  // STYLE 1 — Additional ranks (from highlightRanks array)
+  (extraRanks || []).forEach(r => {
+    FILES.forEach(f => {
+      setStyle(`${f}${r}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
+    });
+  });
 
   // STYLE 2 — Border only: intersection square when both file AND rank active
   // Shows the named square clearly while preserving its true dark/light colour
@@ -327,7 +334,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const continueSpoke = useRef(false); // true when handleContinue already spoke this step
   const [taskComplete, setTaskComplete] = useState(false);
   const [pathSqs, setPathSqs] = useState([]);
-  const [speakingFb, setSpeakingFb] = useState(false); // true while any feedback voice plays // true when a board task is done, shows Continue
+  const [speakingFb, setSpeakingFb] = useState(false);
+  const [extraRanks, setExtraRanks] = useState([]); // additional ranks to highlight (Style 1) // true when a board task is done, shows Continue
   const neonTimer = useRef(null);
   const seqTimers = useRef([]);
 
@@ -339,6 +347,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     // Step-level static highlights (set from lesson data directly)
     if (step?.highlightFile) setNeonFile(step.highlightFile);
     if (step?.highlightRank) setNeonRank(String(step.highlightRank));
+    // highlightRanks: array of rank numbers to glow simultaneously
+    if (step?.highlightRanks?.length) {
+      // Glow first rank immediately, others via word trigger
+      setNeonRank(String(step.highlightRanks[0]));
+    }
     if (step?.highlights?.length) setNeonSqs(step.highlights);
     // No auto-timeout — highlights persist until step changes or student completes task
   }
@@ -530,6 +543,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setTaskComplete(false);
     setPathSqs([]);
     setSpeakingFb(false);
+    setExtraRanks([]);
     fileContextCount.current = 0;
     rankContextActive.current = false;
     rankContextCount.current = 0;
@@ -542,7 +556,17 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
     if (step?.highlightFile) setNeonFile(step.highlightFile);
     if (step?.highlightRank) setNeonRank(String(step.highlightRank));
+    // highlightRanks: multiple ranks get Style 1 (full fill) via neonRank cycling
+    // We set neonSqs only for named squares (step.highlights) — Style 2
     if (step?.highlights?.length) setNeonSqs(step.highlights);
+    // For highlightRanks, use neonRank for the first, and store extras for rendering
+    if (step?.highlightRanks?.length) {
+      setNeonRank(String(step.highlightRanks[0]));
+      // Additional ranks stored in extraRanks state
+      setExtraRanks(step.highlightRanks.slice(1).map(String));
+    } else {
+      setExtraRanks([]);
+    }
 
     // Only pre-highlight targets for click-square (single target is fine)
     // click-file and click-rank: column glow (neonFile/neonRank) is enough
@@ -566,10 +590,17 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
     // Compute board FEN for this step
     if (step?.taskType === 'notation-demo') {
+      // Show starting board, then animate piece moving after a short delay
+      setBoardFen(step.boardState || 'start');
+      setPathSqs([]);
       const demoTimer = setTimeout(() => {
         setBoardFen(step.demoFen || 'start');
-      }, 800);
-      return () => clearTimeout(demoTimer);
+        // Show path dots when piece arrives at destination
+        if (step.path?.length) setPathSqs(step.path);
+      }, 1200);
+      // Clear path dots after student has seen the move
+      const clearTimer = setTimeout(() => setPathSqs([]), 1200 + 3500);
+      return () => { clearTimeout(demoTimer); clearTimeout(clearTimer); setPathSqs([]); };
     } else if (step?.demoSequence?.length) {
       // Sequential movement demo — plays each FEN in order
       // Each frame shows the piece in a new position with path dots
@@ -1255,10 +1286,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     return () => ro.disconnect();
   }, []);
 
-  // Border-only squares: ONLY apply during explicit colour teaching or colour quiz.
-  // During file/rank teaching the full column/row should glow cleanly — no blinkers.
+  // Border-only squares:
+  // 1. Colour teaching steps (borderOnly flag or colour-quiz) — all neon squares
+  // 2. Observe steps — highlights are always NAMED squares, so always border-only
+  // During exercises, squares use green target fill (handled separately)
   const colourTeachingStep = step?.borderOnly || step?.taskType === 'colour-quiz';
-  const borderOnlySquares = colourTeachingStep ? boardNeonSqs : [];
+  const observeNamedSquares = step?.taskType === 'observe' && step?.highlights?.length > 0;
+  const borderOnlySquares = (colourTeachingStep || observeNamedSquares) ? boardNeonSqs : [];
 
   const squareStyles = buildSquareStyles({
     neonFile, neonRank,
@@ -1272,6 +1306,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     borderOnlySquares,
     speedActive: speedState?.active,
     pathSqs,
+    extraRanks,
   });
 
   function handleAudioOverlayTap() {
