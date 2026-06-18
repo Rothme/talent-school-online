@@ -40,3 +40,4 @@
 <!-- sync: full movement sequences -->
 <!-- force-redeploy: test jumper + sequences confirmed in HEAD -->
 <!-- sync: correct piece movement sequences -->
+<!-- sync: pieces from real squares -->
