@@ -24,3 +24,4 @@
 <!-- sync: cancel-outside-speak -->
 <!-- sync: fix double speak -->
 <!-- sync: completeTask gesture fix -->
+<!-- sync: file-context highlight window -->
