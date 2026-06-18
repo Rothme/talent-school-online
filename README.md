@@ -31,3 +31,4 @@
 <!-- sync: observations batch fix -->
 <!-- sync: borderOnly fix -->
 <!-- sync: two-style highlight standard -->
+<!-- sync: indep squares target display -->
