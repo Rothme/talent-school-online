@@ -45,3 +45,4 @@
 <!-- sync: bishop knight final fix -->
 <!-- sync: speakingFb all buttons locked -->
 <!-- sync: lesson2 rules applied -->
+<!-- sync: piece-letter-quiz continue fix -->
