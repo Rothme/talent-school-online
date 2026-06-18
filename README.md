@@ -30,3 +30,4 @@
 <!-- sync: per-type neon timers -->
 <!-- sync: observations batch fix -->
 <!-- sync: borderOnly fix -->
+<!-- sync: two-style highlight standard -->
