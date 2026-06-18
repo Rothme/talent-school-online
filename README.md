@@ -47,3 +47,4 @@
 <!-- sync: lesson2 rules applied -->
 <!-- sync: piece-letter-quiz continue fix -->
 <!-- sync: lesson2 visual learning panels -->
+<!-- sync: rm5 board+move display fix -->
