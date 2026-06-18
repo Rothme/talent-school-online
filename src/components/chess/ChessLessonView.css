@@ -413,3 +413,29 @@
   font-size: clamp(9px, 0.72vw, 11px);
   color: #64748b; font-weight: 700;
 }
+
+/* ── Test account phase jumper ── */
+.cl-test-jumper {
+  background: rgba(249,115,22,0.15);
+  border: 1.5px solid rgba(249,115,22,0.5);
+  color: #fb923c;
+  border-radius: 7px;
+  padding: 3px 8px;
+  font-size: clamp(10px, 0.8vw, 12px);
+  font-weight: 700;
+  font-family: var(--font-main);
+  cursor: pointer;
+  max-width: clamp(140px, 14vw, 200px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cl-test-jumper:focus {
+  outline: 2px solid rgba(249,115,22,0.7);
+  outline-offset: 1px;
+}
+.cl-test-jumper option {
+  background: #1e293b;
+  color: #f1f5f9;
+  font-weight: 600;
+}
