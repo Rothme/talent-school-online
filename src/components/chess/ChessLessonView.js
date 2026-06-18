@@ -937,7 +937,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (!curr) return;
     setPieceQuizAnswer(answer);
     setTotal(t => t + 1);
-    const correctValue = curr.correctLetter !== undefined ? curr.correctLetter : curr.pieceName;
+    const correctValue = curr.correctLetter !== undefined ? curr.correctLetter
+      : curr.correctIdx !== undefined ? curr.options[curr.correctIdx]
+      : curr.pieceName;
     const correct = answer === correctValue;
     const ni = pieceQuizIdx + 1;
 
@@ -1412,7 +1414,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
               <div className="cl-recap-opts">
                 {step.quizItems[pieceQuizIdx].options.map((opt, i) => {
                   const curr = step.quizItems[pieceQuizIdx];
-                  const correctValue = curr.correctLetter !== undefined ? curr.correctLetter : curr.pieceName;
+                  const correctValue = curr.correctLetter !== undefined ? curr.correctLetter
+                    : curr.correctIdx !== undefined ? curr.options[curr.correctIdx]
+                    : curr.pieceName;
                   let cls = 'cl-recap-opt';
                   if (pieceQuizAnswer !== null) {
                     if (opt === correctValue) cls += ' cl-recap-correct';
