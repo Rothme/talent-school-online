@@ -1136,11 +1136,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     return () => ro.disconnect();
   }, []);
 
-  // Squares that should show border-only (no fill) — colour squares in teaching
-  const COLOUR_SQUARES = ['a1','h8','h1','a8','b2','c3','d4','e5','f6','g7'];
-  const borderOnlySquares = (step?.borderOnly || step?.taskType === 'colour-quiz')
-    ? boardNeonSqs
-    : COLOUR_SQUARES.filter(sq => boardNeonSqs.includes(sq));
+  // Border-only squares: ONLY apply during explicit colour teaching or colour quiz.
+  // During file/rank teaching the full column/row should glow cleanly — no blinkers.
+  const colourTeachingStep = step?.borderOnly || step?.taskType === 'colour-quiz';
+  const borderOnlySquares = colourTeachingStep ? boardNeonSqs : [];
 
   const squareStyles = buildSquareStyles({
     neonFile, neonRank,
