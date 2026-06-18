@@ -27,3 +27,4 @@
 <!-- sync: file-context highlight window -->
 <!-- sync: file quiz glow fixes -->
 <!-- sync: rank-square-piece glow complete -->
+<!-- sync: per-type neon timers -->
