@@ -278,41 +278,91 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   // - Square coordinates (e4, d5 etc) always highlight
   // - Suppressed entirely for test/challenge taskTypes
   const lastSpokenWord = useRef('');
+  const fileContextActive = useRef(false);  // true after "file" is spoken, lasts several words
+  const fileContextCount = useRef(0);        // counts words since "file" was spoken
+  const rankContextActive = useRef(false);
+  const rankContextCount = useRef(0);
+
   function applyNeonWord(word) {
     if (!word) return;
-    // Suppress during test/challenge steps
-    const suppressTypes = ['independent-squares', 'speed-round', 'colour-quiz',
-                          'piece-letter-quiz', 'piece-spot-quiz', 'recap-quiz'];
-    if (suppressTypes.includes(step?.taskType)) { lastSpokenWord.current = word.toLowerCase(); return; }
+
+    // Suppress ALL highlights during student exercises and tests
+    const suppressTypes = [
+      'independent-squares', 'speed-round', 'colour-quiz',
+      'piece-letter-quiz', 'piece-spot-quiz', 'recap-quiz',
+      'click-file', 'click-rank', 'click-square', 'piece-range',
+      'file-name-quiz',
+    ];
+    if (suppressTypes.includes(step?.taskType)) {
+      lastSpokenWord.current = word.toLowerCase();
+      return;
+    }
 
     const w = word.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!w) return;
 
-    // Square: e.g. "e4", "a1" — always highlight
+    // Square coordinate e.g. "e4", "a1" — always highlight immediately
     if (/^[a-h][1-8]$/.test(w)) {
       setNeonSqs([w]);
       clearTimeout(neonTimer.current);
       neonTimer.current = setTimeout(() => setNeonSqs([]), 2500);
       lastSpokenWord.current = w;
+      fileContextActive.current = false;
+      rankContextActive.current = false;
       return;
     }
 
-    // File letter: ONLY highlight when preceded by the word "file"
-    // This prevents random file highlights when Ms. Momo says any letter
-    if (/^[a-h]$/.test(w) && lastSpokenWord.current === 'file') {
-      setNeonFile(w);
-      clearTimeout(neonTimer.current);
-      neonTimer.current = setTimeout(() => setNeonFile(null), 2000);
+    // "file" keyword — open file context window for next 8 words
+    if (w === 'file' || w === 'files') {
+      fileContextActive.current = true;
+      fileContextCount.current = 0;
+      rankContextActive.current = false;
       lastSpokenWord.current = w;
       return;
     }
 
-    // Rank number: ONLY highlight when preceded by "rank"
-    if (/^[1-8]$/.test(w) && lastSpokenWord.current === 'rank') {
-      setNeonRank(w);
-      clearTimeout(neonTimer.current);
-      neonTimer.current = setTimeout(() => setNeonRank(null), 2000);
+    // "rank" keyword — open rank context window for next 8 words
+    if (w === 'rank' || w === 'ranks') {
+      rankContextActive.current = true;
+      rankContextCount.current = 0;
+      fileContextActive.current = false;
       lastSpokenWord.current = w;
       return;
+    }
+
+    // File letter: highlight if within file context window OR preceded directly by "file"
+    if (/^[a-h]$/.test(w)) {
+      if (fileContextActive.current || lastSpokenWord.current === 'file') {
+        setNeonFile(w);
+        clearTimeout(neonTimer.current);
+        neonTimer.current = setTimeout(() => setNeonFile(null), 2200);
+        // Keep context active for sequential letters like "a, b, c, d, e, f, g, h"
+        fileContextCount.current = 0;
+      }
+      lastSpokenWord.current = w;
+      return;
+    }
+
+    // Rank number: highlight if within rank context window OR preceded by "rank"
+    if (/^[1-8]$/.test(w)) {
+      if (rankContextActive.current || lastSpokenWord.current === 'rank') {
+        setNeonRank(w);
+        clearTimeout(neonTimer.current);
+        neonTimer.current = setTimeout(() => setNeonRank(null), 2200);
+        rankContextCount.current = 0;
+      }
+      lastSpokenWord.current = w;
+      return;
+    }
+
+    // Count words that pass without a file/rank letter — close context after 6 non-matching words
+    if (fileContextActive.current) {
+      fileContextCount.current++;
+      if (fileContextCount.current > 6) fileContextActive.current = false;
+    }
+    if (rankContextActive.current) {
+      rankContextCount.current++;
+      if (rankContextCount.current > 6) rankContextActive.current = false;
     }
 
     lastSpokenWord.current = w;
@@ -369,6 +419,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setSpeed(null); setIndepIdx(0); clearNeon();
     setRecapAnswer(null); setRecapFeedbackDone(false);
     setTaskComplete(false);
+    fileContextActive.current = false;
+    fileContextCount.current = 0;
+    rankContextActive.current = false;
+    rankContextCount.current = 0;
     clearTimeout(voiceFinishTimer.current);
     setVoiceFinished(false);
 
