@@ -58,24 +58,48 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // ─────────────────────────────────────────────────────
 // Build square style overrides for neon highlights
 // ─────────────────────────────────────────────────────
-function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets, colourQuizSq, glowPieces, boardPosition }) {
+function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets,
+  colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive }) {
   const styles = {};
 
   function setStyle(sq, style) {
     styles[sq] = { ...(styles[sq] || {}), ...style };
   }
 
+  // File highlight — border only on column squares, no fill
   if (neonFile) {
-    for (let r = 1; r <= 8; r++) setStyle(`${neonFile}${r}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
+    for (let r = 1; r <= 8; r++) setStyle(`${neonFile}${r}`, {
+      boxShadow: 'inset 0 0 0 4px rgba(255,210,0,0.95)',
+      outline: '2px solid rgba(255,210,0,0.8)',
+    });
   }
+  // Rank highlight — border only on row squares, no fill
   if (neonRank) {
-    FILES.forEach(f => setStyle(`${f}${neonRank}`, { backgroundColor: 'rgba(255,210,0,0.55)' }));
+    FILES.forEach(f => setStyle(`${f}${neonRank}`, {
+      boxShadow: 'inset 0 0 0 4px rgba(255,210,0,0.95)',
+      outline: '2px solid rgba(255,210,0,0.8)',
+    }));
   }
-  (neonSquares || []).forEach(sq => setStyle(sq, {
-    backgroundColor: 'rgba(255,210,0,0.85)',
-    boxShadow: 'inset 0 0 0 3px rgba(255,210,0,1)',
-  }));
-  // Piece glow: highlight every square containing a piece of the named type
+  // Intersection square from file+rank — full glow to show the named square
+  if (neonFile && neonRank) {
+    setStyle(`${neonFile}${neonRank}`, {
+      backgroundColor: 'rgba(255,210,0,0.75)',
+      boxShadow: 'inset 0 0 0 4px rgba(255,210,0,1)',
+    });
+  }
+  // Named squares (e.g. click-square targets shown during teaching)
+  // Border-only when borderOnly flag is set, full highlight otherwise
+  (neonSquares || []).forEach(sq => {
+    if ((borderOnlySquares || []).includes(sq)) {
+      setStyle(sq, { animation: 'cl-sq-blink 0.9s step-end infinite' });
+    } else {
+      setStyle(sq, {
+        backgroundColor: 'rgba(255,210,0,0.75)',
+        boxShadow: 'inset 0 0 0 3px rgba(255,210,0,1)',
+      });
+    }
+  });
+  // Piece glow — orange border on squares containing matching piece
   if (glowPieces?.length && boardPosition) {
     Object.entries(boardPosition).forEach(([sq, piece]) => {
       if (glowPieces.includes(piece)) {
@@ -86,17 +110,22 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
       }
     });
   }
-  // Colour-quiz square: white blinking border ONLY — no yellow, no colour change at all
+  // Colour-quiz square: blinking border ONLY — true square colour must show
   if (colourQuizSq) {
-    setStyle(colourQuizSq, {
-      animation: 'cl-sq-blink 0.9s step-end infinite',
+    setStyle(colourQuizSq, { animation: 'cl-sq-blink 0.9s step-end infinite' });
+  }
+  // Target squares (click-file, click-rank, click-square, piece-range)
+  // NOT shown during speed round — student must find unaided
+  if (!speedActive) {
+    (targets || []).forEach(sq => {
+      if (!(clicked || []).includes(sq)) {
+        setStyle(sq, {
+          backgroundColor: 'rgba(60,220,90,0.55)',
+          boxShadow: 'inset 0 0 0 3px rgba(50,210,80,0.95)',
+        });
+      }
     });
   }
-  (targets || []).forEach(sq => {
-    if (!(clicked || []).includes(sq)) {
-      setStyle(sq, { backgroundColor: 'rgba(60,220,90,0.55)', boxShadow: 'inset 0 0 0 3px rgba(50,210,80,0.95)' });
-    }
-  });
   (clicked || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(29,158,117,0.65)' }));
   (wrong || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(226,75,74,0.7)' }));
 
@@ -279,22 +308,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const step = steps[stepIdx];
 
   function applyNeon(text) {
-    const m = parseHighlights(text);
-    const sqs = [], files = [], ranks = [], pieces = [];
-    m.forEach(x => {
-      if (x.type === 'square') sqs.push(x.value);
-      else if (x.type === 'file') files.push(x.value);
-      else if (x.type === 'rank') ranks.push(x.value);
-      else if (x.type === 'piece') pieces.push(x.value);
-    });
-    if (files.length) setNeonFile(files[0]);
-    if (ranks.length) setNeonRank(ranks[0]);
-    if (sqs.length) setNeonSqs(sqs);
-    if (pieces.length) setGlowPieces(pieces);
-    clearTimeout(neonTimer.current);
-    neonTimer.current = setTimeout(() => {
-      setNeonFile(null); setNeonRank(null); setNeonSqs([]); setGlowPieces([]);
-    }, 9000);
+    // Step-level static highlights (set from lesson data directly)
+    if (step?.highlightFile) setNeonFile(step.highlightFile);
+    if (step?.highlightRank) setNeonRank(String(step.highlightRank));
+    if (step?.highlights?.length) setNeonSqs(step.highlights);
+    // No auto-timeout — highlights persist until step changes or student completes task
   }
 
   // Progressive word highlighting — called per word boundary as Ms. Momo speaks.
@@ -518,13 +536,17 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
     // Compute board FEN for this step
     if (step?.taskType === 'notation-demo') {
-      // Keep the PREVIOUS position briefly so player can see
-      // where the piece starts before it slides to the new square.
-      // The animation fires ~800ms after voice begins.
-      const prevFen = boardFen;
       const demoTimer = setTimeout(() => {
         setBoardFen(step.demoFen || 'start');
       }, 800);
+      return () => clearTimeout(demoTimer);
+    } else if (step?.demoFen) {
+      // observe steps with a demoFen — show initial position then animate movement
+      setBoardFen(step.boardState && step.boardState !== 'start' && step.boardState !== 'empty'
+        ? step.boardState : 'start');
+      const demoTimer = setTimeout(() => {
+        setBoardFen(step.demoFen);
+      }, step.demoDelay || 3000);
       return () => clearTimeout(demoTimer);
     } else if (step?.taskType === 'notation-build') {
       setBoardFen(step.fromFen || 'start');
@@ -1114,11 +1136,23 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     return () => ro.disconnect();
   }, []);
 
+  // Squares that should show border-only (no fill) — colour squares in teaching
+  const COLOUR_SQUARES = ['a1','h8','h1','a8','b2','c3','d4','e5','f6','g7'];
+  const borderOnlySquares = (step?.borderOnly || step?.taskType === 'colour-quiz')
+    ? boardNeonSqs
+    : COLOUR_SQUARES.filter(sq => boardNeonSqs.includes(sq));
+
   const squareStyles = buildSquareStyles({
-    neonFile, neonRank, neonSquares: boardNeonSqs, clicked, wrong: wrongSqs, targets: targetSqs,
-    colourQuizSq: step?.taskType === 'colour-quiz' && quizState?.active ? step.quizSquares?.[quizIdx]?.sq : null,
+    neonFile, neonRank,
+    neonSquares: boardNeonSqs,
+    clicked, wrong: wrongSqs,
+    targets: targetSqs,
+    colourQuizSq: step?.taskType === 'colour-quiz' && quizState?.active
+      ? step.quizSquares?.[quizIdx]?.sq : null,
     glowPieces,
     boardPosition: resolveBoardPosition(boardFen, placedPieces),
+    borderOnlySquares,
+    speedActive: speedState?.active,
   });
 
   function handleAudioOverlayTap() {
