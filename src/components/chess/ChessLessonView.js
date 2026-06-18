@@ -558,8 +558,33 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         setBoardFen(step.demoFen || 'start');
       }, 800);
       return () => clearTimeout(demoTimer);
+    } else if (step?.demoSequence?.length) {
+      // Sequential movement demo — plays each FEN in order, loops back to start
+      // Used for meetpieces to show all movement directions one by one
+      const startFen = step.boardState || 'start';
+      setBoardFen(startFen);
+      const timers = [];
+      let cumDelay = step.demoSequence[0].delay || 2500;
+
+      step.demoSequence.forEach((frame, i) => {
+        const t = setTimeout(() => setBoardFen(frame.fen + ' w - - 0 1'), cumDelay);
+        timers.push(t);
+        const nextDelay = step.demoSequence[i + 1]?.delay || 2000;
+        cumDelay += nextDelay;
+        // After each move, briefly return to start before next move
+        if (i < step.demoSequence.length - 1) {
+          const ret = setTimeout(() => setBoardFen(startFen), cumDelay - 600);
+          timers.push(ret);
+        }
+      });
+
+      // Loop back to start after last move, then restart sequence
+      const loopBack = setTimeout(() => setBoardFen(startFen), cumDelay + 500);
+      timers.push(loopBack);
+
+      return () => timers.forEach(t => clearTimeout(t));
     } else if (step?.demoFen) {
-      // observe steps with a demoFen — show initial position then animate movement
+      // Single movement demo
       setBoardFen(step.boardState && step.boardState !== 'start' && step.boardState !== 'empty'
         ? step.boardState : 'start');
       const demoTimer = setTimeout(() => {
