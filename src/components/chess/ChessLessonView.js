@@ -308,6 +308,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const fileContextCount = useRef(0);
   const rankContextActive = useRef(false);
   const rankContextCount = useRef(0);
+  // Separate timers per highlight type so they don't interfere with each other
+  const fileNeonTimer = useRef(null);
+  const rankNeonTimer = useRef(null);
+  const sqNeonTimer = useRef(null);
+  const pieceNeonTimer = useRef(null);
 
   // Piece name → piece codes for glowing on board
   const PIECE_CODES = {
@@ -338,17 +343,15 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (!w) return;
 
     // ── Square coordinate e.g. "e4", "a1" ──
-    // Always highlight. Clear+set to handle repeats.
+    // Always highlight. Clear+set forces re-render on repeated mention.
     if (/^[a-h][1-8]$/.test(w)) {
       setNeonSqs([]);
       setTimeout(() => {
         setNeonSqs([w]);
-        clearTimeout(neonTimer.current);
-        neonTimer.current = setTimeout(() => setNeonSqs([]), 2500);
+        clearTimeout(sqNeonTimer.current);
+        sqNeonTimer.current = setTimeout(() => setNeonSqs([]), 2500);
       }, 50);
       lastSpokenWord.current = w;
-      fileContextActive.current = false;
-      rankContextActive.current = false;
       return;
     }
 
@@ -356,74 +359,72 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (w === 'file' || w === 'files') {
       fileContextActive.current = true;
       fileContextCount.current = 0;
-      rankContextActive.current = false;
       lastSpokenWord.current = w;
       return;
     }
 
-    // ── "rank" / "ranks" keyword — open rank context window ──
-    if (w === 'rank' || w === 'ranks') {
+    // ── "rank" / "ranks" / "row" / "rows" keyword — open rank context window ──
+    if (w === 'rank' || w === 'ranks' || w === 'row' || w === 'rows') {
       rankContextActive.current = true;
       rankContextCount.current = 0;
-      fileContextActive.current = false;
       lastSpokenWord.current = w;
       return;
     }
 
     // ── File letter a–h ──
-    // Highlight within file context window OR immediately after "file"
+    // Highlight within file context OR immediately after "file"
     if (/^[a-h]$/.test(w)) {
       if (fileContextActive.current || lastSpokenWord.current === 'file') {
         setNeonFile(null);
+        clearTimeout(fileNeonTimer.current);
         setTimeout(() => {
           setNeonFile(w);
-          clearTimeout(neonTimer.current);
-          neonTimer.current = setTimeout(() => setNeonFile(null), 2200);
+          fileNeonTimer.current = setTimeout(() => setNeonFile(null), 2500);
         }, 50);
-        fileContextCount.current = 0; // reset — keeps window alive for sequences
+        fileContextCount.current = 0; // reset counter — keeps window alive for sequences
       }
       lastSpokenWord.current = w;
       return;
     }
 
     // ── Rank number 1–8 ──
-    // Highlight within rank context window OR immediately after "rank"
+    // Highlight within rank context OR immediately after "rank"/"row"
+    // Glow duration 2500ms. Clear+set forces re-render on repeated mention.
     if (/^[1-8]$/.test(w)) {
-      if (rankContextActive.current || lastSpokenWord.current === 'rank') {
+      if (rankContextActive.current || lastSpokenWord.current === 'rank' || lastSpokenWord.current === 'row') {
         setNeonRank(null);
+        clearTimeout(rankNeonTimer.current);
         setTimeout(() => {
           setNeonRank(w);
-          clearTimeout(neonTimer.current);
-          neonTimer.current = setTimeout(() => setNeonRank(null), 2200);
+          rankNeonTimer.current = setTimeout(() => setNeonRank(null), 2500);
         }, 50);
-        rankContextCount.current = 0; // reset — keeps window alive for sequences
+        rankContextCount.current = 0; // reset counter — keeps window alive for sequences
       }
       lastSpokenWord.current = w;
       return;
     }
 
     // ── Piece names ──
-    // Highlight all squares containing that piece type on the board.
-    // Glow for 2.5s then clear. Clear+set handles repeated mentions.
+    // Glow all squares containing that piece type. Clear+set handles repeats.
     if (PIECE_CODES[w]) {
       setGlowPieces([]);
+      clearTimeout(pieceNeonTimer.current);
       setTimeout(() => {
         setGlowPieces(PIECE_CODES[w]);
-        clearTimeout(neonTimer.current);
-        neonTimer.current = setTimeout(() => setGlowPieces([]), 2500);
+        pieceNeonTimer.current = setTimeout(() => setGlowPieces([]), 2500);
       }, 50);
       lastSpokenWord.current = w;
       return;
     }
 
-    // ── Count non-matching words — close context after 6 ──
+    // ── Count non-matching words — close context after 8 non-matching words ──
     if (fileContextActive.current) {
       fileContextCount.current++;
-      if (fileContextCount.current > 6) fileContextActive.current = false;
+      if (fileContextCount.current > 8) fileContextActive.current = false;
     }
     if (rankContextActive.current) {
       rankContextCount.current++;
-      if (rankContextCount.current > 6) rankContextActive.current = false;
+      if (rankContextCount.current > 8) rankContextActive.current = false;
     }
 
     lastSpokenWord.current = w;
@@ -484,6 +485,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     fileContextCount.current = 0;
     rankContextActive.current = false;
     rankContextCount.current = 0;
+    clearTimeout(fileNeonTimer.current);
+    clearTimeout(rankNeonTimer.current);
+    clearTimeout(sqNeonTimer.current);
+    clearTimeout(pieceNeonTimer.current);
     clearTimeout(voiceFinishTimer.current);
     setVoiceFinished(false);
 
