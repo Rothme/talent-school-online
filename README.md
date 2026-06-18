@@ -39,3 +39,4 @@
 <!-- sync: test phase jumper -->
 <!-- sync: full movement sequences -->
 <!-- force-redeploy: test jumper + sequences confirmed in HEAD -->
+<!-- sync: correct piece movement sequences -->
