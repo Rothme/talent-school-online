@@ -630,8 +630,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       setPathSqs([]);
       const timers = [];
       let cumDelay = 1800; // initial pause before first move
+      // For recap-quiz steps, keep the piece on its final destination
+      // so the student can reference it while answering — don't loop back
+      const keepOnDestination = step?.taskType === 'recap-quiz';
 
       step.demoSequence.forEach((frame, i) => {
+        const isLast = i === step.demoSequence.length - 1;
         // Show the move
         const t1 = setTimeout(() => {
           setBoardFen(frame.fen);
@@ -641,11 +645,14 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         cumDelay += (frame.delay || 2200);
 
         // Return to start, clear path dots before next move
-        const t2 = setTimeout(() => {
-          setBoardFen(startFen);
-          setPathSqs([]);
-        }, cumDelay - 600);
-        timers.push(t2);
+        // (skip this for the last frame of a recap-quiz — leave piece in place)
+        if (!(keepOnDestination && isLast)) {
+          const t2 = setTimeout(() => {
+            setBoardFen(startFen);
+            setPathSqs([]);
+          }, cumDelay - 600);
+          timers.push(t2);
+        }
       });
 
       return () => {
