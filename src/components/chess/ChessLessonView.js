@@ -335,7 +335,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const [taskComplete, setTaskComplete] = useState(false);
   const [pathSqs, setPathSqs] = useState([]);
   const [speakingFb, setSpeakingFb] = useState(false);
-  const [extraRanks, setExtraRanks] = useState([]); // additional ranks to highlight (Style 1) // true when a board task is done, shows Continue
+  const [extraRanks, setExtraRanks] = useState([]);
+  const [visibleLetterCards, setVisibleLetterCards] = useState([]); // progressive letter+piece reveal // true when a board task is done, shows Continue
   const neonTimer = useRef(null);
   const seqTimers = useRef([]);
 
@@ -474,7 +475,26 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         pieceNeonTimer.current = setTimeout(() => setGlowPieces([]), 2500);
       }, 50);
       lastSpokenWord.current = w;
+
+      // Progressive letter card reveal — when step has a letterMap,
+      // show the piece+letter card on the right panel as it's named
+      if (step?.letterMap?.[w]) {
+        const card = step.letterMap[w];
+        setVisibleLetterCards(prev =>
+          prev.some(c => c.letter === card.letter) ? prev : [...prev, card]
+        );
+      }
       return;
+    }
+
+    // ── "Pawn(s)" with no letter — also trigger card for lessons mentioning it ──
+    if (w === 'pawn' || w === 'pawns') {
+      if (step?.letterMap?.pawn) {
+        const card = step.letterMap.pawn;
+        setVisibleLetterCards(prev =>
+          prev.some(c => c.letter === card.letter) ? prev : [...prev, card]
+        );
+      }
     }
 
     // ── Count non-matching words — close context after 8 non-matching words ──
@@ -544,6 +564,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setPathSqs([]);
     setSpeakingFb(false);
     setExtraRanks([]);
+    setVisibleLetterCards([]);
     fileContextCount.current = 0;
     rankContextActive.current = false;
     rankContextCount.current = 0;
@@ -1511,6 +1532,22 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         {/* COLUMN 3 — Exercise / practice engine */}
         <div className="cl-exercise">
 
+          {/* Letter + piece visual reference panel — builds up as Ms. Momo names each piece */}
+          {visibleLetterCards.length > 0 && (
+            <div className="cl-letter-panel">
+              <div className="cl-letter-panel-lbl">Piece Letters</div>
+              <div className="cl-letter-grid">
+                {visibleLetterCards.map(card => (
+                  <div key={card.letter} className="cl-letter-card">
+                    <div className="cl-letter-card-icon">{card.icon}</div>
+                    <div className="cl-letter-card-letter">{card.letter}</div>
+                    <div className="cl-letter-card-name">{card.name}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Task card */}
           {step?.task && (
             <div className="cl-task-card">
@@ -1644,6 +1681,34 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 </span>
                 <span className="cl-tray-piece-sq">→ find its square on the board</span>
               </div>
+            </div>
+          )}
+
+          {/* Piece-letter visual reference — shown when step.pieceLetterRef is set.
+              Builds up as Ms. Momo names each piece+letter, so children SEE
+              the association, not just hear it. */}
+          {step?.pieceLetterRef?.length > 0 && (
+            <div className="cl-letter-ref">
+              <div className="cl-letter-ref-title">Piece Letters</div>
+              <div className="cl-letter-ref-grid">
+                {step.pieceLetterRef.map((item, i) => (
+                  <div key={i} className="cl-letter-ref-card">
+                    <span className="cl-letter-ref-icon">{item.icon}</span>
+                    <span className="cl-letter-ref-letter">{item.letter}</span>
+                    <span className="cl-letter-ref-name">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notation move display — shows the move text large and clear
+              whenever a notation-demo step plays, e.g. "e4" or "Nf3" */}
+          {step?.taskType === 'notation-demo' && step?.moveNotation && (
+            <div className="cl-move-display">
+              <div className="cl-move-label">The Move</div>
+              <div className="cl-move-text">{step.moveNotation}</div>
+              {step.moveExplain && <div className="cl-move-explain">{step.moveExplain}</div>}
             </div>
           )}
 
