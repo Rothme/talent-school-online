@@ -345,6 +345,8 @@ export const LESSON_1 = {
           id: 's2',
           type: 'square-guided',
           highlights: ['e4'],
+          highlightFile: 'e',
+          highlightRank: 4,
           voice: `This glowing square is e4 — file e, rank 4. Say it with me — E FOUR! This is actually the most famous square in chess. More chess games start with a pawn moving to e4 than any other square. Click on e4!`,
           task: 'Click on e4',
           taskType: 'click-square',
@@ -356,6 +358,8 @@ export const LESSON_1 = {
           id: 's3',
           type: 'square-guided',
           highlights: ['d5'],
+          highlightFile: 'd',
+          highlightRank: 5,
           voice: `This square is d5 — file d, rank 5. D — FIVE. File d is the 4th column from the left. Rank 5 is the 5th row from the bottom. Find where they cross — that is d5! Click on d5!`,
           task: 'Click on d5',
           taskType: 'click-square',
@@ -367,6 +371,8 @@ export const LESSON_1 = {
           id: 's4',
           type: 'square-guided',
           highlights: ['a1'],
+          highlightFile: 'a',
+          highlightRank: 1,
           voice: `This corner square is a1 — file a, rank 1. A — ONE. The bottom left corner of the board. This is a very famous square — a1 is ALWAYS a dark square. That is a rule in chess — the bottom left corner is always dark! Click on a1!`,
           task: 'Click on a1',
           taskType: 'click-square',
@@ -378,6 +384,8 @@ export const LESSON_1 = {
           id: 's5',
           type: 'square-guided',
           highlights: ['h8'],
+          highlightFile: 'h',
+          highlightRank: 8,
           voice: `This corner square is h8 — file h, rank 8. H — EIGHT. The top right corner. Now here is a surprise — h8 is a DARK square, just like a1! The bottom left AND top right corners are both dark! The light corners are h1 — bottom right — and a8 — top left. So remember: a1 dark, h8 dark, h1 light, a8 light! Click on h8!`,
           task: 'Click on h8',
           taskType: 'click-square',
@@ -389,6 +397,8 @@ export const LESSON_1 = {
           id: 's6',
           type: 'square-guided',
           highlights: ['c6'],
+          highlightFile: 'c',
+          highlightRank: 6,
           voice: `This square is c6. File c — third column from the left. Rank 6 — sixth row from the bottom. Count carefully and find c6! Click on it!`,
           task: 'Click on c6',
           taskType: 'click-square',
@@ -400,6 +410,8 @@ export const LESSON_1 = {
           id: 's7',
           type: 'square-guided',
           highlights: ['g3'],
+          highlightFile: 'g',
+          highlightRank: 3,
           voice: `Now find g3! File g is the 7th column from the left — close to the right side. Rank 3 is the 3rd row from the bottom. Find where g and 3 cross!`,
           task: 'Click on g3',
           taskType: 'click-square',
@@ -411,6 +423,8 @@ export const LESSON_1 = {
           id: 's8',
           type: 'square-guided',
           highlights: ['b7'],
+          highlightFile: 'b',
+          highlightRank: 7,
           voice: `Now find b7! File b is the second column from the left. Rank 7 is near the top — second row from the top actually. Find b7!`,
           task: 'Click on b7',
           taskType: 'click-square',
@@ -422,6 +436,8 @@ export const LESSON_1 = {
           id: 's9',
           type: 'square-guided',
           highlights: ['f2'],
+          highlightFile: 'f',
+          highlightRank: 2,
           voice: `Last guided example — find f2! File f is the 6th column. Rank 2 is the second row from the bottom. This is where the White f-Pawn starts in a real game!`,
           task: 'Click on f2',
           taskType: 'click-square',
@@ -647,6 +663,8 @@ export const LESSON_1 = {
 
         {
           id: 'mp2',
+          demoFen: '4k3/8/8/8/8/8/8/3K4 w - - 0 1',
+          demoDelay: 3500,
           type: 'observe',
           boardState: '4k3/8/8/8/8/8/8/4K3 w - - 0 1',
           highlights: ['e1', 'e8'],
@@ -658,6 +676,8 @@ export const LESSON_1 = {
 
         {
           id: 'mp3',
+          demoFen: '3k4/8/8/8/3Q4/8/8/3K4 w - - 0 1',
+          demoDelay: 3500,
           type: 'observe',
           boardState: '3qk3/8/8/8/8/8/8/3QK3 w - - 0 1',
           highlights: ['d1', 'd8'],
@@ -669,6 +689,8 @@ export const LESSON_1 = {
 
         {
           id: 'mp4',
+          demoFen: 'r3k2r/R7/8/8/8/8/8/4K2R w - - 0 1',
+          demoDelay: 4000,
           type: 'observe',
           boardState: 'r3k2r/8/8/8/8/8/8/R3K2R w - - 0 1',
           highlights: ['a1', 'h1', 'a8', 'h8'],
@@ -680,6 +702,8 @@ export const LESSON_1 = {
 
         {
           id: 'mp5',
+          demoFen: '2b1kb2/8/8/5B2/8/8/8/4KB2 w - - 0 1',
+          demoDelay: 4000,
           type: 'observe',
           boardState: '2b1kb2/8/8/8/8/8/8/2B1KB2 w - - 0 1',
           highlights: ['c1', 'f1', 'c8', 'f8'],
@@ -691,6 +715,8 @@ export const LESSON_1 = {
 
         {
           id: 'mp6',
+          demoFen: '1n2k1n1/8/8/8/8/2N5/8/4K1N1 w - - 0 1',
+          demoDelay: 4000,
           type: 'observe',
           boardState: '1n2k1n1/8/8/8/8/8/8/1N2K1N1 w - - 0 1',
           highlights: ['b1', 'g1', 'b8', 'g8'],
@@ -702,6 +728,8 @@ export const LESSON_1 = {
 
         {
           id: 'mp7',
+          demoFen: '4k3/pppppppp/8/8/4P3/8/PPPP1PPP/4K3 w - - 0 1',
+          demoDelay: 4500,
           type: 'observe',
           boardState: '4k3/pppppppp/8/8/8/8/PPPPPPPP/4K3 w - - 0 1',
           highlights: ['e2', 'e7'],
