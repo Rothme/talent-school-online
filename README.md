@@ -35,3 +35,4 @@
 <!-- sync: meetpieces rebuild -->
 <!-- sync: meetpieces solo drag-drop -->
 <!-- sync: bonus round + lesson end fix -->
+<!-- sync: meetpieces correct squares -->
