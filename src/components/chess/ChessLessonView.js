@@ -326,7 +326,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const voiceRef = useRef(false);
   const continueSpoke = useRef(false); // true when handleContinue already spoke this step
   const [taskComplete, setTaskComplete] = useState(false);
-  const [pathSqs, setPathSqs] = useState([]); // yellow dots along movement path // true when a board task is done, shows Continue
+  const [pathSqs, setPathSqs] = useState([]);
+  const [speakingFb, setSpeakingFb] = useState(false); // true while any feedback voice plays // true when a board task is done, shows Continue
   const neonTimer = useRef(null);
   const seqTimers = useRef([]);
 
@@ -528,6 +529,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     setRecapAnswer(null); setRecapFeedbackDone(false);
     setTaskComplete(false);
     setPathSqs([]);
+    setSpeakingFb(false);
     fileContextCount.current = 0;
     rankContextActive.current = false;
     rankContextCount.current = 0;
@@ -706,7 +708,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (voice) {
       const vt = fill(voice, childName); applyNeon(vt);
       let done = false;
-      const fire = () => { if (done) return; done = true; afterVoice?.(); };
+      const fire = () => {
+        if (done) return; done = true;
+        setSpeakingFb(false);
+        afterVoice?.();
+      };
+      setSpeakingFb(true);
       speakElevenLabs(vt, {
         onStart: () => setIsPlaying(true),
         onEnd: () => { setIsPlaying(false); fire(); },
@@ -728,18 +735,19 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   // the next step's voice within a real user gesture — the only reliable way
   // to satisfy the browser's audio gesture policy.
   function completeTask(successMsg, successVoice) {
-    setTaskComplete(true);          // makes Continue button appear
+    setTaskComplete(true);
     setFeedback(fill(successMsg, childName)); setFbType('success');
     if (successVoice) {
       const vt = fill(successVoice, childName); applyNeon(vt);
+      setSpeakingFb(true);
       speakElevenLabs(vt, {
         onStart: () => setIsPlaying(true),
-        onEnd: () => { setIsPlaying(false); setVoiceFinished(true); },
-        onError: () => { setIsPlaying(false); setVoiceFinished(true); },
-        onBlocked: () => setVoiceFinished(true),
+        onEnd: () => { setIsPlaying(false); setSpeakingFb(false); setVoiceFinished(true); },
+        onError: () => { setIsPlaying(false); setSpeakingFb(false); setVoiceFinished(true); },
+        onBlocked: () => { setSpeakingFb(false); setVoiceFinished(true); },
       });
       const fallbackMs = Math.max(1800, vt.length * 110) + 1500;
-      setTimeout(() => setVoiceFinished(true), fallbackMs);
+      setTimeout(() => { setSpeakingFb(false); setVoiceFinished(true); }, fallbackMs);
     } else {
       setVoiceFinished(true);
     }
@@ -808,8 +816,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     unlockAudio();
     const sq = square;
     if (!step) return;
-    // Block interaction until Ms. Momo has finished her instructions
-    if (!voiceFinished && !isTest) return;
+    // Block interaction until Ms. Momo has finished speaking — main voice OR feedback voice
+    if ((!voiceFinished || speakingFb) && !isTest) return;
     const tt = step.taskType;
 
     if (tt === 'click-file' || tt === 'click-rank' || tt === 'piece-range') {
@@ -1495,8 +1503,16 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           {/* Colour quiz */}
           {quizState?.active && (
             <div className="cl-col-btns">
-              <button className="cl-light-btn" onClick={() => handleLightDark('light')}>Light square</button>
-              <button className="cl-dark-btn" onClick={() => handleLightDark('dark')}>Dark square</button>
+              <button className="cl-light-btn"
+                onClick={() => handleLightDark('light')}
+                disabled={speakingFb}>
+                Light square
+              </button>
+              <button className="cl-dark-btn"
+                onClick={() => handleLightDark('dark')}
+                disabled={speakingFb}>
+                Dark square
+              </button>
             </div>
           )}
 
@@ -1504,13 +1520,18 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           {fileQS?.active && (
             <div className="cl-file-grid">
               {FILES.map(f => (
-                <button key={f} className="cl-file-btn" onClick={() => handleFileAnswer(f)}>{f.toUpperCase()}</button>
+                <button key={f} className="cl-file-btn"
+                  onClick={() => handleFileAnswer(f)}
+                  disabled={speakingFb}
+                  style={speakingFb ? { opacity: 0.4, cursor: 'not-allowed' } : {}}>
+                  {f.toUpperCase()}
+                </button>
               ))}
             </div>
           )}
 
           {/* Recap quiz */}
-          {step?.taskType === 'recap-quiz' && voiceFinished && (
+          {step?.taskType === 'recap-quiz' && voiceFinished && !speakingFb && (
             <div className="cl-recap">
               <div className="cl-recap-q">{step.recapQuestion}</div>
               <div className="cl-recap-opts">
@@ -1521,7 +1542,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                     else if (i === recapAnswer) cls += ' cl-recap-wrong';
                   }
                   return (
-                    <button key={i} className={cls} onClick={() => handleRecapAnswer(i)} disabled={recapAnswer !== null}>
+                    <button key={i} className={cls} onClick={() => handleRecapAnswer(i)} disabled={recapAnswer !== null || speakingFb}>
                       {opt}
                     </button>
                   );
@@ -1531,7 +1552,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           )}
 
           {/* Piece letter quiz / piece spot quiz */}
-          {['piece-letter-quiz', 'piece-spot-quiz'].includes(step?.taskType) && voiceFinished && step.quizItems?.[pieceQuizIdx] && (
+          {['piece-letter-quiz', 'piece-spot-quiz'].includes(step?.taskType) && voiceFinished && !speakingFb && step.quizItems?.[pieceQuizIdx] && (
             <div className="cl-recap">
               <div className="cl-recap-q">
                 Item {pieceQuizIdx + 1} of {step.quizItems.length} — {step.taskType === 'piece-spot-quiz' ? 'which piece is highlighted?' : "what is this piece's letter?"}
@@ -1629,7 +1650,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
             if (step?.taskType === 'recap-quiz' && voiceFinished && recapAnswer === null) return null;
 
             const isRecap = step?.taskType === 'recap-quiz';
-            const locked = !voiceFinished
+            const locked = !voiceFinished || speakingFb
               || (isRecap && (recapAnswer === null || !recapFeedbackDone));
             return (
               <button
@@ -1638,7 +1659,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 disabled={locked}
               >
                 {locked ? (
-                  isPlaying
+                  (isPlaying || speakingFb)
                     ? <><span className="cl-continue-listening">◉ Ms. Momo is speaking...</span></>
                     : <>{!voiceFinished ? 'Please wait...' : recapAnswer === null ? 'Answer the question first...' : 'Listen to Ms. Momo...'}</>
                 ) : (
