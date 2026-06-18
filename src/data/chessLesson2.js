@@ -1,7 +1,7 @@
 /* eslint-disable */
 // ─────────────────────────────────────────────────────────────────
 // CHESS LESSON 2 — The Chess Pieces: Names and Letters
-// 55 minutes · Tutor: Ms. Momo | Beginner Module · Lesson 2 of 24
+// 58 minutes · Tutor: Ms. Momo | Beginner Module · Lesson 2 of 24
 // Builds on Lesson 1 (board, files, ranks, squares, piece shapes)
 //
 // CONCEPT (from Super Curriculum): Each chess piece has a unique
@@ -16,13 +16,19 @@
 // move and experienced captures/checks in Lessons 7-10.
 // Only the MINIMUM notation (piece letter + square) stays here,
 // because Lessons 3-5 refer to pieces by letter ("R for Rook").
+//
+// VISUAL RULE (applies to every step in this file): any spoken
+// move or piece reference must be shown — on the board via FEN/
+// demoSequence/path dots, and on the right panel via moveNotation/
+// moveExplain or pieceLetterRef. No move is ever spoken without
+// being seen.
 // ─────────────────────────────────────────────────────────────────
 
 export const LESSON_2 = {
   id: 'chess-lesson-2',
   title: 'The Chess Pieces — Names and Letters',
   subtitle: 'Lesson 2 of 24 · Beginner Module',
-  totalMinutes: 55,
+  totalMinutes: 58,
 
   phases: [
 
@@ -111,6 +117,7 @@ export const LESSON_2 = {
     // ═══════════════════════════════════════════════════════════
     // PHASE 3 — EACH PIECE IN DETAIL (15 minutes)
     // One step per piece — isolated FEN so ONLY that piece shows
+    // Progressive pieceLetterRef builds visual memory as we go
     // ═══════════════════════════════════════════════════════════
     {
       id: 'pieceletters',
@@ -262,25 +269,38 @@ export const LESSON_2 = {
     },
 
     // ═══════════════════════════════════════════════════════════
-    // PHASE 5 — READING A MOVE (10 minutes)
+    // PHASE 5 — READING A MOVE (18 minutes, expanded from 10)
     // Minimum notation: piece letter + square = one move.
     // No captures, no check — those come in Lesson 24.
+    // Every move spoken is shown on board + right panel.
     // ═══════════════════════════════════════════════════════════
     {
       id: 'readmove',
       title: 'Reading a Chess Move',
       type: 'teach',
-      durationMins: 10,
+      durationMins: 18,
       steps: [
         {
           id: 'rm1',
           type: 'observe',
           boardState: 'start',
           highlights: [],
+          moveNotation: 'Re4 · Nf3 · Qd5 · e4',
+          moveExplain: 'Examples — watch each one closely next!',
           voice: `{name}, now that you know every piece's letter, let's learn how to READ a chess move! A chess move is written as two things stuck together: the PIECE LETTER, then the SQUARE it moved to. That is all! "Re4" means the Rook moved to e4. "Nf3" means the Knight moved to f3. "Qd5" means the Queen moved to d5. If there is no letter at the front, a Pawn moved. So "e4" means a Pawn moved to e4!`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Let me see examples!',
+        },
+        {
+          id: 'rm1b',
+          type: 'observe',
+          boardState: 'start',
+          highlights: [],
+          voice: `Let us slow this down even more, {name}. Every move has exactly TWO parts. Part one — the LETTER, which tells us WHICH piece moved. Part two — the SQUARE, which tells us WHERE it moved to. Letter first, square second, always stuck together with no space. Watch closely as I show you three real moves, one at a time!`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: 'Show me the first one!',
         },
         {
           id: 'rm2',
@@ -295,7 +315,7 @@ export const LESSON_2 = {
           moveNotation: 'e4',
           moveExplain: 'No letter = Pawn moved to e4',
           demoFen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
-          path: ['e3','e4'],
+          path: ['e3', 'e4'],
           continueLabel: 'Next move',
         },
         {
@@ -311,7 +331,7 @@ export const LESSON_2 = {
           moveNotation: 'Nf3',
           moveExplain: 'N = Knight moved to f3',
           demoFen: 'rnbqkbnr/pppppppp/8/8/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
-          path: ['g2','g3','f3'],
+          path: ['g2', 'g3', 'f3'],
           continueLabel: 'Next move',
         },
         {
@@ -327,8 +347,20 @@ export const LESSON_2 = {
           moveNotation: 'Bc4',
           moveExplain: 'B = Bishop moved to c4',
           demoFen: 'rnbqkbnr/pppppppp/8/8/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 2 3',
-          path: ['e2','d3','c4'],
+          path: ['e2', 'd3', 'c4'],
           continueLabel: 'Now try reading moves!',
+        },
+        {
+          id: 'rm4b',
+          type: 'observe',
+          boardState: 'rnbqkbnr/pppppppp/8/8/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 2 3',
+          highlights: [],
+          moveNotation: 'e4 Nf3 Bc4',
+          moveExplain: 'Three moves: Pawn, Knight, Bishop',
+          voice: `Look at the board now, {name} — this is what the position looks like after all three moves: e4, Nf3, Bc4. The Pawn moved forward, the Knight jumped out, and the Bishop is aiming at the centre. Every chess game ever played can be written down this way — letter plus square, move after move!`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: 'Your turn to read moves!',
         },
         {
           id: 'rm5',
@@ -338,7 +370,7 @@ export const LESSON_2 = {
           moveNotation: 'Rd1',
           moveExplain: 'R = Rook moved to d1',
           demoSequence: [
-            { fen: '4k3/8/8/8/8/8/8/3R4 w - - 0 1', path: ['b1','c1','d1'], delay: 2200 },
+            { fen: '4k3/8/8/8/8/8/8/3R4 w - - 0 1', path: ['b1', 'c1', 'd1'], delay: 2200 },
           ],
           voice: `{name}, let us do a quick reading exercise. I will say a move and you tell me — which piece moved, and to which square? Try this one: "Rd1" — which piece? The Rook! To which square? d1!`,
           task: null,
@@ -353,7 +385,7 @@ export const LESSON_2 = {
           moveNotation: 'Qe5',
           moveExplain: 'Q = Queen moved to e5',
           demoSequence: [
-            { fen: '4k3/8/8/4Q3/8/8/8/8 w - - 0 1', path: ['d2','d3','d4','e5'], delay: 2200 },
+            { fen: '4k3/8/8/4Q3/8/8/8/8 w - - 0 1', path: ['d2', 'd3', 'd4', 'e5'], delay: 2200 },
           ],
           voice: `Next — "Qe5" — which piece? The Queen! To which square? e5!`,
           task: null,
@@ -368,7 +400,7 @@ export const LESSON_2 = {
           moveNotation: 'Nb3',
           moveExplain: 'N = Knight moved to b3',
           demoSequence: [
-            { fen: '4k3/8/8/8/8/1N6/8/8 w - - 0 1', path: ['a2','a3','b3'], delay: 2200 },
+            { fen: '4k3/8/8/8/8/1N6/8/8 w - - 0 1', path: ['a2', 'a3', 'b3'], delay: 2200 },
           ],
           voice: `Next — "Nb3" — which piece? The Knight! To which square? b3!`,
           task: null,
@@ -383,19 +415,147 @@ export const LESSON_2 = {
           moveNotation: 'd4',
           moveExplain: 'No letter = Pawn moved to d4',
           demoSequence: [
-            { fen: '4k3/8/8/8/3P4/8/8/8 w - - 0 1', path: ['d3','d4'], delay: 2200 },
+            { fen: '4k3/8/8/8/3P4/8/8/8 w - - 0 1', path: ['d3', 'd4'], delay: 2200 },
           ],
           voice: `And "d4" with no letter — which piece? The Pawn! To d4! You are reading chess notation already, {name}!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'One final challenge!',
+          continueLabel: 'Now a real practice round!',
         },
+
+        // ── EXPANDED: guided practice quiz round, 6 new moves ──
+        {
+          id: 'rmq1',
+          type: 'recap-quiz',
+          boardState: '4k3/8/8/8/8/8/8/2B5 w - - 0 1',
+          highlights: [],
+          moveNotation: 'Bf4',
+          moveExplain: 'Which piece moved, and to which square?',
+          demoSequence: [
+            { fen: '4k3/8/8/8/5B2/8/8/8 w - - 0 1', path: ['d2', 'e3', 'f4'], delay: 1800 },
+          ],
+          voice: `Practice round, {name}! Watch the board and read the move. "Bf4" — which piece moved?`,
+          task: null,
+          taskType: 'recap-quiz',
+          continueLabel: 'Next move!',
+          recapQuestion: 'Which piece does "Bf4" tell you moved?',
+          recapOptions: ['The Bishop', 'The Rook', 'The Pawn'],
+          recapCorrect: 0,
+          recapCorrectVoice: `Yes! B means Bishop. The Bishop moved to f4. You read it perfectly, {name}!`,
+          recapWrongVoice: `Remember — B is always Bishop. "Bf4" means the Bishop moved to the square f4.`,
+        },
+        {
+          id: 'rmq2',
+          type: 'recap-quiz',
+          boardState: '4k3/8/8/8/8/8/8/R7 w - - 0 1',
+          highlights: [],
+          moveNotation: 'Ra4',
+          moveExplain: 'Which square did the Rook move to?',
+          demoSequence: [
+            { fen: '4k3/8/8/8/R7/8/8/8 w - - 0 1', path: ['a2', 'a3', 'a4'], delay: 1800 },
+          ],
+          voice: `Next one — "Ra4". You already know R means Rook. But which SQUARE did it move to?`,
+          task: null,
+          taskType: 'recap-quiz',
+          continueLabel: 'Next move!',
+          recapQuestion: 'Which square does "Ra4" tell you the Rook moved to?',
+          recapOptions: ['a4', 'a1', 'h4'],
+          recapCorrect: 0,
+          recapCorrectVoice: `Correct! The square comes right after the letter — Ra4 means the Rook moved to a4. Sharp reading, {name}!`,
+          recapWrongVoice: `The square is written right after the letter. "Ra4" — the Rook moved to a4, not anywhere else!`,
+        },
+        {
+          id: 'rmq3',
+          type: 'recap-quiz',
+          boardState: '4k3/8/8/8/8/8/8/1N6 w - - 0 1',
+          highlights: [],
+          moveNotation: 'Nc3',
+          moveExplain: 'Which piece, and which square?',
+          demoSequence: [
+            { fen: '4k3/8/8/8/8/2N5/8/8 w - - 0 1', path: ['b2', 'b3', 'c3'], delay: 1800 },
+          ],
+          voice: `Here is a tricky one — "Nc3". Remember, N is NOT King. What piece does N stand for?`,
+          task: null,
+          taskType: 'recap-quiz',
+          continueLabel: 'Next move!',
+          recapQuestion: 'What piece does the letter "N" represent?',
+          recapOptions: ['Knight', 'King', 'No piece — N means nothing'],
+          recapCorrect: 0,
+          recapCorrectVoice: `Exactly! N always means Knight, never King — because King already has the letter K. Nc3 means the Knight moved to c3!`,
+          recapWrongVoice: `N stands for Knight! The King's letter is K — King already took it, so Knight uses N instead.`,
+        },
+        {
+          id: 'rmq4',
+          type: 'recap-quiz',
+          boardState: '4k3/8/8/8/8/8/2P5/8 w - - 0 1',
+          highlights: [],
+          moveNotation: 'c4',
+          moveExplain: 'No letter at the front — what does that mean?',
+          demoSequence: [
+            { fen: '4k3/8/8/8/2P5/8/8/8 w - - 0 1', path: ['c3', 'c4'], delay: 1800 },
+          ],
+          voice: `This move is written as just "c4" — no capital letter in front at all. What piece moved?`,
+          task: null,
+          taskType: 'recap-quiz',
+          continueLabel: 'Next move!',
+          recapQuestion: 'A move with NO letter in front, like "c4" — which piece moved?',
+          recapOptions: ['A Pawn', 'A Knight', 'A King'],
+          recapCorrect: 0,
+          recapCorrectVoice: `Yes! No letter ALWAYS means Pawn. "c4" tells you a Pawn moved to the square c4. You have got this rule down perfectly, {name}!`,
+          recapWrongVoice: `No letter in front always means a Pawn moved! Every other piece needs its letter — only the Pawn has none.`,
+        },
+        {
+          id: 'rmq5',
+          type: 'recap-quiz',
+          boardState: '4k3/8/8/8/8/8/8/3Q4 w - - 0 1',
+          highlights: [],
+          moveNotation: 'Qh5',
+          moveExplain: 'Which piece, and which square?',
+          demoSequence: [
+            { fen: '4k3/8/8/7Q/8/8/8/8 w - - 0 1', path: ['e2', 'f3', 'g4', 'h5'], delay: 1800 },
+          ],
+          voice: `One more — "Qh5". This is a famous opening move some chess players love! Which piece moved, and where?`,
+          task: null,
+          taskType: 'recap-quiz',
+          continueLabel: 'Final move!',
+          recapQuestion: 'What does "Qh5" tell you?',
+          recapOptions: ['The Queen moved to h5', 'The King moved to h5', 'A Pawn moved to h5'],
+          recapCorrect: 0,
+          recapCorrectVoice: `Perfect! Q is always Queen. "Qh5" means the Queen slid all the way to h5. You are reading chess like a real player, {name}!`,
+          recapWrongVoice: `Q always means Queen — never King, never Pawn. "Qh5" means the Queen moved to h5.`,
+        },
+        {
+          id: 'rmq6',
+          type: 'recap-quiz',
+          boardState: '4k3/8/8/8/8/8/8/4K3 w - - 0 1',
+          highlights: [],
+          moveNotation: 'Kf2',
+          moveExplain: 'Which piece, and which square?',
+          demoSequence: [
+            { fen: '4k3/8/8/8/8/8/5K2/8 w - - 0 1', path: ['f2'], delay: 1800 },
+          ],
+          voice: `Last one in this round — "Kf2". Careful, {name} — do not confuse this with Knight!`,
+          task: null,
+          taskType: 'recap-quiz',
+          continueLabel: 'One final challenge!',
+          recapQuestion: 'What does "Kf2" tell you?',
+          recapOptions: ['The King moved to f2', 'The Knight moved to f2', 'The Bishop moved to f2'],
+          recapCorrect: 0,
+          recapCorrectVoice: `Excellent, {name}! Capital K is always King. "Kf2" means the King carefully stepped to f2 — just one square, as Kings always do!`,
+          recapWrongVoice: `Capital K is the King's letter — Knight uses N instead, remember? "Kf2" means the King moved to f2.`,
+        },
+
         {
           id: 'rm6',
           type: 'recap-quiz',
-          boardState: 'empty',
+          boardState: '4k3/8/8/8/1N6/8/8/8 w - - 0 1',
           highlights: [],
-          voice: `Quick quiz — what does the move "Nc6" tell you?`,
+          moveNotation: 'Nc6',
+          moveExplain: 'Which piece, and which square?',
+          demoSequence: [
+            { fen: '4k3/8/2N5/8/8/8/8/8 w - - 0 1', path: ['c6'], delay: 1800 },
+          ],
+          voice: `One final quiz before we move on — what does the move "Nc6" tell you?`,
           task: null,
           taskType: 'recap-quiz',
           continueLabel: 'One more thing before we finish...',
@@ -413,21 +573,34 @@ export const LESSON_2 = {
     },
 
     // ═══════════════════════════════════════════════════════════
-    // PHASE 6 — STARTING POSITION REVISION (7 minutes)
+    // PHASE 6 — STARTING POSITION REVISION (9 minutes, expanded)
     // Know where every piece starts — sets up Lesson 6 (board setup)
+    // Each step now shows its pieceLetterRef so the letter spoken
+    // is also seen, matching the rule from Phase 3.
     // ═══════════════════════════════════════════════════════════
     {
       id: 'startpos',
       title: 'Where Every Piece Starts',
       type: 'teach',
-      durationMins: 7,
+      durationMins: 9,
       steps: [
+        {
+          id: 'sp0',
+          type: 'observe',
+          boardState: 'start',
+          highlights: [],
+          voice: `{name}, before we finish today, let us look at the WHOLE starting position one more time and lock in everything you have learned — every piece, every letter, every starting square. This is the picture you will see at the start of every single chess game you ever play!`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: "Let's go!",
+        },
         {
           id: 'sp1',
           type: 'observe',
           boardState: 'start',
-          highlights: ['a1','h1','a8','h8'],
-          voice: `Let us look at the starting position one more time, {name}. We now know EVERY piece by name, shape, AND letter. Let us go piece by piece from the corners. Rooks — R — in all four corners: a1, h1, a8, h8.`,
+          highlights: ['a1', 'h1', 'a8', 'h8'],
+          pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
+          voice: `Let us go piece by piece from the corners. Rooks — R — in all four corners: a1, h1, a8, h8.`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Next',
@@ -436,7 +609,11 @@ export const LESSON_2 = {
           id: 'sp2',
           type: 'observe',
           boardState: 'start',
-          highlights: ['b1','g1','b8','g8'],
+          highlights: ['b1', 'g1', 'b8', 'g8'],
+          pieceLetterRef: [
+            { icon: '♖', letter: 'R', name: 'Rook' },
+            { icon: '♘', letter: 'N', name: 'Knight' },
+          ],
           voice: `Knights — N — on b1, g1, b8, g8. Right next to the Rooks. The horse-heads, the L-shape jumpers.`,
           task: null,
           taskType: 'observe',
@@ -446,7 +623,12 @@ export const LESSON_2 = {
           id: 'sp3',
           type: 'observe',
           boardState: 'start',
-          highlights: ['c1','f1','c8','f8'],
+          highlights: ['c1', 'f1', 'c8', 'f8'],
+          pieceLetterRef: [
+            { icon: '♖', letter: 'R', name: 'Rook' },
+            { icon: '♘', letter: 'N', name: 'Knight' },
+            { icon: '♗', letter: 'B', name: 'Bishop' },
+          ],
           voice: `Bishops — B — on c1, f1, c8, f8. Right next to the Knights. One on a dark square, one on a light square — they will stay on those colours forever.`,
           task: null,
           taskType: 'observe',
@@ -456,7 +638,13 @@ export const LESSON_2 = {
           id: 'sp4',
           type: 'observe',
           boardState: 'start',
-          highlights: ['d1','d8'],
+          highlights: ['d1', 'd8'],
+          pieceLetterRef: [
+            { icon: '♖', letter: 'R', name: 'Rook' },
+            { icon: '♘', letter: 'N', name: 'Knight' },
+            { icon: '♗', letter: 'B', name: 'Bishop' },
+            { icon: '♕', letter: 'Q', name: 'Queen' },
+          ],
           voice: `The Queens — Q — on d1 and d8. Queen on her own colour. White Queen on light d1, Black Queen on dark d8.`,
           task: null,
           taskType: 'observe',
@@ -466,12 +654,71 @@ export const LESSON_2 = {
           id: 'sp5',
           type: 'observe',
           boardState: 'start',
-          highlights: ['e1','e8'],
+          highlights: ['e1', 'e8'],
           highlightRanks: [2, 7],
+          pieceLetterRef: [
+            { icon: '♖', letter: 'R', name: 'Rook' },
+            { icon: '♘', letter: 'N', name: 'Knight' },
+            { icon: '♗', letter: 'B', name: 'Bishop' },
+            { icon: '♕', letter: 'Q', name: 'Queen' },
+            { icon: '♔', letter: 'K', name: 'King' },
+            { icon: '♙', letter: '—', name: 'Pawn (no letter)' },
+          ],
           voice: `Kings — K — on e1 and e8. Right next to their Queens. And the eight Pawns — no letter — fill rank 2 for White and rank 7 for Black. Now you know the name, the letter, AND the starting square of every single piece on the chess board!`,
           task: null,
           taskType: 'observe',
+          continueLabel: "Let's test that memory!",
+        },
+
+        // ── EXPANDED: starting square recall quiz, 3 new questions ──
+        {
+          id: 'sp6',
+          type: 'recap-quiz',
+          boardState: 'start',
+          highlights: [],
+          voice: `Quick quiz, {name}! Where do the Bishops start on the board?`,
+          task: null,
+          taskType: 'recap-quiz',
+          continueLabel: 'Next question!',
+          recapQuestion: 'Where do the Bishops start?',
+          recapOptions: ['c1, f1, c8, f8', 'a1, h1, a8, h8', 'b1, g1, b8, g8'],
+          recapCorrect: 0,
+          recapCorrectVoice: `Yes! Bishops start on c1, f1, c8, and f8 — right next to the Knights. Great memory, {name}!`,
+          recapWrongVoice: `Bishops start on c1, f1, c8, and f8. Rooks are in the corners, Knights are next to them, then Bishops!`,
+        },
+        {
+          id: 'sp7',
+          type: 'recap-quiz',
+          boardState: 'start',
+          highlights: [],
+          voice: `Next — which piece starts on d1 for White?`,
+          task: null,
+          taskType: 'recap-quiz',
+          continueLabel: 'One more!',
+          recapQuestion: 'Which piece starts on d1 for White?',
+          recapOptions: ['The Queen', 'The King', 'The Rook'],
+          recapCorrect: 0,
+          recapCorrectVoice: `Correct! The Queen always starts on d1 for White and d8 for Black — on her own colour. Well done, {name}!`,
+          recapWrongVoice: `It is the QUEEN that starts on d1. Remember — the Queen starts on her own colour square!`,
+        },
+        {
+          id: 'sp8',
+          type: 'recap-quiz',
+          boardState: 'start',
+          highlights: [],
+          voice: `Last one in this round — how many Pawns does each player start with, and which ranks do they fill?`,
+          task: null,
+          taskType: 'recap-quiz',
           continueLabel: 'One more thing before we finish...',
+          recapQuestion: 'How many Pawns does each player have, and where do they start?',
+          recapOptions: [
+            'Eight Pawns — rank 2 for White, rank 7 for Black',
+            'Six Pawns — rank 1 for White, rank 8 for Black',
+            'Eight Pawns — rank 3 for White, rank 6 for Black',
+          ],
+          recapCorrect: 0,
+          recapCorrectVoice: `Perfect! Eight Pawns each — filling rank 2 for White and rank 7 for Black. You know the entire starting position now, {name}!`,
+          recapWrongVoice: `Each player has EIGHT Pawns — they fill rank 2 for White and rank 7 for Black, right in front of the other pieces.`,
         },
       ],
     },
@@ -490,6 +737,14 @@ export const LESSON_2 = {
           type: 'wrapup',
           boardState: 'empty',
           highlights: [],
+          pieceLetterRef: [
+            { icon: '♔', letter: 'K', name: 'King' },
+            { icon: '♕', letter: 'Q', name: 'Queen' },
+            { icon: '♖', letter: 'R', name: 'Rook' },
+            { icon: '♗', letter: 'B', name: 'Bishop' },
+            { icon: '♘', letter: 'N', name: 'Knight' },
+            { icon: '♙', letter: '—', name: 'Pawn (no letter)' },
+          ],
           voice: `{name}, you have done something real today! You now know every chess piece by shape, by name, by letter, and by starting square. K for King, Q for Queen, R for Rook, B for Bishop, N for Knight, and Pawns have no letter. You can read a simple chess move — piece letter plus square equals a move. And you know where every single piece begins on the board. That is the foundation of everything we will build in the coming lessons!`,
           task: null,
           taskType: 'recap-quiz',
@@ -505,6 +760,10 @@ export const LESSON_2 = {
           type: 'wrapup',
           boardState: 'empty',
           highlights: [],
+          pieceLetterRef: [
+            { icon: '♖', letter: 'R', name: 'Rook' },
+            { icon: '♗', letter: 'B', name: 'Bishop' },
+          ],
           voice: `Next time, {name}, we learn HOW the Rook and Bishop actually MOVE around the board! The Rook travels in straight lines — up, down, left, right. The Bishop glides diagonally, and has a colour secret you will find amazing. Everything you learned today — especially R for Rook and B for Bishop — will come straight to life in Lesson 3. See you next session!`,
           task: null,
           taskType: 'complete',
