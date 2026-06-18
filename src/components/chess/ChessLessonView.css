@@ -387,3 +387,29 @@
 .cl-done-n { font-size: clamp(28px, 2.8vw, 40px); font-weight: 900; color: #5dcaa5; }
 .cl-done-l { font-size: clamp(10px, 0.8vw, 12px); color: #94a3b8; font-weight: 700; }
 
+
+/* ── Independent squares target display ── */
+.cl-indep-target {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: clamp(10px, 1vh, 16px);
+  background: rgba(13,19,33,.88);
+  border: 2px solid rgba(255,210,0,0.35);
+  border-radius: 12px;
+}
+.cl-indep-find {
+  font-size: clamp(9px, 0.72vw, 11px);
+  font-weight: 900; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.cl-indep-sq {
+  font-size: clamp(48px, 5vw, 72px);
+  font-weight: 900;
+  color: #fde047;
+  letter-spacing: .06em;
+  line-height: 1;
+  text-shadow: 0 0 24px rgba(253,224,71,0.6);
+}
+.cl-indep-hint {
+  font-size: clamp(9px, 0.72vw, 11px);
+  color: #64748b; font-weight: 700;
+}
