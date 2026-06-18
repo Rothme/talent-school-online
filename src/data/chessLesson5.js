@@ -19,13 +19,20 @@
 //   Lesson 15. NO exercise on it here.
 // - NO captures-as-attacks framing (that begins Lesson 7+) - pawn
 //   captures here are taught as MOVEMENT MECHANICS only.
+//
+// REBUILD NOTE (per docs/CURRICULUM_RULES.md): every piece intro now
+// follows the 3-step pattern from Lessons 1-2 — real starting square
+// first, then an animated demoSequence with path dots showing every
+// direction, THEN the practice round. All FENs verified with chess.js.
+// pieceLetterRef panels reinforce the N letter from Lesson 2 (and
+// confirm Pawn has none).
 // ─────────────────────────────────────────────────────────────────
 
 export const LESSON_5 = {
   id: 'chess-lesson-5',
   title: 'Knight and Pawn Movement',
   subtitle: 'Lesson 5 of 24 · Beginner Module',
-  totalMinutes: 55,
+  totalMinutes: 56,
 
   phases: [
 
@@ -40,6 +47,12 @@ export const LESSON_5 = {
           type: 'observe',
           boardState: 'k7/8/8/8/4Q3/8/8/K7 w - - 0 1',
           highlights: ['a4','a8','b1','b4','b7','c2','c4','c6','d3','d4','d5','e1','e2','e3','e5','e6','e7','e8','f3','f4','f5','g2','g4','g6','h1','h4','h7'],
+          pieceLetterRef: [
+            { icon: '♖', letter: 'R', name: 'Rook' },
+            { icon: '♗', letter: 'B', name: 'Bishop' },
+            { icon: '♕', letter: 'Q', name: 'Queen' },
+            { icon: '♔', letter: 'K', name: 'King' },
+          ],
           voice: `Welcome back, {name}! Quick recall — the Queen, on e4, reaches twenty-seven squares — straight lines AND diagonals. You've now learned how Rook, Bishop, Queen, and King all move. Today, the final two pieces — the KNIGHT, who jumps in a surprising L-shape, and the PAWN, the smallest piece with some of the most special rules in chess!`,
           task: null,
           taskType: 'observe',
@@ -63,38 +76,61 @@ export const LESSON_5 = {
       ],
     },
 
+    // ═══════════════════════════════════════════════════════════
+    // PHASE 2 — KNIGHT: HOW IT MOVES (8 minutes, was 7)
+    // 3-step pattern: real square intro (both b1 and g1) → demo
+    // with path dots → centre demo
+    // ═══════════════════════════════════════════════════════════
     {
       id: 'knightteach',
       title: 'The Knight — The L-Shape Jump',
       type: 'teach',
-      durationMins: 7,
+      durationMins: 8,
       steps: [
         {
-          id: 'nt1',
+          id: 'nt0',
           type: 'observe',
-          boardState: '4k3/8/8/8/3N4/8/8/K7 w - - 0 1',
-          highlights: [],
-          voice: `Here is the KNIGHT, {name} — on square d4. Remember its horse-head shape — easiest piece to recognise! The Knight moves in an L-SHAPE: two squares in one direction, then one square sideways — like the letter L. It is the ONLY piece in chess that can JUMP OVER other pieces, like a horse leaping a fence!`,
+          boardState: '4k3/8/8/8/4K3/8/8/1N4N1 w - - 0 1',
+          highlights: ['b1', 'g1'],
+          pieceLetterRef: [{ icon: '♘', letter: 'N', name: 'Knight' }],
+          voice: `{name}, here are both Knights on their real starting squares — b1 and g1! Remember the Knight's letter from Lesson 2 — capital N, NOT K, because King already took K. See its horse-head shape — easiest piece to recognise! The Knight is the ONLY piece in chess that can JUMP OVER other pieces, like a horse leaping a fence.`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Show me its jumps!',
         },
         {
+          id: 'nt1',
+          type: 'observe',
+          boardState: '4k3/8/8/8/4K3/8/8/1N6 w - - 0 1',
+          demoSequence: [
+            { fen: '4k3/8/8/8/4K3/N7/8/8 w - - 0 1', path: ['a3'], delay: 2000 },
+            { fen: '4k3/8/8/8/4K3/2N5/8/8 w - - 0 1', path: ['c3'], delay: 2000 },
+            { fen: '4k3/8/8/8/4K3/8/3N4/8 w - - 0 1', path: ['d2'], delay: 2000 },
+          ],
+          highlights: [],
+          pieceLetterRef: [{ icon: '♘', letter: 'N', name: 'Knight' }],
+          voice: `Watch the Knight jump from b1 — to a3, to c3, to d2. Three different L-shapes, all from the same starting square! Two squares in one direction, then one square sideways — always an L. From the centre of the board, the Knight has even MORE jumps available.`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: 'Show me from the centre!',
+        },
+        {
           id: 'nt2',
           type: 'observe',
           boardState: '4k3/8/8/8/3N4/8/8/K7 w - - 0 1',
+          demoSequence: [
+            { fen: '4k3/8/8/8/8/1N6/8/K7 w - - 0 1', path: ['b3'], delay: 1700 },
+            { fen: '4k3/8/8/1N6/8/8/8/K7 w - - 0 1', path: ['b5'], delay: 1700 },
+            { fen: '4k3/8/8/8/8/8/2N5/K7 w - - 0 1', path: ['c2'], delay: 1700 },
+            { fen: '4k3/8/2N5/8/8/8/8/K7 w - - 0 1', path: ['c6'], delay: 1700 },
+            { fen: '4k3/8/8/8/8/8/4N3/K7 w - - 0 1', path: ['e2'], delay: 1700 },
+            { fen: '4k3/8/4N3/8/8/8/8/K7 w - - 0 1', path: ['e6'], delay: 1700 },
+            { fen: '4k3/8/8/8/8/5N2/8/K7 w - - 0 1', path: ['f3'], delay: 1700 },
+            { fen: '4k3/8/8/5N2/8/8/8/K7 w - - 0 1', path: ['f5'], delay: 1700 },
+          ],
           highlights: ['b3','b5','c2','c6','e2','e6','f3','f5'],
+          pieceLetterRef: [{ icon: '♘', letter: 'N', name: 'Knight' }],
           voice: `From d4, the Knight can jump to any of these EIGHT squares — all shaped like an L! Two-up-one-side, two-down-one-side, two-left-one-up, and so on, in all four pairs of directions. Notice something interesting — the Knight is the ONLY piece that changes square COLOUR every single time it moves. d4 is dark, and every one of these eight squares is light!`,
-          task: null,
-          taskType: 'observe',
-          continueLabel: 'Now from the start!',
-        },
-        {
-          id: 'nt3',
-          type: 'observe',
-          boardState: '4k3/8/8/8/8/8/8/1N2K3 w - - 0 1',
-          highlights: ['a3','c3','d2'],
-          voice: `Here's the Knight on its STARTING square, b1. From here, it can only reach THREE squares — a3, c3, and d2. Fewer options than from the centre! This is why, {name}, one of the first things strong players do is bring their Knights toward the centre of the board, where they have more L-shaped jumps available.`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Your turn to try!',
@@ -113,8 +149,8 @@ export const LESSON_5 = {
           type: 'piece-range',
           pieceRangeFen: '4k3/8/8/8/3N4/8/8/K7 w - - 0 1',
           highlights: [],
-          voice: `The Knight is on d4 — the centre. Click every square it can jump to. Remember — L-shapes only, eight of them!`,
-          task: 'Click every square the Knight on d4 can reach.',
+          voice: `The Knight is on d4 — the centre. Drag it to every square it can jump to. Remember — L-shapes only, eight of them!`,
+          task: 'Drag the Knight on d4 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['b3','b5','c2','c6','e2','e6','f3','f5'],
           successVoice: `All eight, {name}! Maximum Knight power from the centre. Now from its starting square...`,
@@ -125,8 +161,8 @@ export const LESSON_5 = {
           type: 'piece-range',
           pieceRangeFen: '4k3/8/8/8/8/8/8/1N2K3 w - - 0 1',
           highlights: [],
-          voice: `Now the Knight is on b1 — its starting square. Click every square it can jump to from here.`,
-          task: 'Click every square the Knight on b1 can reach.',
+          voice: `Now the Knight is on b1 — its starting square. Drag it to every square it can jump to from here.`,
+          task: 'Drag the Knight on b1 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['a3','c3','d2'],
           successVoice: `Just THREE, {name} — from b1 the Knight is quite limited. Let's try the OTHER starting Knight square...`,
@@ -137,8 +173,8 @@ export const LESSON_5 = {
           type: 'piece-range',
           pieceRangeFen: '4k3/8/8/8/8/8/8/4K1N1 w - - 0 1',
           highlights: [],
-          voice: `This Knight starts on g1 — the other side of the board. Click every square it can jump to!`,
-          task: 'Click every square the Knight on g1 can reach.',
+          voice: `This Knight starts on g1 — the other side of the board. Drag it to every square it can jump to!`,
+          task: 'Drag the Knight on g1 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['e2','f3','h3'],
           successVoice: `Three again, {name} — symmetric to b1! One more — the trickiest spot of all for a Knight...`,
@@ -149,8 +185,8 @@ export const LESSON_5 = {
           type: 'piece-range',
           pieceRangeFen: '4k3/8/8/8/4K3/8/8/N7 w - - 0 1',
           highlights: [],
-          voice: `The Knight is on a1 — the corner! This is its WORST possible square. Click every square it can reach.`,
-          task: 'Click every square the Knight on a1 can reach.',
+          voice: `The Knight is on a1 — the corner! This is its WORST possible square. Drag it to every square it can reach.`,
+          task: 'Drag the Knight on a1 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['b3','c2'],
           successVoice: `Just TWO squares, {name} — the Knight's smallest reach anywhere on the board! Pattern check: Knight goes from two (corner) to three (starting squares) to eight (centre). Centre is always best — for every piece we've studied. Now — let's meet the Pawn!`,
@@ -159,47 +195,63 @@ export const LESSON_5 = {
       ],
     },
 
+    // ═══════════════════════════════════════════════════════════
+    // PHASE 4 — PAWN: HOW IT MOVES (8 minutes, was 7)
+    // 3-step pattern: real square intro → demo with path dots →
+    // diagonal capture demo
+    // ═══════════════════════════════════════════════════════════
     {
       id: 'pawnteach',
       title: 'The Pawn — Forward March, Diagonal Capture',
       type: 'teach',
-      durationMins: 7,
+      durationMins: 8,
       steps: [
+        {
+          id: 'pt0',
+          type: 'observe',
+          boardState: '4k3/8/8/8/8/8/4P3/K7 w - - 0 1',
+          highlights: ['e2'],
+          pieceLetterRef: [{ icon: '♙', letter: '—', name: 'Pawn (no letter)' }],
+          voice: `Here is a PAWN, {name} — on its real starting square, e2! The Pawn is the smallest piece, with a round head and no special shape. Remember from Lesson 2 — the Pawn has NO letter at all in chess notation. The Pawn moves FORWARD ONLY — it can never move backward or sideways.`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: "Show its first-move choice!",
+        },
         {
           id: 'pt1',
           type: 'observe',
-          boardState: 'k7/8/8/8/8/8/4P3/K7 w - - 0 1',
+          boardState: '4k3/8/8/8/8/8/4P3/K7 w - - 0 1',
+          demoSequence: [
+            { fen: '4k3/8/8/8/8/4P3/8/K7 w - - 0 1', path: ['e3'], delay: 2200 },
+            { fen: '4k3/8/8/8/4P3/8/8/K7 w - - 0 1', path: ['e3','e4'], delay: 2200 },
+          ],
           highlights: [],
-          voice: `Here is a PAWN, {name} — the smallest piece, with a round head and no special shape. The Pawn moves FORWARD ONLY — it can never move backward or sideways. On its VERY FIRST MOVE, a Pawn that is still on its starting rank can move EITHER one square OR two squares forward — its choice!`,
-          task: null,
-          taskType: 'observe',
-          continueLabel: 'Show its first-move choice!',
-        },
-        {
-          id: 'pt2',
-          type: 'observe',
-          boardState: 'k7/8/8/8/8/8/4P3/K7 w - - 0 1',
-          highlights: ['e3','e4'],
-          voice: `From e2 — its starting square — this Pawn can move to e3 OR e4. Two choices! But watch what happens AFTER it moves...`,
+          pieceLetterRef: [{ icon: '♙', letter: '—', name: 'Pawn (no letter)' }],
+          voice: `On its VERY FIRST MOVE, a Pawn that is still on its starting rank can move EITHER one square OR two squares forward — its choice! Watch — e2 to e3 is one choice. e2 to e4 is the other choice. Two squares forward, only on the very first move!`,
           task: null,
           taskType: 'observe',
           continueLabel: 'After the first move...',
         },
         {
-          id: 'pt3',
+          id: 'pt2',
           type: 'observe',
           boardState: 'k7/8/8/8/4P3/8/8/K7 w - - 0 1',
+          demoSequence: [
+            { fen: 'k7/8/8/4P3/8/8/8/K7 w - - 0 1', path: ['e5'], delay: 2200 },
+          ],
           highlights: ['e5'],
+          pieceLetterRef: [{ icon: '♙', letter: '—', name: 'Pawn (no letter)' }],
           voice: `Now the Pawn is on e4 — it already used its special first move. From here, it can ONLY move ONE square forward, to e5. {name}, remember this rule: the two-square move is ONLY available on a Pawn's very FIRST move, from its starting rank. Every move after that is just one square.`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Now — diagonal captures!',
         },
         {
-          id: 'pt4',
+          id: 'pt3',
           type: 'observe',
           boardState: 'k7/8/8/3p1p2/4P3/8/8/K7 w - - 0 1',
-          highlights: ['e5','d5','f5'],
+          highlights: ['e5', 'd5', 'f5'],
+          pieceLetterRef: [{ icon: '♙', letter: '—', name: 'Pawn (no letter)' }],
           voice: `Here's the Pawn's other special rule, {name}. The White Pawn on e4 normally moves straight to e5. But look — there are enemy Pawns on d5 and f5! A Pawn captures DIAGONALLY — one square diagonally forward, only when there's an enemy piece there. So this Pawn could move to e5 (straight, no capture), OR capture on d5, OR capture on f5 — diagonal captures only!`,
           task: null,
           taskType: 'observe',
@@ -219,8 +271,8 @@ export const LESSON_5 = {
           type: 'piece-range',
           pieceRangeFen: 'k7/8/8/8/8/8/4P3/K7 w - - 0 1',
           highlights: [],
-          voice: `This Pawn is on e2 — its STARTING square, with no enemy pieces nearby. Click every square it can move to.`,
-          task: 'Click every square the Pawn on e2 can reach.',
+          voice: `This Pawn is on e2 — its STARTING square, with no enemy pieces nearby. Drag it to every square it can move to.`,
+          task: 'Drag the Pawn on e2 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['e3','e4'],
           successVoice: `Two squares, {name} — the special first-move choice! Now let's see a Pawn that already moved.`,
@@ -231,8 +283,8 @@ export const LESSON_5 = {
           type: 'piece-range',
           pieceRangeFen: 'k7/8/8/8/4P3/8/8/K7 w - - 0 1',
           highlights: [],
-          voice: `This Pawn is on e4 — it has ALREADY moved once before. Click every square it can move to now.`,
-          task: 'Click every square the Pawn on e4 can reach.',
+          voice: `This Pawn is on e4 — it has ALREADY moved once before. Drag it to every square it can move to now.`,
+          task: 'Drag the Pawn on e4 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['e5'],
           successVoice: `Just ONE square, {name} — exactly as we learned. The two-square option only existed on the very first move. Now — let's add some enemy pieces!`,
@@ -243,8 +295,8 @@ export const LESSON_5 = {
           type: 'piece-range',
           pieceRangeFen: 'k7/8/8/3p1p2/4P3/8/8/K7 w - - 0 1',
           highlights: [],
-          voice: `This Pawn is on e4, with enemy Pawns on d5 and f5. Click every square White's Pawn can move to — straight AND diagonal captures!`,
-          task: 'Click every square the Pawn on e4 can reach (including captures).',
+          voice: `This Pawn is on e4, with enemy Pawns on d5 and f5. Drag it to every square White's Pawn can move to — straight AND diagonal captures!`,
+          task: 'Drag the Pawn on e4 to every square it can reach (including captures).',
           taskType: 'piece-range',
           targetSquares: ['e5','d5','f5'],
           successVoice: `All three, {name}! One straight move to e5, plus two diagonal captures on d5 and f5. You've mastered how the Pawn moves AND captures!`,
@@ -274,6 +326,7 @@ export const LESSON_5 = {
           type: 'observe',
           boardState: '6Qk/8/8/8/8/8/8/K7 w - - 0 1',
           highlights: [],
+          pieceLetterRef: [{ icon: '♕', letter: 'Q', name: 'Queen' }],
           voice: `Choice one: PROMOTE TO QUEEN! This is by far the most common choice — the Pawn becomes the most powerful piece on the board. Twenty-seven squares of reach, just like that!`,
           task: null,
           taskType: 'observe',
@@ -284,6 +337,7 @@ export const LESSON_5 = {
           type: 'observe',
           boardState: '6Rk/8/8/8/8/8/8/K7 w - - 0 1',
           highlights: [],
+          pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
           voice: `Choice two: promote to ROOK — fourteen squares of straight-line power. Less common than the Queen, but still very strong.`,
           task: null,
           taskType: 'observe',
@@ -294,6 +348,10 @@ export const LESSON_5 = {
           type: 'observe',
           boardState: '6Bk/8/8/8/8/8/8/K7 w - - 0 1',
           highlights: [],
+          pieceLetterRef: [
+            { icon: '♗', letter: 'B', name: 'Bishop' },
+            { icon: '♘', letter: 'N', name: 'Knight' },
+          ],
           voice: `Choice three: promote to BISHOP — diagonal power, locked to one colour. And choice four — promote to KNIGHT, for that special L-shaped jump. {name}, here's a fun fact: most of the time, players choose the Queen because she's the strongest. But sometimes — very rarely — choosing a KNIGHT instead can be the cleverer choice, because of a tricky rule you'll learn properly very soon. For now, just remember: FOUR choices — Queen, Rook, Bishop, or Knight — but NEVER a King, and NEVER another Pawn!`,
           task: null,
           taskType: 'observe',
@@ -338,6 +396,14 @@ export const LESSON_5 = {
           type: 'wrapup',
           boardState: 'empty',
           highlights: [],
+          pieceLetterRef: [
+            { icon: '♔', letter: 'K', name: 'King' },
+            { icon: '♕', letter: 'Q', name: 'Queen' },
+            { icon: '♖', letter: 'R', name: 'Rook' },
+            { icon: '♗', letter: 'B', name: 'Bishop' },
+            { icon: '♘', letter: 'N', name: 'Knight' },
+            { icon: '♙', letter: '—', name: 'Pawn (no letter)' },
+          ],
           voice: `{name}, incredible work! Today you learned the Knight — the only piece that jumps over others, moving in an L-shape and changing square colour every move. And you learned the Pawn — moving forward only, with a two-square first move, diagonal captures, and the amazing power of PROMOTION, transforming into a Queen, Rook, Bishop, or Knight when it reaches the far rank. You now know how ALL SIX chess pieces move — King, Queen, Rook, Bishop, Knight, and Pawn. That is a HUGE achievement!`,
           task: null,
           taskType: 'recap-quiz',
