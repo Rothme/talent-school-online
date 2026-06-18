@@ -732,6 +732,29 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       }
     }
 
+    // piece-range: drag piece to any reachable square to mark it as found
+    // Piece always snaps back to starting square so student can continue dragging
+    if (tt === 'piece-range') {
+      const sq = targetSquare;
+      if (step.targetSquares?.includes(sq) && !clicked.includes(sq)) {
+        const nc = [...clicked, sq];
+        setClicked(nc);
+        setStreak(s => s + 1);
+        if (nc.length === step.targetSquares.length) {
+          setScore(s => s + nc.length); setTotal(t => t + nc.length); setTargetSqs([]);
+          completeTask(step.successVoice || 'Complete!', step.successVoice);
+        } else {
+          showFb(`${nc.length} of ${step.targetSquares.length} found!`, 'hint');
+        }
+      } else if (step.targetSquares?.includes(sq) && clicked.includes(sq)) {
+        showFb('Already found that one!', 'hint');
+      } else {
+        setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
+        showFb('That square is not reachable — try dragging to a highlighted square!', 'error');
+      }
+      return false; // always return false so piece snaps back to origin
+    }
+
     return false; // not a draggable taskType — snap back
   }
 
@@ -753,8 +776,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       } else if (!step.targetSquares?.includes(sq)) {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
         const msg = tt === 'piece-range'
-          ? `That square is not reachable - try one of the glowing squares!`
-          : `That square is not in this ${tt === 'click-file' ? 'file' : 'rank'} - try the glowing one!`;
+          ? `Try dragging the piece to that square!`
+          : `That square is not in this ${tt === 'click-file' ? 'file' : 'rank'} — try the glowing one!`;
         showFb(msg, 'error');
       }
       return;
@@ -1296,7 +1319,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 showAnimations={true}
                 animationDuration={500}
                 showBoardNotation={true}
-                arePiecesDraggable={['notation-build', 'notation-puzzle-move'].includes(step?.taskType) && !moveDone}
+                arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range'].includes(step?.taskType) && !moveDone && voiceFinished}
                 onPieceDrop={handlePieceDrop}
                 customSquareStyles={squareStyles}
                 customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
