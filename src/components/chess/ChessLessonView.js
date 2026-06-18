@@ -1294,6 +1294,33 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           <h2 className="cl-banner-title">{lesson.title}</h2>
         </div>
         <div className="cl-banner-right">
+          {/* Test account phase jumper — not visible to real students */}
+          {isTest && (
+            <select
+              className="cl-test-jumper"
+              value={phaseIdx}
+              onChange={e => {
+                const npi = parseInt(e.target.value);
+                window.speechSynthesis?.cancel();
+                setPhaseIdx(npi); setStepIdx(0);
+                setClassStarted(true);
+                setVoiceFinished(true);
+                setTaskComplete(false);
+                setClicked([]); setWrongSqs([]); setFeedback(''); setFbType('info');
+                setSpeed(null); setIndepIdx(0);
+                setRecapAnswer(null); setRecapFeedbackDone(false);
+                voiceRef.current = false;
+                continueSpoke.current = false;
+                clearNeon();
+              }}
+            >
+              {phases.map((p, i) => (
+                <option key={p.id} value={i}>
+                  {i + 1}. {p.title}
+                </option>
+              ))}
+            </select>
+          )}
           <div className={`cl-timer ${timerWarning ? 'cl-timer-warn' : ''}`}>
             <Clock size={13} />
             <span>{timerStr}</span>
