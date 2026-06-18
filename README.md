@@ -44,3 +44,4 @@
 <!-- sync: verified piece movements + path dots -->
 <!-- sync: bishop knight final fix -->
 <!-- sync: speakingFb all buttons locked -->
+<!-- sync: lesson2 rules applied -->
