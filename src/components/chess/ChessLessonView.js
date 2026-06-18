@@ -1704,7 +1704,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
           {/* Notation move display — shows the move text large and clear
               whenever a notation-demo step plays, e.g. "e4" or "Nf3" */}
-          {step?.taskType === 'notation-demo' && step?.moveNotation && (
+          {step?.moveNotation && (
             <div className="cl-move-display">
               <div className="cl-move-label">The Move</div>
               <div className="cl-move-text">{step.moveNotation}</div>
