@@ -29,3 +29,4 @@
 <!-- sync: rank-square-piece glow complete -->
 <!-- sync: per-type neon timers -->
 <!-- sync: observations batch fix -->
+<!-- sync: borderOnly fix -->
