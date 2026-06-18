@@ -66,55 +66,65 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     styles[sq] = { ...(styles[sq] || {}), ...style };
   }
 
-  // File highlight — border only on column squares, no fill
+  // STYLE 1 — Full fill: entire file column in neon yellow
   if (neonFile) {
-    for (let r = 1; r <= 8; r++) setStyle(`${neonFile}${r}`, {
-      boxShadow: 'inset 0 0 0 4px rgba(255,210,0,0.95)',
-      outline: '2px solid rgba(255,210,0,0.8)',
+    for (let r = 1; r <= 8; r++) {
+      setStyle(`${neonFile}${r}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
+    }
+  }
+
+  // STYLE 1 — Full fill: entire rank row in neon yellow
+  if (neonRank) {
+    FILES.forEach(f => {
+      setStyle(`${f}${neonRank}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
     });
   }
-  // Rank highlight — border only on row squares, no fill
-  if (neonRank) {
-    FILES.forEach(f => setStyle(`${f}${neonRank}`, {
-      boxShadow: 'inset 0 0 0 4px rgba(255,210,0,0.95)',
-      outline: '2px solid rgba(255,210,0,0.8)',
-    }));
-  }
-  // Intersection square from file+rank — full glow to show the named square
+
+  // STYLE 2 — Border only: intersection square when both file AND rank active
+  // Shows the named square clearly while preserving its true dark/light colour
   if (neonFile && neonRank) {
     setStyle(`${neonFile}${neonRank}`, {
-      backgroundColor: 'rgba(255,210,0,0.75)',
+      backgroundColor: 'transparent',
       boxShadow: 'inset 0 0 0 4px rgba(255,210,0,1)',
     });
   }
-  // Named squares (e.g. click-square targets shown during teaching)
-  // Border-only when borderOnly flag is set, full highlight otherwise
+
+  // Named squares from lesson data (e.g. step.highlights)
+  // Always STYLE 2 — border only — because a specific square is being discussed
   (neonSquares || []).forEach(sq => {
     if ((borderOnlySquares || []).includes(sq)) {
+      // Explicit border-only (colour teaching) — animated blink
       setStyle(sq, { animation: 'cl-sq-blink 0.9s step-end infinite' });
     } else {
+      // Standard named-square highlight — static border, true colour shows
       setStyle(sq, {
-        backgroundColor: 'rgba(255,210,0,0.75)',
-        boxShadow: 'inset 0 0 0 3px rgba(255,210,0,1)',
+        backgroundColor: 'transparent',
+        boxShadow: 'inset 0 0 0 4px rgba(255,210,0,1)',
       });
     }
   });
-  // Piece glow — orange border on squares containing matching piece
+
+  // Piece glow — orange border on squares containing the named piece
   if (glowPieces?.length && boardPosition) {
     Object.entries(boardPosition).forEach(([sq, piece]) => {
       if (glowPieces.includes(piece)) {
         setStyle(sq, {
-          backgroundColor: 'rgba(249,115,22,0.55)',
+          backgroundColor: 'rgba(249,115,22,0.4)',
           boxShadow: 'inset 0 0 0 3px rgba(249,115,22,0.95)',
         });
       }
     });
   }
-  // Colour-quiz square: blinking border ONLY — true square colour must show
+
+  // Colour-quiz square — STYLE 2 border blink, true colour must show
   if (colourQuizSq) {
-    setStyle(colourQuizSq, { animation: 'cl-sq-blink 0.9s step-end infinite' });
+    setStyle(colourQuizSq, {
+      backgroundColor: 'transparent',
+      animation: 'cl-sq-blink 0.9s step-end infinite',
+    });
   }
-  // Target squares (click-file, click-rank, click-square, piece-range)
+
+  // Task target squares (click-file, click-rank, click-square, piece-range)
   // NOT shown during speed round — student must find unaided
   if (!speedActive) {
     (targets || []).forEach(sq => {
@@ -126,6 +136,7 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
       }
     });
   }
+
   (clicked || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(29,158,117,0.65)' }));
   (wrong || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(226,75,74,0.7)' }));
 
@@ -361,13 +372,14 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     if (!w) return;
 
     // ── Square coordinate e.g. "e4", "a1" ──
-    // Always highlight. Clear+set forces re-render on repeated mention.
+    // Style 2 (border only) — a specific square is being named.
+    // Clear+set forces re-render on repeated mention.
     if (/^[a-h][1-8]$/.test(w)) {
       setNeonSqs([]);
+      clearTimeout(sqNeonTimer.current);
       setTimeout(() => {
         setNeonSqs([w]);
-        clearTimeout(sqNeonTimer.current);
-        sqNeonTimer.current = setTimeout(() => setNeonSqs([]), 2500);
+        sqNeonTimer.current = setTimeout(() => setNeonSqs([]), 3000);
       }, 50);
       lastSpokenWord.current = w;
       return;
