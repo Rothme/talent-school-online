@@ -4,7 +4,7 @@ import { Chessboard } from 'react-chessboard';
 import confetti from 'canvas-confetti';
 import { ChevronRight, ChevronLeft, CheckCircle2, BookOpen, Swords, Award, Clock, RotateCcw } from 'lucide-react';
 import { Chess } from 'chess.js';
-import { LESSON_1 } from '../../data/chessLesson1';
+import { LESSON_1, LESSON_1_BONUS } from '../../data/chessLesson1';
 import { LESSON_2 } from '../../data/chessLesson2';
 import { speakElevenLabs, stopSpeech, parseHighlights, unlockAudio, pendingAudioClear } from '../../utils/elevenlabs';
 import './ChessLessonView.css';
@@ -147,8 +147,6 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
 // MAIN — Chess Lesson View (Lesson 1: board fundamentals)
 // ─────────────────────────────────────────────────────
 export default function ChessLessonView({ lessonData, childName = 'Student', isTest = false, onComplete }) {
-  const lesson = lessonData || LESSON_1;
-  const phases = lesson.phases;
 
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [stepIdx, setStepIdx] = useState(0);
@@ -163,10 +161,14 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   // Timer — counts up from 0, shown as time elapsed / total lesson time
   const lessonStartTime = useRef(Date.now());
   const [elapsedSecs, setElapsedSecs] = useState(0);
+  const remainSecsRef = useRef(55 * 60); // always-current remaining seconds
   useEffect(() => {
     lessonStartTime.current = Date.now();
+    const totalSecs = (lesson?.totalMinutes || 55) * 60;
     const id = setInterval(() => {
-      setElapsedSecs(Math.floor((Date.now() - lessonStartTime.current) / 1000));
+      const elapsed = Math.floor((Date.now() - lessonStartTime.current) / 1000);
+      setElapsedSecs(elapsed);
+      remainSecsRef.current = Math.max(0, totalSecs - elapsed);
     }, 1000);
     return () => clearInterval(id);
   }, []);
@@ -296,6 +298,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const [recapAnswer, setRecapAnswer] = useState(null);
   const [recapFeedbackDone, setRecapFeedbackDone] = useState(false);
   const [lessonDone, setLessonDone] = useState(false);
+  const [bonusActive, setBonusActive] = useState(false);
+
+  const lesson = lessonData || LESSON_1;
+  const phases = bonusActive ? (LESSON_1_BONUS?.phases || lesson.phases) : lesson.phases;
 
   // Piece-based interaction state (Lesson 2+)
   const [boardFen, setBoardFen] = useState('start');
@@ -1085,9 +1091,37 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   function handleContinue() {
     if (step?.taskType === 'complete') {
-      setLessonDone(true);
-      confetti({ particleCount: 160, spread: 100 });
-      setTimeout(() => onComplete?.(), 1500);
+      // Check if this is the bonus round completion or if time remains for bonus
+      const isBonus = phases.some(p => p.id?.startsWith('bonus'));
+      if (isBonus || remainSecsRef.current < 300) {
+        // Bonus already active, or less than 5 min left — end the lesson
+        setLessonDone(true);
+        confetti({ particleCount: 200, spread: 120 });
+        setTimeout(() => onComplete?.(), 2000);
+      } else {
+        // Main lesson complete with time remaining — activate bonus round!
+        const bonus = LESSON_1_BONUS || null;
+        if (bonus && remainSecsRef.current > 300) {
+          // Merge bonus phases into current lesson
+          const bonusVoice = `Incredible, {name}! You finished all the main content with time to spare. Let's play the bonus round!`;
+          speakElevenLabs(fill(bonusVoice, childName), {
+            onStart: () => setIsPlaying(true),
+            onEnd: () => setIsPlaying(false),
+          });
+          // Navigate to bonus phases by resetting to start of bonus
+          setPhaseIdx(phases.length); // will be caught below
+          // Actually we need to reload with bonus phases — simplest: trigger bonus state
+          setBonusActive(true);
+          setPhaseIdx(0); setStepIdx(0);
+          setVoiceFinished(false);
+          voiceRef.current = false;
+          continueSpoke.current = false;
+        } else {
+          setLessonDone(true);
+          confetti({ particleCount: 200, spread: 120 });
+          setTimeout(() => onComplete?.(), 2000);
+        }
+      }
       return;
     }
     // Compute next step
@@ -1516,7 +1550,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           {(() => {
             // Steps that advance via their own in-panel controls (quizzes with
             // their own option buttons) never show the Continue button.
-            const ownControls = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'piece-letter-quiz', 'piece-spot-quiz', 'write-notation'].includes(step?.taskType);
+            const ownControls = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'piece-letter-quiz', 'write-notation'].includes(step?.taskType);
             // Board-interaction tasks: Continue is hidden UNTIL the task is done,
             // then it appears (orange) so the student's click drives the next voice.
             const boardTask = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'speed-round', 'file-name-quiz'].includes(step?.taskType);
