@@ -1462,6 +1462,19 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
             </div>
           )}
 
+          {/* Independent squares — current target square shown large and bold */}
+          {step?.taskType === 'independent-squares' && !taskComplete && (
+            <div className="cl-indep-target">
+              <div className="cl-indep-find">Find this square:</div>
+              <div className="cl-indep-sq">
+                {(step.targetSquares?.[indepIdx] || '').toUpperCase()}
+              </div>
+              <div className="cl-indep-hint">
+                {step.targetSquares && `${indepIdx + 1} of ${step.targetSquares.length}`}
+              </div>
+            </div>
+          )}
+
           {/* Speed round */}
           {speedState?.active && (
             <div className="cl-speed">
