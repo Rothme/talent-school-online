@@ -38,3 +38,4 @@
 <!-- sync: meetpieces correct squares -->
 <!-- sync: test phase jumper -->
 <!-- sync: full movement sequences -->
+<!-- force-redeploy: test jumper + sequences confirmed in HEAD -->
