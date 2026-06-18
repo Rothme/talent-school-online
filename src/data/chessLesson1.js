@@ -675,11 +675,11 @@ export const LESSON_1 = {
           id: 'mp2b',
           taskType: 'observe',
           demoSequence: [
-          { fen: '4k3/8/8/8/8/8/4K3/8 w - - 0 1', delay: 2500 },
-          { fen: '4k3/8/8/8/8/8/8/3K4 w - - 0 1', delay: 2000 },
-          { fen: '4k3/8/8/8/8/8/8/5K2 w - - 0 1', delay: 2000 },
-          { fen: '4k3/8/8/8/8/8/3K4/8 w - - 0 1', delay: 2000 },
-          { fen: '4k3/8/8/8/8/8/5K2/8 w - - 0 1', delay: 2000 }
+          { fen: '4k3/8/8/8/8/8/4K3/8 w - - 0 1', path: ['e2'], delay: 2200 },
+          { fen: '4k3/8/8/8/8/8/8/3K4 w - - 0 1', path: ['d1'], delay: 2200 },
+          { fen: '4k3/8/8/8/8/8/8/5K2 w - - 0 1', path: ['f1'], delay: 2200 },
+          { fen: '4k3/8/8/8/8/8/3K4/8 w - - 0 1', path: ['d2'], delay: 2200 },
+          { fen: '4k3/8/8/8/8/8/5K2/8 w - - 0 1', path: ['f2'], delay: 2200 }
         ],
           boardState: '4k3/8/8/8/8/8/8/4K3 w - - 0 1',          highlights: ['d2','e2','f2','f1','d1'],
           voice: `The King moves ONE square at a time — forward, backward, sideways, or diagonally. Just ONE careful step in any direction. Watch the White King slide from e1 to e2. He can reach any of the squares around him — but only one at a time, like someone walking very carefully!`,
@@ -711,11 +711,11 @@ export const LESSON_1 = {
           id: 'mp3b',
           taskType: 'observe',
           demoSequence: [
-          { fen: '3Q4/8/8/8/8/8/8/8 w - - 0 1', delay: 2500 },
-          { fen: '3q4/8/8/8/8/8/8/Q7 w - - 0 1', delay: 2000 },
-          { fen: '3q4/8/8/8/8/8/8/7Q w - - 0 1', delay: 2000 },
-          { fen: '3q4/8/8/Q7/8/8/8/8 w - - 0 1', delay: 2000 },
-          { fen: '3q4/8/8/8/7Q/8/8/8 w - - 0 1', delay: 2000 }
+          { fen: '3Q4/8/8/8/8/8/8/8 w - - 0 1', path: ['d2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8'], delay: 2200 },
+          { fen: '8/8/8/8/8/8/8/7Q w - - 0 1', path: ['e1', 'f1', 'g1', 'h1'], delay: 2200 },
+          { fen: '8/8/8/8/8/8/8/Q7 w - - 0 1', path: ['c1', 'b1', 'a1'], delay: 2200 },
+          { fen: '8/8/8/7Q/8/8/8/8 w - - 0 1', path: ['e2', 'f3', 'g4', 'h5'], delay: 2200 },
+          { fen: '8/8/8/8/Q7/8/8/8 w - - 0 1', path: ['c2', 'b3', 'a4'], delay: 2200 }
         ],
           boardState: '3q4/8/8/8/8/8/8/3Q4 w - - 0 1',          highlights: ['c2','b3','a4','d2','d3','d4','e2','f3','g4','h5','e1','c1','b1','a1'],
           voice: `Watch the White Queen slide from d1 all the way up to d5! She can go along files, along ranks, AND along diagonals — all eight directions! From d1 she reaches all those glowing squares. No piece covers more ground than the Queen!`,
@@ -747,10 +747,9 @@ export const LESSON_1 = {
           id: 'mp4b',
           taskType: 'observe',
           demoSequence: [
-          { fen: 'R6r/8/8/8/8/8/8/7R w - - 0 1', delay: 2500 },
-          { fen: 'r6r/8/8/8/8/8/8/7R w - - 0 1', delay: 2000 },
-          { fen: 'r6r/R7/8/8/8/8/8/7R w - - 0 1', delay: 2000 },
-          { fen: 'r6r/8/8/8/8/8/8/R7 w - - 0 1', delay: 2000 }
+          { fen: 'R6r/8/8/8/8/8/8/7R w - - 0 1', path: ['a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8'], delay: 2200 },
+          { fen: 'r6r/8/8/8/8/8/8/7R w - - 0 1', path: ['b1', 'c1', 'd1', 'e1', 'f1', 'g1', 'h1'], delay: 2200 },
+          { fen: 'r6R/8/8/8/8/8/8/R7 w - - 0 1', path: ['h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8'], delay: 2200 }
         ],
           boardState: 'r6r/8/8/8/8/8/8/R6R w - - 0 1',          highlights: ['a2','a3','a4','a5','a6','a7','b1','c1','d1','e1','f1','g1','h1'],
           voice: `Watch the White Rook slide from a1 up to a5! The Rook moves in STRAIGHT LINES only — up and down the file, or left and right along the rank. No diagonals at all! Like a tower watching down a long, straight hallway. Very powerful on open files!`,
@@ -782,10 +781,10 @@ export const LESSON_1 = {
           id: 'mp5b',
           taskType: 'observe',
           demoSequence: [
-          { fen: '2b2b2/8/8/8/8/5B2/2B5/8 w - - 0 1', delay: 2500 },
-          { fen: '2b2b2/8/8/8/7B/8/2B5/8 w - - 0 1', delay: 2000 },
-          { fen: '2b2b2/8/8/8/8/8/1B3B2/8 w - - 0 1', delay: 2000 },
-          { fen: '7b/8/8/2b5/8/8/8/2B2B2 w - - 0 1', delay: 2000 }
+          { fen: '2b2b1B/8/8/8/8/8/8/5B2 w - - 0 1', path: ['d2', 'e3', 'f4', 'g5', 'h6'], delay: 2200 },
+          { fen: '2b2b2/8/8/8/8/B7/8/5B2 w - - 0 1', path: ['b2', 'a3'], delay: 2200 },
+          { fen: 'B1b2b2/8/8/8/8/8/8/2B5 w - - 0 1', path: ['e2', 'd3', 'c4', 'b5', 'a6'], delay: 2200 },
+          { fen: '2b2b2/8/8/8/8/7B/8/2B5 w - - 0 1', path: ['g2', 'h3'], delay: 2200 }
         ],
           boardState: '2b2b2/8/8/8/8/8/8/2B2B2 w - - 0 1',          highlights: ['d2','e3','f4','g5','h6','b2','a3'],
           voice: `Watch the White Bishop slide from c1 diagonally up to f4! The Bishop moves DIAGONALLY only — in four diagonal directions, as far as it likes. From c1 it can reach all those glowing diagonal squares. Notice how it stays on the same colour the whole time — beautiful!`,
@@ -817,12 +816,12 @@ export const LESSON_1 = {
           id: 'mp6b',
           taskType: 'observe',
           demoSequence: [
-          { fen: '1n4n1/8/8/8/8/2N5/8/6N1 w - - 0 1', delay: 2500 },
-          { fen: '1n4n1/8/8/8/8/N7/8/6N1 w - - 0 1', delay: 2000 },
-          { fen: '1n4n1/8/8/8/8/8/3N4/6N1 w - - 0 1', delay: 2000 },
-          { fen: '1n4n1/8/8/8/8/5N2/1N6/8 w - - 0 1', delay: 2000 },
-          { fen: '1n4n1/8/8/8/8/7N/1N6/8 w - - 0 1', delay: 2000 },
-          { fen: '1n4n1/8/8/8/8/8/1N2N3/8 w - - 0 1', delay: 2000 }
+          { fen: '1n4n1/8/8/8/8/N7/8/6N1 w - - 0 1', path: ['b2', 'a2', 'a3'], delay: 2200 },
+          { fen: '1n4n1/8/8/8/8/2N5/8/6N1 w - - 0 1', path: ['b2', 'b3', 'c3'], delay: 2200 },
+          { fen: '1n4n1/8/8/8/8/8/3N4/6N1 w - - 0 1', path: ['c1', 'd1', 'd2'], delay: 2200 },
+          { fen: '1n4n1/8/8/8/8/7N/1N6/8 w - - 0 1', path: ['g2', 'h2', 'h3'], delay: 2200 },
+          { fen: '1n4n1/8/8/8/8/5N2/1N6/8 w - - 0 1', path: ['g2', 'g3', 'f3'], delay: 2200 },
+          { fen: '1n4n1/8/8/8/8/8/1N2N3/8 w - - 0 1', path: ['f1', 'e1', 'e2'], delay: 2200 }
         ],
           boardState: '1n4n1/8/8/8/8/8/8/1N4N1 w - - 0 1',          highlights: ['a3','c3','d2'],
           voice: `Watch the White Knight jump from b1 to c3! The Knight moves in an L-shape — two squares in one direction, then one square sideways. Always an L! It can jump right over other pieces — no other piece can do that. From b1, it can reach a3, c3, or d2.`,
@@ -854,9 +853,8 @@ export const LESSON_1 = {
           id: 'mp7b',
           taskType: 'observe',
           demoSequence: [
-          { fen: '8/pppppppp/8/8/8/4P3/PPPP1PPP/8 w - - 0 1', delay: 2500 },
-          { fen: '8/pppppppp/8/8/4P3/8/PPPP1PPP/8 w - - 0 1', delay: 2500 },
-          { fen: '8/ppppp1pp/8/8/8/5p2/PPPPPPPP/8 w - - 0 1', delay: 2000 }
+          { fen: '8/pppppppp/8/8/8/4P3/PPPP1PPP/8 w - - 0 1', path: ['e3'], delay: 2200 },
+          { fen: '8/pppppppp/8/8/4P3/8/PPPP1PPP/8 w - - 0 1', path: ['e3', 'e4'], delay: 2200 }
         ],
           boardState: '8/pppppppp/8/8/8/8/PPPPPPPP/8 w - - 0 1',          highlights: ['e3','e4'],
           voice: `Watch the White Pawn move from e2 all the way to e4 — two squares on its very FIRST move! After that, Pawns can only move ONE square forward. They NEVER go backward. And here is the clever part — Pawns capture DIAGONALLY, one square forward and to the side. They cannot capture straight ahead!`,
