@@ -439,3 +439,156 @@
   color: #f1f5f9;
   font-weight: 600;
 }
+
+/* ── Letter + piece visual reference panel ── */
+.cl-letter-panel {
+  background: rgba(13,19,33,.88);
+  border: 2px solid rgba(255,210,0,0.3);
+  border-radius: 12px;
+  padding: clamp(10px, 1.2vh, 16px);
+  margin-bottom: 10px;
+}
+.cl-letter-panel-lbl {
+  font-size: clamp(9px, 0.72vw, 11px);
+  font-weight: 900; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+.cl-letter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.cl-letter-card {
+  display: flex; flex-direction: column; align-items: center;
+  background: rgba(255,210,0,0.1);
+  border: 1.5px solid rgba(255,210,0,0.4);
+  border-radius: 9px;
+  padding: 8px 4px;
+  animation: cl-card-pop 0.35s ease-out;
+}
+@keyframes cl-card-pop {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.cl-letter-card-icon {
+  font-size: clamp(20px, 2vw, 28px);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.cl-letter-card-letter {
+  font-size: clamp(18px, 1.8vw, 24px);
+  font-weight: 900;
+  color: #fde047;
+  line-height: 1.1;
+}
+.cl-letter-card-name {
+  font-size: clamp(8px, 0.65vw, 10px);
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* ── Move notation display panel ── */
+.cl-move-panel {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: clamp(14px, 1.6vh, 20px);
+  background: rgba(13,19,33,.88);
+  border: 2px solid rgba(255,210,0,0.35);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.cl-move-panel-lbl {
+  font-size: clamp(9px, 0.72vw, 11px);
+  font-weight: 900; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.cl-move-notation {
+  font-size: clamp(36px, 4vw, 56px);
+  font-weight: 900;
+  color: #fde047;
+  letter-spacing: .04em;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(253,224,71,0.5);
+  font-family: 'Courier New', monospace;
+}
+.cl-move-meaning {
+  font-size: clamp(11px, 0.9vw, 13px);
+  color: #cbd5e1;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* ── Piece letter visual reference panel ── */
+.cl-letter-ref {
+  padding: clamp(10px, 1vh, 14px);
+  background: rgba(13,19,33,.88);
+  border: 2px solid rgba(255,210,0,0.3);
+  border-radius: 12px;
+}
+.cl-letter-ref-title {
+  font-size: clamp(9px, 0.72vw, 11px);
+  font-weight: 900; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+.cl-letter-ref-grid {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.cl-letter-ref-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px;
+  background: rgba(255,210,0,0.08);
+  border: 1px solid rgba(255,210,0,0.25);
+  border-radius: 8px;
+  animation: cl-letter-pop 0.35s ease-out;
+}
+@keyframes cl-letter-pop {
+  from { opacity: 0; transform: translateX(8px) scale(0.9); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+.cl-letter-ref-icon {
+  font-size: clamp(20px, 1.8vw, 26px);
+  line-height: 1;
+}
+.cl-letter-ref-letter {
+  font-size: clamp(18px, 1.6vw, 24px);
+  font-weight: 900;
+  color: #fde047;
+  min-width: 28px;
+  text-align: center;
+}
+.cl-letter-ref-name {
+  font-size: clamp(11px, 0.85vw, 13px);
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+/* ── Notation move display ── */
+.cl-move-display {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: clamp(12px, 1.4vh, 18px);
+  background: rgba(13,19,33,.88);
+  border: 2px solid rgba(255,210,0,0.35);
+  border-radius: 12px;
+}
+.cl-move-label {
+  font-size: clamp(9px, 0.72vw, 11px);
+  font-weight: 900; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.cl-move-text {
+  font-size: clamp(36px, 3.6vw, 52px);
+  font-weight: 900;
+  color: #fde047;
+  letter-spacing: .04em;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(253,224,71,0.5);
+  font-family: 'Courier New', monospace;
+}
+.cl-move-explain {
+  font-size: clamp(10px, 0.8vw, 12px);
+  color: #94a3b8; font-weight: 600;
+  text-align: center;
+}
