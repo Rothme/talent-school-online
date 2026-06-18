@@ -780,14 +780,15 @@ export const LESSON_1 = {
         {
           id: 'mp5b',
           taskType: 'observe',
+          boardState: '2b2b2/8/8/8/8/8/8/2B2B2 w - - 0 1',
           demoSequence: [
-          { fen: '2b2b1B/8/8/8/8/8/8/5B2 w - - 0 1', path: ['d2', 'e3', 'f4', 'g5', 'h6'], delay: 2200 },
-          { fen: '2b2b2/8/8/8/8/B7/8/5B2 w - - 0 1', path: ['b2', 'a3'], delay: 2200 },
-          { fen: 'B1b2b2/8/8/8/8/8/8/2B5 w - - 0 1', path: ['e2', 'd3', 'c4', 'b5', 'a6'], delay: 2200 },
-          { fen: '2b2b2/8/8/8/8/7B/8/2B5 w - - 0 1', path: ['g2', 'h3'], delay: 2200 }
-        ],
-          boardState: '2b2b2/8/8/8/8/8/8/2B2B2 w - - 0 1',          highlights: ['d2','e3','f4','g5','h6','b2','a3'],
-          voice: `Watch the White Bishop slide from c1 diagonally up to f4! The Bishop moves DIAGONALLY only — in four diagonal directions, as far as it likes. From c1 it can reach all those glowing diagonal squares. Notice how it stays on the same colour the whole time — beautiful!`,
+            { fen: '2b2b2/8/7B/8/8/8/8/5B2 w - - 0 1', path: ['d2','e3','f4','g5','h6'], delay: 2200 },
+            { fen: '2b2b2/8/8/8/8/B7/8/5B2 w - - 0 1',  path: ['b2','a3'],               delay: 2200 },
+            { fen: '2b2b2/8/B7/8/8/8/8/2B5 w - - 0 1',  path: ['e2','d3','c4','b5','a6'],delay: 2200 },
+            { fen: '2b2b2/8/8/8/8/7B/8/2B5 w - - 0 1',  path: ['g2','h3'],               delay: 2200 },
+          ],
+          highlights: ['c1','f1','c8','f8'],
+          voice: `The Bishop moves DIAGONALLY only — in straight diagonal lines, as far as the board allows. Watch the c1 Bishop slide to h6, then to a3. Now the f1 Bishop slides to a6, then to h3. Each Bishop stays on its own colour for life — the c1 Bishop always on dark squares, the f1 Bishop always on light squares!`,
           continueLabel: 'Now you try!',
         },
         {
@@ -815,16 +816,17 @@ export const LESSON_1 = {
         {
           id: 'mp6b',
           taskType: 'observe',
+          boardState: '1n4n1/8/8/8/8/8/8/1N4N1 w - - 0 1',
           demoSequence: [
           { fen: '1n4n1/8/8/8/8/N7/8/6N1 w - - 0 1', path: ['b2', 'a2', 'a3'], delay: 2200 },
           { fen: '1n4n1/8/8/8/8/2N5/8/6N1 w - - 0 1', path: ['b2', 'b3', 'c3'], delay: 2200 },
           { fen: '1n4n1/8/8/8/8/8/3N4/6N1 w - - 0 1', path: ['c1', 'd1', 'd2'], delay: 2200 },
-          { fen: '1n4n1/8/8/8/8/7N/1N6/8 w - - 0 1', path: ['g2', 'h2', 'h3'], delay: 2200 },
-          { fen: '1n4n1/8/8/8/8/5N2/1N6/8 w - - 0 1', path: ['g2', 'g3', 'f3'], delay: 2200 },
-          { fen: '1n4n1/8/8/8/8/8/1N2N3/8 w - - 0 1', path: ['f1', 'e1', 'e2'], delay: 2200 }
+          { fen: '1n4n1/8/8/8/8/7N/8/1N6 w - - 0 1',  path: ['g2', 'h2', 'h3'], delay: 2200 },
+          { fen: '1n4n1/8/8/8/8/5N2/8/1N6 w - - 0 1', path: ['g2', 'g3', 'f3'], delay: 2200 },
+          { fen: '1n4n1/8/8/8/8/8/4N3/1N6 w - - 0 1', path: ['f1', 'e1', 'e2'], delay: 2200 }
         ],
-          boardState: '1n4n1/8/8/8/8/8/8/1N4N1 w - - 0 1',          highlights: ['a3','c3','d2'],
-          voice: `Watch the White Knight jump from b1 to c3! The Knight moves in an L-shape — two squares in one direction, then one square sideways. Always an L! It can jump right over other pieces — no other piece can do that. From b1, it can reach a3, c3, or d2.`,
+          highlights: ['b1','g1','b8','g8'],
+          voice: `Watch the White Knight jump from b1 to c3! The Knight moves in an L-shape — two squares in one direction, then one square sideways. Always an L! It can jump right over other pieces — no other piece can do that. From b1, it can reach a3, c3, or d2. Watch all the jumps!`,
           continueLabel: 'Now you try!',
         },
         {
