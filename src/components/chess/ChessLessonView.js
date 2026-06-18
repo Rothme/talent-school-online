@@ -1674,7 +1674,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           {(() => {
             // Steps that advance via their own in-panel controls (quizzes with
             // their own option buttons) never show the Continue button.
-            const ownControls = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'piece-letter-quiz', 'write-notation'].includes(step?.taskType);
+            const ownControls = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'write-notation'].includes(step?.taskType);
             // Board-interaction tasks: Continue is hidden UNTIL the task is done,
             // then it appears (orange) so the student's click drives the next voice.
             const boardTask = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'speed-round', 'file-name-quiz'].includes(step?.taskType);
