@@ -3,23 +3,24 @@
 // CHESS LESSON 3 — Rook and Bishop Movement
 // 56 minutes · Tutor: Ms. Momo | Beginner Module · Lesson 3 of 24
 //
-// REBUILD v4 — all Lesson 1+2 rules applied as hard rules:
+// REBUILD v5 — final approved approach:
 //
-// RULE: Only the piece being taught appears on the board — NO Kings,
-//       NO other pieces unless the step explicitly introduces them.
-// RULE: Circuit movements use SEPARATE steps per leg so each step's
-//       boardState = piece at the START of that leg. The component
-//       resets boardState on each step transition, so continuous
-//       circuit animation is achieved through sequential steps,
-//       NOT through a single demoSequence that returns to start.
-// RULE: Warm-up must test ALL prior lessons (L1: squares, L2: letters).
-// RULE: Pieces introduced in wa1 must appear on the board immediately.
-// RULE: Together phase — Rook and Bishop alternate on e4, highlights
-//       match the piece currently on e4, no Kings.
-// RULE: wu2 preview introduces next lesson pieces on the board.
+// ANIMATION RULE (hard): demoSequence returns piece to startFen between
+// frames. For circuit demos this caused "illegal jump" appearance.
+// FIX: one step per circuit leg — each step's boardState = piece at
+// START of that leg. One demoSequence frame per step = one clean move.
 //
-// ALL FENs programmatically verified with chess.js (skipValidation
-// for single-piece display boards). Zero hand-typed positions.
+// TOGETHER PHASE RULE: NO demoSequence in tg1/tg2/tg3.
+// Pure static boards + static highlights only. No animation = no
+// mixed-up path confusion. Child sees piece clearly, highlights match.
+//
+// PRACTICE RULE: No pre-highlighted target squares. Student drags
+// freely. Component validates on drop. No answer giveaways.
+//
+// ALL SOLO BOARDS: No Kings, no other pieces. Only the piece being
+// taught. skipValidation handles rendering.
+//
+// All FENs verified with chess.js.
 // ─────────────────────────────────────────────────────────────────
 
 export const LESSON_3 = {
@@ -32,8 +33,9 @@ export const LESSON_3 = {
 
     // ═══════════════════════════════════════════════════════════
     // PHASE 1 — WARM-UP (6 min)
-    // wa1: ALL pieces being taught visible on board from first word
-    // wa2/wa3: test Lesson 2 letters (R, B)
+    // wa1: ALL 4 Rooks + ALL 4 Bishops on board from first word
+    // wa2: test Lesson 2 — Rook letter, board shows Rooks
+    // wa3: test Lesson 2 — Bishop letter, board shows Bishops
     // wa4: test Lesson 1 squares
     // ═══════════════════════════════════════════════════════════
     {
@@ -51,7 +53,7 @@ export const LESSON_3 = {
             { icon: '♖', letter: 'R', name: 'Rook' },
             { icon: '♗', letter: 'B', name: 'Bishop' },
           ],
-          voice: `Welcome back, {name}! Look at the board right now — today's stars are already there! The Rooks sit in the corners: a1, h1, a8, and h8. The Bishops are right beside them: c1, f1, c8, and f8. Today you discover exactly HOW they move. The Rook travels in straight lines. The Bishop glides diagonally. Let us warm up your memory first — from both Lesson 1 and Lesson 2!`,
+          voice: `Welcome back, {name}! Look at the board right now — today's two stars are already on it! The Rooks sit in the corners: a1, h1, a8, and h8. The Bishops are right beside them: c1, f1, c8, and f8. Today you discover exactly HOW they move. Let us warm up your memory first — from both Lesson 1 and Lesson 2!`,
           task: null,
           taskType: 'observe',
           continueLabel: "Let's warm up!",
@@ -59,33 +61,33 @@ export const LESSON_3 = {
         {
           id: 'wa2',
           type: 'recap-quiz',
-          boardState: 'r1b2b1r/8/8/8/8/8/8/R1B2B1R w - - 0 1',
+          boardState: 'r6r/8/8/8/8/8/8/R6R w - - 0 1',
           highlights: ['a1','h1','a8','h8'],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `From Lesson 2 — what letter does the Rook use in chess notation?`,
+          voice: `From Lesson 2 — look at the Rooks in the corners. What letter does the Rook use in chess notation?`,
           task: null,
           taskType: 'recap-quiz',
-          recapQuestion: 'What letter does the Rook use in chess notation?',
+          recapQuestion: 'What letter does the Rook use?',
           recapOptions: ['R', 'K', 'N'],
           recapCorrect: 0,
-          recapCorrectVoice: `Yes! R for Rook. K is King, N is Knight. You remember your letters well, {name}!`,
-          recapWrongVoice: `It is R for Rook! From Lesson 2 — K is King, N is Knight, R is Rook.`,
+          recapCorrectVoice: `Yes! R for Rook. K is King, N is Knight. You remember your letters, {name}!`,
+          recapWrongVoice: `It is R for Rook! K is King, N is Knight, R is Rook.`,
           continueLabel: 'Next question!',
         },
         {
           id: 'wa3',
           type: 'recap-quiz',
-          boardState: 'r1b2b1r/8/8/8/8/8/8/R1B2B1R w - - 0 1',
+          boardState: '2b2b2/8/8/8/8/8/8/2B2B2 w - - 0 1',
           highlights: ['c1','f1','c8','f8'],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `Good! Now — what letter does the Bishop use in chess notation?`,
+          voice: `Good! Now look at the Bishops. What letter does the Bishop use?`,
           task: null,
           taskType: 'recap-quiz',
-          recapQuestion: 'What letter does the Bishop use in chess notation?',
+          recapQuestion: 'What letter does the Bishop use?',
           recapOptions: ['B', 'R', 'Q'],
           recapCorrect: 0,
-          recapCorrectVoice: `B for Bishop! Today you see exactly how the Bishop earns its letter — moving in a completely unique way.`,
-          recapWrongVoice: `B for Bishop! Not R — that is the Rook. Today we see exactly how the Bishop moves.`,
+          recapCorrectVoice: `B for Bishop! Today you see exactly how the Bishop moves — in a completely unique way.`,
+          recapWrongVoice: `B for Bishop! Not R — that is the Rook. Today we learn the Bishop's movement.`,
           continueLabel: 'One more!',
         },
         {
@@ -112,12 +114,7 @@ export const LESSON_3 = {
 
     // ═══════════════════════════════════════════════════════════
     // PHASE 2 — ROOK: HOW IT MOVES (10 min)
-    // rt0: All 4 Rooks on board — no Kings
-    // rt1a-rt1d: White Rook circuit — SEPARATE STEP PER LEG
-    //   rt1a: a1→h1  rt1b: h1→h8  rt1c: h8→a8  rt1d: a8→a1
-    // rt2a-rt2d: Black Rook circuit — SEPARATE STEP PER LEG
-    //   rt2a: h8→a8  rt2b: a8→a1  rt2c: a1→h1  rt2d: h1→h8
-    // rt3: Rook on e4 — 14 squares, no Kings
+    // One step per circuit leg — no jumps, clean continuous movement
     // ═══════════════════════════════════════════════════════════
     {
       id: 'rookteach',
@@ -131,12 +128,11 @@ export const LESSON_3 = {
           boardState: 'r6r/8/8/8/8/8/8/R6R w - - 0 1',
           highlights: ['a1','h1','a8','h8'],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `Here are all FOUR Rooks on their real starting squares — a1 and h1 for White, a8 and h8 for Black. R for Rook! The Rook looks like a castle tower with a flat, blocky top. It moves in STRAIGHT LINES only — up, down, left, or right. Never diagonal. Watch the White Rook travel the full edge of the board — one move at a time!`,
+          voice: `Here are all FOUR Rooks on their real starting squares — a1 and h1 for White, a8 and h8 for Black. R for Rook! The Rook looks like a castle tower with a flat, blocky top. It moves in STRAIGHT LINES only — up, down, left, or right — never diagonally. Watch the White Rook travel the full edge of the board, one move at a time!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Watch the White Rook — step 1!',
+          continueLabel: 'Watch the White Rook — move 1!',
         },
-        // WHITE ROOK CIRCUIT — one step per leg so piece stays at destination
         {
           id: 'rt1a',
           type: 'observe',
@@ -146,10 +142,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `The White Rook starts on a1 and slides RIGHT along rank 1 — all the way to h1! Straight line along the rank. Seven squares in one move!`,
+          voice: `Move 1 — the White Rook slides RIGHT along rank 1 from a1 all the way to h1! Straight line along the rank. Seven squares in one move!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Next move!',
+          continueLabel: 'Move 2!',
         },
         {
           id: 'rt1b',
@@ -160,10 +156,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `From h1 the Rook goes straight UP the h-file — all the way to h8! Seven squares upward in one move!`,
+          voice: `Move 2 — from h1 the Rook goes straight UP the h-file all the way to h8! Seven more squares upward!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Next move!',
+          continueLabel: 'Move 3!',
         },
         {
           id: 'rt1c',
@@ -174,10 +170,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `From h8, the Rook slides LEFT along rank 8 — all the way to a8! Straight line along the top rank!`,
+          voice: `Move 3 — from h8 the Rook slides LEFT along rank 8 all the way to a8! Straight line along the top of the board!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Next move!',
+          continueLabel: 'Move 4!',
         },
         {
           id: 'rt1d',
@@ -188,12 +184,11 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `And from a8, the Rook drops straight DOWN the a-file — back to a1! The White Rook has toured the entire edge of the board in four straight moves: right, up, left, down. That is the Rook's power — straight lines in all four directions!`,
+          voice: `Move 4 — from a8 the Rook drops straight DOWN the a-file back to a1! The White Rook has toured the entire edge of the board in four moves — right, up, left, down. STRAIGHT LINES in all four directions. That is the Rook's power!`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Now watch the Black Rook!',
         },
-        // BLACK ROOK CIRCUIT — one step per leg
         {
           id: 'rt2a',
           type: 'observe',
@@ -203,10 +198,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `The Black Rook starts on h8 and slides LEFT along rank 8 to a8. Exactly the same straight-line movement!`,
+          voice: `Now the Black Rook! From h8, it slides LEFT along rank 8 to a8. Same straight-line movement!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Next move!',
+          continueLabel: 'Next!',
         },
         {
           id: 'rt2b',
@@ -217,10 +212,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `From a8 straight DOWN the a-file to a1. The Black Rook travels the same paths as the White Rook — colour does not change movement!`,
+          voice: `From a8 straight DOWN to a1. The colour of the piece does not change the movement!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Next move!',
+          continueLabel: 'Next!',
         },
         {
           id: 'rt2c',
@@ -231,10 +226,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `From a1 RIGHT along rank 1 to h1. Straight line — just like the White Rook did!`,
+          voice: `From a1 right along rank 1 to h1. Straight!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Final move!',
+          continueLabel: 'Last move!',
         },
         {
           id: 'rt2d',
@@ -245,7 +240,7 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `And from h1 straight UP the h-file back to h8! The Black Rook has completed the same full circuit. White or Black — the Rook moves identically. Straight lines only, as far as the board allows!`,
+          voice: `And from h1 straight UP to h8! The Black Rook has toured the same full circuit. White or Black — the Rook's movement is identical. Straight lines, as far as the board allows!`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Now see its full reach!',
@@ -253,7 +248,6 @@ export const LESSON_3 = {
         {
           id: 'rt3',
           type: 'observe',
-          // Rook on e4 — NO Kings
           boardState: '8/8/8/8/4R3/8/8/8 w - - 0 1',
           demoSequence: [
             { fen: '8/8/8/8/4R3/8/8/8 w - - 0 1', path: ['e5','e6','e7','e8'], delay: 2000 },
@@ -263,7 +257,7 @@ export const LESSON_3 = {
           ],
           highlights: ['e1','e2','e3','e5','e6','e7','e8','a4','b4','c4','d4','f4','g4','h4'],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `From the centre square e4, the Rook reaches UP the e-file, DOWN the e-file, RIGHT along rank 4, and LEFT along rank 4. All FOURTEEN yellow squares light up — that is the Rook's full reach from the centre. Fourteen squares every time, no matter where it stands — corner, edge, or centre!`,
+          voice: `From the centre square e4, the Rook reaches UP the e-file, DOWN the e-file, RIGHT along rank 4, and LEFT along rank 4. All FOURTEEN yellow squares — the Rook's full reach. Fourteen squares every time, no matter where it stands!`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Your turn to try!',
@@ -273,7 +267,7 @@ export const LESSON_3 = {
 
     // ═══════════════════════════════════════════════════════════
     // PHASE 3 — ROOK: PRACTICE (12 min)
-    // All practice FENs: Rook only — NO Kings
+    // No pre-highlighted targets — student drags freely
     // ═══════════════════════════════════════════════════════════
     {
       id: 'rookpractice',
@@ -298,11 +292,11 @@ export const LESSON_3 = {
           type: 'piece-range',
           pieceRangeFen: '8/8/8/8/7R/8/8/8 w - - 0 1',
           highlights: [],
-          voice: `Now the Rook is on h4 — at the edge of the board. Does it lose power? Drag it to every square it can reach!`,
+          voice: `Now the Rook is on h4 — at the edge. Does it lose power? Drag it to every square!`,
           task: 'Drag the Rook on h4 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['h1','h2','h3','h5','h6','h7','h8','a4','b4','c4','d4','e4','f4','g4'],
-          successVoice: `Still fourteen, {name}! The edge does not reduce the Rook. Fourteen every time. Now the corner...`,
+          successVoice: `Still fourteen! The edge does not reduce the Rook. Now the corner...`,
           continueLabel: 'Try the corner!',
         },
         {
@@ -310,11 +304,11 @@ export const LESSON_3 = {
           type: 'piece-range',
           pieceRangeFen: '8/8/8/8/8/8/8/R7 w - - 0 1',
           highlights: [],
-          voice: `The Rook is on a1 — its real starting square! Drag it to every square it can reach from a1!`,
+          voice: `The Rook is on a1 — its real starting square! Drag it to every square it can reach!`,
           task: 'Drag the Rook on a1 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['a2','a3','a4','a5','a6','a7','a8','b1','c1','d1','e1','f1','g1','h1'],
-          successVoice: `Fourteen once more! Corner, edge, or centre — always fourteen. That is the Rook's constant power. You have mastered the Rook, {name}!`,
+          successVoice: `Fourteen once more! Corner, edge, or centre — always fourteen. You have mastered the Rook, {name}!`,
           continueLabel: 'Now meet the Bishop!',
         },
       ],
@@ -322,12 +316,7 @@ export const LESSON_3 = {
 
     // ═══════════════════════════════════════════════════════════
     // PHASE 4 — BISHOP: HOW IT MOVES (10 min)
-    // bt0: All 4 Bishops — NO Kings
-    // bt1a-bt1d: White Bishop circuit — SEPARATE STEP PER LEG
-    //   c1→a3  a3→f8  f8→h6  h6→c1
-    // bt2a-bt2d: Black Bishop circuit — SEPARATE STEP PER LEG
-    //   f8→h6  h6→c1  c1→a3  a3→f8
-    // bt3: Colour rule with persistent highlights
+    // One step per circuit leg — no jumps, clean continuous movement
     // ═══════════════════════════════════════════════════════════
     {
       id: 'bishopteach',
@@ -341,12 +330,11 @@ export const LESSON_3 = {
           boardState: '2b2b2/8/8/8/8/8/8/2B2B2 w - - 0 1',
           highlights: ['c1','f1','c8','f8'],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `Here are all FOUR Bishops on their real starting squares — c1 and f1 for White, c8 and f8 for Black. B for Bishop! See the tall, rounded top with a little notch like a hat. The Bishop moves only DIAGONALLY — in four diagonal directions, as far as the board allows. Never in a straight line. Watch the White Bishop on c1 make a complete diagonal tour!`,
+          voice: `Here are all FOUR Bishops on their real starting squares — c1 and f1 for White, c8 and f8 for Black. B for Bishop! The Bishop moves only DIAGONALLY — in four diagonal directions, as far as the board allows. Never in a straight line. Watch the White Bishop on c1 make its full diagonal tour, one move at a time!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Watch the White Bishop — step 1!',
+          continueLabel: 'Watch the White Bishop — move 1!',
         },
-        // WHITE BISHOP CIRCUIT — one step per leg
         {
           id: 'bt1a',
           type: 'observe',
@@ -356,10 +344,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `The White Bishop starts on c1 and slides diagonally to a3 — two squares, up-left diagonal. Only diagonal — never straight!`,
+          voice: `Move 1 — the White Bishop on c1 slides diagonally up-left to a3. Two squares, diagonal only!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Next move!',
+          continueLabel: 'Move 2!',
         },
         {
           id: 'bt1b',
@@ -370,10 +358,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `From a3, the Bishop slides a long diagonal all the way to f8 — five squares, up-right! Look at the path: b4, c5, d6, e7, f8. Pure diagonal the whole way!`,
+          voice: `Move 2 — from a3, the Bishop slides diagonally up-right all the way to f8! Five squares — b4, c5, d6, e7, f8. Pure diagonal!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Next move!',
+          continueLabel: 'Move 3!',
         },
         {
           id: 'bt1c',
@@ -384,10 +372,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `From f8, the Bishop slides diagonally down-right to h6 — two squares. Short diagonal step!`,
+          voice: `Move 3 — from f8, the Bishop slides diagonally down-right to h6. Two squares!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Final move!',
+          continueLabel: 'Move 4!',
         },
         {
           id: 'bt1d',
@@ -398,12 +386,11 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `And from h6, the Bishop slides all the way back to c1 — five squares, down-left diagonal! The White Bishop has completed its full diagonal tour: c1 to a3, to f8, to h6, and back to c1. Every single move diagonal — that is the Bishop's way!`,
+          voice: `Move 4 — from h6, the Bishop slides diagonally down-left all the way back to c1! The complete tour: c1 to a3, to f8, to h6, and back to c1. Every single move was diagonal. That is the Bishop's way!`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Now watch the Black Bishop!',
         },
-        // BLACK BISHOP CIRCUIT — one step per leg
         {
           id: 'bt2a',
           type: 'observe',
@@ -413,10 +400,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `The Black Bishop starts on f8 — a light square. It slides diagonally to h6. Same diagonal movement as the White Bishop!`,
+          voice: `Now the Black Bishop on f8 — it slides diagonally to h6. Same diagonal movement!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Next move!',
+          continueLabel: 'Next!',
         },
         {
           id: 'bt2b',
@@ -427,10 +414,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `From h6, down the long diagonal to c1 — five squares, down-left! Notice the squares: h6, g5, f4, e3, d2, c1. What colour are they all?`,
+          voice: `From h6, all the way down the diagonal to c1! Notice the squares visited: h6, g5, f4, e3, d2, c1. What colour are they all?`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Next move!',
+          continueLabel: 'Next!',
         },
         {
           id: 'bt2c',
@@ -441,10 +428,10 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `From c1, a short diagonal up-left to a3. Still all light squares!`,
+          voice: `From c1, diagonally up-left to a3. All light squares!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Final move!',
+          continueLabel: 'Last move!',
         },
         {
           id: 'bt2d',
@@ -455,7 +442,7 @@ export const LESSON_3 = {
           ],
           highlights: [],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `And from a3, the long diagonal back to f8. The Black Bishop visited f8, h6, c1, a3, and back to f8 — they are ALL light squares! This is the Bishop's great secret — it is locked to ONE colour for life. The White Bishop on c1 lives on DARK squares forever. The Black Bishop on f8 lives on LIGHT squares forever. The colour NEVER changes!`,
+          voice: `And from a3 all the way back to f8! The Black Bishop visited f8, h6, c1, a3 — they are ALL light squares! This is the Bishop's great secret — it is locked to ONE colour forever. The White c1 Bishop stays on DARK squares. The Black f8 Bishop stays on LIGHT squares. The colour NEVER changes!`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Now — the colour secret!',
@@ -466,7 +453,7 @@ export const LESSON_3 = {
           boardState: '2b2b2/8/8/8/8/8/8/2B2B2 w - - 0 1',
           highlights: ['a1','b2','c3','d4','e5','f6','g7','h8','a3','b4','c5','d6','e7','f8'],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `Look — every square the c1 Bishop can EVER visit, highlighted in yellow. They are ALL dark squares! The c1 Bishop lives on dark squares forever. The f1 Bishop lives on light squares forever. A Bishop that starts on a dark square visits ONLY dark squares for its entire life, in every game it ever plays. This colour-lock NEVER changes!`,
+          voice: `Look — every square the White c1 Bishop can EVER visit, highlighted in yellow. They are ALL dark squares! The c1 Bishop lives on dark squares forever. The f1 Bishop lives on light squares forever. A Bishop that starts on a dark square visits ONLY dark squares for its entire life. This colour-lock NEVER changes!`,
           task: null,
           taskType: 'observe',
           continueLabel: "Let's test this!",
@@ -476,7 +463,7 @@ export const LESSON_3 = {
 
     // ═══════════════════════════════════════════════════════════
     // PHASE 5 — BISHOP: PRACTICE (13 min)
-    // All practice FENs: Bishop only — NO Kings
+    // No pre-highlighted target squares — student discovers freely
     // ═══════════════════════════════════════════════════════════
     {
       id: 'bishoppractice',
@@ -489,7 +476,7 @@ export const LESSON_3 = {
           type: 'piece-range',
           pieceRangeFen: '8/8/8/8/8/8/8/2B5 w - - 0 1',
           highlights: [],
-          voice: `The Bishop is on c1 — a dark square. Drag it to every square it can reach. Diagonals only!`,
+          voice: `The Bishop is on c1 — a dark square. Drag it to every square it can reach. Diagonals only — discover them yourself!`,
           task: 'Drag the Bishop on c1 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['a3','b2','d2','e3','f4','g5','h6'],
@@ -505,7 +492,7 @@ export const LESSON_3 = {
           task: 'Drag the Bishop on e5 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['a1','b2','b8','c3','c7','d4','d6','f4','f6','g3','g7','h2','h8'],
-          successVoice: `Thirteen from the centre — almost double! And all dark squares again. Now try a light-squared Bishop...`,
+          successVoice: `Thirteen from the centre — almost double the corner! And all dark squares again. Now try a light-squared Bishop...`,
           continueLabel: 'Try a light-squared Bishop!',
         },
         {
@@ -513,11 +500,11 @@ export const LESSON_3 = {
           type: 'piece-range',
           pieceRangeFen: '8/8/8/8/8/8/8/3B4 w - - 0 1',
           highlights: [],
-          voice: `This Bishop is on d1 — a LIGHT square! Drag it to every square it can reach. Are they all light?`,
+          voice: `This Bishop is on d1 — a LIGHT square! Drag it to every square it can reach.`,
           task: 'Drag the Bishop on d1 to every square it can reach.',
           taskType: 'piece-range',
           targetSquares: ['a4','b3','c2','e2','f3','g4','h5'],
-          successVoice: `All LIGHT squares! The colour-lock holds for both colours. Dark Bishop stays dark, light Bishop stays light — forever!`,
+          successVoice: `All LIGHT squares! Dark Bishop stays dark, light Bishop stays light — forever, {name}!`,
           continueLabel: 'Quick colour check!',
         },
         {
@@ -525,14 +512,14 @@ export const LESSON_3 = {
           type: 'recap-quiz',
           boardState: '8/8/8/8/8/8/8/2B5 w - - 0 1',
           highlights: ['c1'],
-          voice: `One check — this Bishop is on c1, a dark square. Could it ever reach e4, a light square?`,
+          voice: `One final check — this Bishop is on c1, a dark square. Could it ever reach e4, a light square?`,
           task: null,
           taskType: 'recap-quiz',
           recapQuestion: 'Can a dark-squared Bishop ever reach a light square like e4?',
           recapOptions: ['Never — colour-locked forever', 'Yes, after many moves', 'Only by capturing a piece'],
           recapCorrect: 0,
-          recapCorrectVoice: `Never! The Bishop's colour is locked for life. One of chess's permanent rules — and you know it now, {name}!`,
-          recapWrongVoice: `NEVER. The Bishop that starts on a dark square can only ever visit dark squares. The colour-lock is permanent.`,
+          recapCorrectVoice: `Never! The Bishop's colour is locked for life. One of chess's permanent rules!`,
+          recapWrongVoice: `NEVER. The Bishop that starts on a dark square can only ever visit dark squares. Permanent, for the whole game.`,
           continueLabel: 'Now see them together!',
         },
       ],
@@ -540,9 +527,11 @@ export const LESSON_3 = {
 
     // ═══════════════════════════════════════════════════════════
     // PHASE 6 — TOGETHER (8 min)
-    // tg1: Rook on e4 — 14 squares — NO Kings
-    // tg2: Bishop on e4 — 13 squares — NO Kings
-    // tg3: Both sets combined — NO Kings
+    // SIMPLE STATIC APPROACH — no demoSequence, no animation.
+    // tg1: Rook on e4, 14 straight-line squares highlighted
+    // tg2: Bishop on e4, 13 diagonal squares highlighted
+    // tg3: Rook on e4 + all 27 squares combined
+    // Child sees piece clearly, highlights match exactly, zero confusion
     // ═══════════════════════════════════════════════════════════
     {
       id: 'together',
@@ -556,10 +545,10 @@ export const LESSON_3 = {
           boardState: '8/8/8/8/4R3/8/8/8 w - - 0 1',
           highlights: ['e1','e2','e3','e5','e6','e7','e8','a4','b4','c4','d4','f4','g4','h4'],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `Look at the Rook on e4. All FOURTEEN yellow squares form a plus sign — straight up, down, left, right. These highlights stay on screen as long as we discuss the Rook. This is the Rook's territory on e4. Now I am going to swap the piece — watch what changes!`,
+          voice: `{name}, look at the Rook on e4. All FOURTEEN yellow squares form a plus sign — straight up, down, left, right. These are ALL the squares the Rook can reach from e4. This is the Rook's territory. Now watch what happens when I replace the Rook with a Bishop on the same square!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Swap to Bishop!',
+          continueLabel: 'Replace with Bishop!',
         },
         {
           id: 'tg2',
@@ -567,7 +556,7 @@ export const LESSON_3 = {
           boardState: '8/8/8/8/4B3/8/8/8 w - - 0 1',
           highlights: ['a8','b1','b7','c2','c6','d3','d5','f3','f5','g2','g6','h1','h7'],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `The Bishop has replaced the Rook on e4! Now THIRTEEN yellow squares glow — diagonals forming an X shape. Notice: the Rook's plus squares and the Bishop's X squares from the SAME square e4 do NOT overlap at all. The Rook owns straight lines. The Bishop owns diagonals. Now — what if we combine them?`,
+          voice: `The Bishop is now on e4! Look at the THIRTEEN yellow squares — they all go diagonally, forming an X shape. Compare this to the Rook's plus shape. The Rook's squares and the Bishop's squares from the SAME square e4 do NOT overlap at all. The Rook owns straight lines. The Bishop owns diagonals. Now — see them BOTH at once!`,
           task: null,
           taskType: 'observe',
           continueLabel: 'Show me both together!',
@@ -586,7 +575,7 @@ export const LESSON_3 = {
             { icon: '♖', letter: 'R', name: 'Rook' },
             { icon: '♗', letter: 'B', name: 'Bishop' },
           ],
-          voice: `TWENTY-SEVEN squares — the plus AND the X combined! Together, a Rook and a Bishop from the same square cover nearly every corner of the board. The Rook handles straight lines. The Bishop handles diagonals. Between them, every type of line on the chessboard is covered. And very soon, {name}, you will meet ONE single piece that can do both at once — but that is next lesson!`,
+          voice: `TWENTY-SEVEN squares — the Rook's plus shape AND the Bishop's X shape combined! Together, a Rook and a Bishop from the same square cover nearly every corner of the board. The Rook handles straight lines. The Bishop handles diagonals. Between them, every type of line on the chessboard is covered. And very soon, {name}, you will meet ONE single piece that can do BOTH at the same time!`,
           task: null,
           taskType: 'observe',
           continueLabel: 'One more thing before we finish...',
@@ -596,7 +585,6 @@ export const LESSON_3 = {
 
     // ═══════════════════════════════════════════════════════════
     // PHASE 7 — WRAP-UP (4 min)
-    // wu2: Queen + King both colours on board for Lesson 4 preview
     // ═══════════════════════════════════════════════════════════
     {
       id: 'wrapup',
@@ -632,7 +620,7 @@ export const LESSON_3 = {
             { icon: '♕', letter: 'Q', name: 'Queen' },
             { icon: '♔', letter: 'K', name: 'King' },
           ],
-          voice: `Next time, {name}, we meet THESE two — look at them on the board right now! The Queen on d1 and d8, the King on e1 and e8. The Queen moves like the Rook AND Bishop combined — straight lines AND diagonals — making her the most powerful piece on the board! The King moves just one careful step in any direction. Everything you learned today will make the Queen feel familiar from the very first moment. See you next session!`,
+          voice: `Next time, {name}, we meet THESE two — look at them on the board right now! The Queen on d1 and d8, the King on e1 and e8. The Queen moves like the Rook AND Bishop combined — straight lines AND diagonals — making her the most powerful piece on the board! Everything you learned today will make the Queen feel very familiar. See you next session!`,
           task: null,
           taskType: 'complete',
           continueLabel: 'Finish lesson!',
