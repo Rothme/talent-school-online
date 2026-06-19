@@ -54,3 +54,4 @@
 <!-- sync: lesson2 obs fixes - illegal moves, blink yellow, isPlaying gate -->
 <!-- sync: lesson3 rebuild + persistent highlights fix -->
 <!-- sync: lesson2 retest fixes applied -->
+<!-- sync: fix setIsPlaying race condition -->
