@@ -60,3 +60,4 @@
 <!-- sync: lesson3 v5 static together + stale closure fix -->
 <!-- sync: fix intro board - initialise from first step boardState -->
 <!-- sync: together phase simplified - separate boards -->
+<!-- sync: fix single-frame demoSeq stays at destination -->
