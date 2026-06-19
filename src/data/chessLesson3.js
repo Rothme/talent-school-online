@@ -527,15 +527,15 @@ export const LESSON_3 = {
 
     // ═══════════════════════════════════════════════════════════
     // PHASE 6 — TOGETHER (8 min)
-    // SIMPLE STATIC APPROACH — no demoSequence, no animation.
-    // tg1: Rook on e4, 14 straight-line squares highlighted
-    // tg2: Bishop on e4, 13 diagonal squares highlighted
-    // tg3: Rook on e4 + all 27 squares combined
-    // Child sees piece clearly, highlights match exactly, zero confusion
+    // SIMPLE SEPARATE APPROACH — Rook and Bishop on DIFFERENT squares.
+    // No combined highlighting. No piece swapping. No complexity.
+    // tg1: Rook on e4 — 14 straight squares glowing
+    // tg2: Bishop on e5 — 13 diagonal squares glowing
+    // tg3: Summary on Bishop board — no highlight changes
     // ═══════════════════════════════════════════════════════════
     {
       id: 'together',
-      title: 'Together They Cover Everything',
+      title: 'Rook and Bishop — What They Each Control',
       type: 'teach',
       durationMins: 8,
       steps: [
@@ -545,37 +545,32 @@ export const LESSON_3 = {
           boardState: '8/8/8/8/4R3/8/8/8 w - - 0 1',
           highlights: ['e1','e2','e3','e5','e6','e7','e8','a4','b4','c4','d4','f4','g4','h4'],
           pieceLetterRef: [{ icon: '♖', letter: 'R', name: 'Rook' }],
-          voice: `{name}, look at the Rook on e4. All FOURTEEN yellow squares form a plus sign — straight up, down, left, right. These are ALL the squares the Rook can reach from e4. This is the Rook's territory. Now watch what happens when I replace the Rook with a Bishop on the same square!`,
+          voice: `{name}, here is the Rook on e4. Count the yellow squares — one, two, three, four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, FOURTEEN! All straight lines — up the e-file, down the e-file, left along rank 4, right along rank 4. FOURTEEN squares. That is the Rook's reach from the centre of the board. Every single one is a straight line. Now let us look at the Bishop!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Replace with Bishop!',
+          continueLabel: 'Now the Bishop!',
         },
         {
           id: 'tg2',
           type: 'observe',
-          boardState: '8/8/8/8/4B3/8/8/8 w - - 0 1',
-          highlights: ['a8','b1','b7','c2','c6','d3','d5','f3','f5','g2','g6','h1','h7'],
+          boardState: '8/8/8/4B3/8/8/8/8 w - - 0 1',
+          highlights: ['a1','b2','b8','c3','c7','d4','d6','f4','f6','g3','g7','h2','h8'],
           pieceLetterRef: [{ icon: '♗', letter: 'B', name: 'Bishop' }],
-          voice: `The Bishop is now on e4! Look at the THIRTEEN yellow squares — they all go diagonally, forming an X shape. Compare this to the Rook's plus shape. The Rook's squares and the Bishop's squares from the SAME square e4 do NOT overlap at all. The Rook owns straight lines. The Bishop owns diagonals. Now — see them BOTH at once!`,
+          voice: `Here is the Bishop on e5. Count the yellow squares — one, two, three, four, five, six, seven, eight, nine, ten, eleven, twelve, THIRTEEN! All diagonals — four diagonal directions spreading outward. THIRTEEN squares. Every single one is a diagonal. Look how different the pattern is from the Rook's straight lines! The Rook owns the plus shape. The Bishop owns the X shape. They are completely different!`,
           task: null,
           taskType: 'observe',
-          continueLabel: 'Show me both together!',
+          continueLabel: 'What do they mean together?',
         },
         {
           id: 'tg3',
           type: 'observe',
-          boardState: '8/8/8/8/4R3/8/8/8 w - - 0 1',
-          highlights: [
-            'e1','e2','e3','e5','e6','e7','e8',
-            'a4','b4','c4','d4','f4','g4','h4',
-            'a8','b1','b7','c2','c6','d3','d5',
-            'f3','f5','g2','g6','h1','h7',
-          ],
+          boardState: '8/8/8/4B3/8/8/8/8 w - - 0 1',
+          highlights: ['a1','b2','b8','c3','c7','d4','d6','f4','f6','g3','g7','h2','h8'],
           pieceLetterRef: [
             { icon: '♖', letter: 'R', name: 'Rook' },
             { icon: '♗', letter: 'B', name: 'Bishop' },
           ],
-          voice: `TWENTY-SEVEN squares — the Rook's plus shape AND the Bishop's X shape combined! Together, a Rook and a Bishop from the same square cover nearly every corner of the board. The Rook handles straight lines. The Bishop handles diagonals. Between them, every type of line on the chessboard is covered. And very soon, {name}, you will meet ONE single piece that can do BOTH at the same time!`,
+          voice: `So what does this mean together, {name}? The Rook controls STRAIGHT lines — up, down, left, right — fourteen squares. The Bishop controls DIAGONAL lines — four diagonal directions — thirteen squares. Between them, they cover EVERY type of line that exists on a chessboard. Straight AND diagonal — the Rook and Bishop complement each other perfectly. And very soon, you will meet ONE single piece that combines BOTH powers at once. But that is next lesson!`,
           task: null,
           taskType: 'observe',
           continueLabel: 'One more thing before we finish...',
