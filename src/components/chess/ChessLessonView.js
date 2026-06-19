@@ -319,8 +319,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const lesson = lessonData || LESSON_1;
   const phases = bonusActive ? (LESSON_1_BONUS?.phases || lesson.phases) : lesson.phases;
 
+  // Derive the first step's board so it shows immediately — no empty flash on load
+  const firstStep = phases?.[0]?.steps?.[0];
+  const firstBoardFen = firstStep?.boardState && firstStep.boardState !== 'start' && firstStep.boardState !== 'empty'
+    ? firstStep.boardState : 'start';
+
   // Piece-based interaction state (Lesson 2+)
-  const [boardFen, setBoardFen] = useState('start');
+  const [boardFen, setBoardFen] = useState(firstBoardFen);
   const [selectedSq, setSelectedSq] = useState(null);
   const [moveDone, setMoveDone] = useState(false);
   const [pieceQuizIdx, setPieceQuizIdx] = useState(0);
@@ -694,9 +699,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     } else if (step?.boardState === 'empty') {
       setBoardFen('empty-custom');
     } else if (step?.boardState && step.boardState !== 'custom' && step.boardState !== 'start' && step.boardState !== 'empty') {
-      // Literal FEN string — animate the transition with a brief delay
-      const t = setTimeout(() => setBoardFen(step.boardState), 200);
-      return () => clearTimeout(t);
+      // Literal FEN string — first step shows immediately, subsequent steps animate with brief delay
+      if (phaseIdx === 0 && stepIdx === 0) {
+        setBoardFen(step.boardState);
+      } else {
+        const t = setTimeout(() => setBoardFen(step.boardState), 200);
+        return () => clearTimeout(t);
+      }
     }
   }, [phaseIdx, stepIdx]);
 
