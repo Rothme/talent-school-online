@@ -560,7 +560,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     applyNeon(text);
   }
 
-  // Keep ref always pointing to latest speakStep
+  // Keep ref always pointing to latest speakStep — rebuilt 2026-06-19 22:51:53
   speakStepRef.current = speakStep;
 
   function clearNeon() { setNeonFile(null); setNeonRank(null); setNeonSqs([]); setGlowPieces([]); }
