@@ -56,3 +56,4 @@
 <!-- sync: lesson2 retest fixes applied -->
 <!-- sync: fix setIsPlaying race condition -->
 <!-- sync: lesson2 kings removed from all solo teaching boards -->
+<!-- sync: lesson3 v4 - per-leg circuit steps, kings removed, audit clean -->
