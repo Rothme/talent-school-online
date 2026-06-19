@@ -55,3 +55,4 @@
 <!-- sync: lesson3 rebuild + persistent highlights fix -->
 <!-- sync: lesson2 retest fixes applied -->
 <!-- sync: fix setIsPlaying race condition -->
+<!-- sync: lesson2 kings removed from all solo teaching boards -->
