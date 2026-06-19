@@ -100,10 +100,10 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
   // Always STYLE 2 — border only — because a specific square is being discussed
   (neonSquares || []).forEach(sq => {
     if ((borderOnlySquares || []).includes(sq)) {
-      // Explicit border-only (colour teaching) — animated blink
-      setStyle(sq, { animation: 'cl-sq-blink 0.9s step-end infinite' });
+      // Colour-teaching blink — neon yellow border so it catches the child's eye
+      setStyle(sq, { animation: 'cl-sq-blink-yellow 0.9s step-end infinite' });
     } else {
-      // Standard named-square highlight — static border, true colour shows
+      // Standard named-square highlight — static neon yellow border, true colour shows
       setStyle(sq, {
         backgroundColor: 'transparent',
         boxShadow: 'inset 0 0 0 4px rgba(255,210,0,1)',
@@ -875,8 +875,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     unlockAudio();
     const sq = square;
     if (!step) return;
-    // Block interaction until Ms. Momo has finished speaking — main voice OR feedback voice
-    if ((!voiceFinished || speakingFb) && !isTest) return;
+    // Block interaction until Ms. Momo has finished speaking — main voice OR feedback voice OR still playing
+    if ((!voiceFinished || speakingFb || isPlaying) && !isTest) return;
     const tt = step.taskType;
 
     if (tt === 'click-file' || tt === 'click-rank' || tt === 'piece-range') {
@@ -1492,7 +1492,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                 showAnimations={true}
                 animationDuration={500}
                 showBoardNotation={true}
-                arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range'].includes(step?.taskType) && !moveDone && voiceFinished}
+                arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
                 onPieceDrop={handlePieceDrop}
                 customSquareStyles={squareStyles}
                 customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
@@ -1610,7 +1610,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           )}
 
           {/* Recap quiz */}
-          {step?.taskType === 'recap-quiz' && voiceFinished && !speakingFb && (
+          {step?.taskType === 'recap-quiz' && voiceFinished && !speakingFb && !isPlaying && (
             <div className="cl-recap">
               <div className="cl-recap-q">{step.recapQuestion}</div>
               <div className="cl-recap-opts">
@@ -1631,7 +1631,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           )}
 
           {/* Piece letter quiz / piece spot quiz */}
-          {['piece-letter-quiz', 'piece-spot-quiz'].includes(step?.taskType) && voiceFinished && !speakingFb && step.quizItems?.[pieceQuizIdx] && (
+          {['piece-letter-quiz', 'piece-spot-quiz'].includes(step?.taskType) && voiceFinished && !speakingFb && !isPlaying && step.quizItems?.[pieceQuizIdx] && (
             <div className="cl-recap">
               <div className="cl-recap-q">
                 Item {pieceQuizIdx + 1} of {step.quizItems.length} — {step.taskType === 'piece-spot-quiz' ? 'which piece is highlighted?' : "what is this piece's letter?"}
@@ -1648,7 +1648,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                     else if (opt === pieceQuizAnswer) cls += ' cl-recap-wrong';
                   }
                   return (
-                    <button key={i} className={cls} onClick={() => handlePieceLetterAnswer(opt)} disabled={pieceQuizAnswer !== null}>
+                    <button key={i} className={cls} onClick={() => handlePieceLetterAnswer(opt)} disabled={pieceQuizAnswer !== null || speakingFb || isPlaying}>
                       {opt}
                     </button>
                   );
@@ -1757,7 +1757,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
             if (step?.taskType === 'recap-quiz' && voiceFinished && recapAnswer === null) return null;
 
             const isRecap = step?.taskType === 'recap-quiz';
-            const locked = !voiceFinished || speakingFb
+            const locked = !voiceFinished || speakingFb || isPlaying
               || (isRecap && (recapAnswer === null || !recapFeedbackDone));
             return (
               <button
