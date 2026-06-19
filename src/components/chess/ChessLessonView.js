@@ -548,7 +548,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     // State updates after speak() — React re-renders don't affect already-queued speech
     setCurrentNarration(text);
     setVoiceFinished(false);
-    setIsPlaying(false);
     setIsPaused(false);
     applyNeon(text);
   }
