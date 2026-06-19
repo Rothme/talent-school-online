@@ -62,3 +62,4 @@
 <!-- sync: together phase simplified - separate boards -->
 <!-- sync: fix single-frame demoSeq stays at destination -->
 <!-- force-rebuild: 20260619-225124 -->
+<!-- sync: fenToPositionObj skipValidation fix -->
