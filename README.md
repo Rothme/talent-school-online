@@ -51,3 +51,4 @@
 <!-- sync: lesson2 full rewrite zero violations -->
 <!-- sync: curriculum rules codified -->
 <!-- sync: lessons 3-5 rebuilt to codified rules -->
+<!-- sync: lesson2 obs fixes - illegal moves, blink yellow, isPlaying gate -->
