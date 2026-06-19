@@ -656,9 +656,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         timers.push(t1);
         cumDelay += (frame.delay || 2200);
 
-        // Return to start, clear path dots before next move
-        // (skip this for the last frame of a recap-quiz — leave piece in place)
-        if (!(keepOnDestination && isLast)) {
+        // Return to start between frames ONLY for multi-frame sequences.
+        // Single-frame steps (circuit legs) keep the piece at destination —
+        // the student must see where the piece landed before clicking Continue.
+        // Also keep for recap-quiz last frame (student references while answering).
+        const isSingleFrame = step.demoSequence.length === 1;
+        const skipReturn = isSingleFrame || (keepOnDestination && isLast);
+        if (!skipReturn) {
           const t2 = setTimeout(() => {
             setBoardFen(startFen);
             setPathSqs([]);
