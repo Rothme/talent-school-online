@@ -405,12 +405,16 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     // ── Square coordinate e.g. "e4", "a1" ──
     // Style 2 (border only) — a specific square is being named.
     // Clear+set forces re-render on repeated mention.
+    // After 3s, restore step's static highlights rather than clearing to []
+    // so persistent highlights (step.highlights) are not wiped by word-trigger timers.
     if (/^[a-h][1-8]$/.test(w)) {
       setNeonSqs([]);
       clearTimeout(sqNeonTimer.current);
       setTimeout(() => {
         setNeonSqs([w]);
-        sqNeonTimer.current = setTimeout(() => setNeonSqs([]), 3000);
+        sqNeonTimer.current = setTimeout(() => {
+          setNeonSqs(step?.highlights?.length ? step.highlights : []);
+        }, 3000);
       }, 50);
       lastSpokenWord.current = w;
       return;
