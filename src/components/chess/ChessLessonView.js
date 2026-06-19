@@ -332,6 +332,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const speedRef = useRef(null);
   const voiceRef = useRef(false);
   const continueSpoke = useRef(false); // true when handleContinue already spoke this step
+  const currentStepRef = useRef(null); // always points to current step — avoids stale closures in timers
   const [taskComplete, setTaskComplete] = useState(false);
   const [pathSqs, setPathSqs] = useState([]);
   const [speakingFb, setSpeakingFb] = useState(false);
@@ -413,7 +414,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       setTimeout(() => {
         setNeonSqs([w]);
         sqNeonTimer.current = setTimeout(() => {
-          setNeonSqs(step?.highlights?.length ? step.highlights : []);
+          // Use currentStepRef to get LIVE step highlights, not stale closed-over step
+          const liveHighlights = currentStepRef.current?.highlights;
+          setNeonSqs(liveHighlights?.length ? liveHighlights : []);
         }, 3000);
       }, 50);
       lastSpokenWord.current = w;
@@ -559,6 +562,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
   // Reset on step change
   useEffect(() => {
+    currentStepRef.current = step; // always keep ref current — avoids stale closures
     voiceRef.current = false;
     setClicked([]); setWrongSqs([]); setFeedback(''); setFbType('info');
     setSpeed(null); setIndepIdx(0); clearNeon();
