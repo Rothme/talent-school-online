@@ -59,3 +59,4 @@
 <!-- sync: lesson3 v4 - per-leg circuit steps, kings removed, audit clean -->
 <!-- sync: lesson3 v5 static together + stale closure fix -->
 <!-- sync: fix intro board - initialise from first step boardState -->
+<!-- sync: together phase simplified - separate boards -->
