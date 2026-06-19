@@ -23,7 +23,8 @@ function fenToPositionObj(fen) {
   }
   if (typeof fen === 'object') return fen; // already a position obj
   try {
-    const c = new Chess(fen);
+    const c = new Chess();
+    c.load(fen, { skipValidation: true });
     const board = c.board();
     const pos = {};
     const pieceMap = { k:'K', q:'Q', r:'R', b:'B', n:'N', p:'P' };
