@@ -6,6 +6,7 @@ import { ChevronRight, ChevronLeft, CheckCircle2, BookOpen, Swords, Award, Clock
 import { Chess } from 'chess.js';
 import { LESSON_1, LESSON_1_BONUS } from '../../data/chessLesson1';
 import { LESSON_2 } from '../../data/chessLesson2';
+import { LESSON_3_BONUS } from '../../data/chessLesson3';
 import { speakElevenLabs, stopSpeech, parseHighlights, unlockAudio, pendingAudioClear } from '../../utils/elevenlabs';
 import './ChessLessonView.css';
 
@@ -1244,7 +1245,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         setTimeout(() => onComplete?.(), 2000);
       } else {
         // Main lesson complete with time remaining — activate bonus round!
-        const bonus = LESSON_1_BONUS || null;
+        // Select the bonus for the current lesson
+      const lessonBonusMap = { 'chess-lesson-1': LESSON_1_BONUS, 'chess-lesson-3': LESSON_3_BONUS };
+      const bonus = lessonBonusMap[lesson?.id] || LESSON_1_BONUS || null;
         if (bonus && remainSecsRef.current > 300) {
           // Merge bonus phases into current lesson
           const bonusVoice = `Incredible, {name}! You finished all the main content with time to spare. Let's play the bonus round!`;
