@@ -1067,7 +1067,15 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   }
 
   function startSpeed(roundStep) {
-    const tgts = roundStep?.targetSquares || [];
+    // Use explicit targetSquares if provided, otherwise generate from targetCount
+    let tgts = roundStep?.targetSquares || [];
+    if (!tgts.length && roundStep?.targetCount) {
+      const allSqs = [];
+      'abcdefgh'.split('').forEach(f => { for(let r=1;r<=8;r++) allSqs.push(f+r); });
+      // Shuffle and take targetCount
+      const shuffled = allSqs.sort(() => Math.random() - 0.5);
+      tgts = shuffled.slice(0, roundStep.targetCount);
+    }
     if (!tgts.length) return;
     setClicked([]); setStreak(0);
     setSpeed({ active: true, targets: tgts, currentTarget: tgts[0], hits: 0, done: [], timeLeft: roundStep.timeLimitSecs || 75, totalTime: roundStep.timeLimitSecs || 75 });
