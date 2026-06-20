@@ -135,7 +135,7 @@ export const LESSON_4 = {
             { fen: '8/8/8/8/8/8/8/7Q w - - 0 1', path: ['f3','g2','h1'], delay: 1800 },
             { fen: '8/8/8/8/8/8/8/1Q6 w - - 0 1', path: ['d3','c2','b1'], delay: 1800 },
           ],
-          highlights: ['a4','b1','b4','b7','c2','c4','c6','d3','d4','d5','e1','e2','e3','e5','e6','e7','e8','f3','f4','f5','g2','g4','g6','h1','h4','h7'],
+          highlights: ['a4','a8','b1','b4','b7','c2','c4','c6','d3','d4','d5','e1','e2','e3','e5','e6','e7','e8','f3','f4','f5','g2','g4','g6','h1','h4','h7'],
           pieceLetterRef: [{ icon: '♕', letter: 'Q', name: 'Queen' }],
           voice: `From the CENTRE square e4, the Queen reaches ALL EIGHT directions! Count all the yellow squares — TWENTY-SEVEN! The Rook's fourteen straight squares PLUS the Bishop's thirteen diagonal squares. The Queen is the MOST POWERFUL piece in chess. She can do everything the Rook and Bishop do, at the same time!`,
           task: null,
@@ -382,7 +382,7 @@ export const LESSON_4 = {
       steps: [
         {
           id: 'wu1',
-          type: 'wrapup',
+          type: 'recap-quiz',
           boardState: 'empty',
           highlights: [],
           pieceLetterRef: [
@@ -408,7 +408,7 @@ export const LESSON_4 = {
             { icon: '♘', letter: 'N', name: 'Knight' },
             { icon: '♙', letter: '—', name: 'Pawn (no letter)' },
           ],
-          voice: `Next time, {name}, we meet the last two pieces — the KNIGHT on b1 and g1, who jumps in a special L-shape and can leap OVER other pieces, and the PAWN on e2, the smallest piece that can transform into a Queen! Two very different pieces — both with surprises in store. See you next session!`,
+          voice: `{name}, you have done brilliantly today! You learned the Queen — the most powerful piece, moving in all eight directions up to twenty-seven squares — and the King, who moves just one careful step in any direction but is the most important piece of all. Four pieces mastered: Rook, Bishop, Queen, and King! Next time we meet the last two pieces — the KNIGHT on b1 and g1, who jumps in a special L-shape and can leap OVER other pieces, and the PAWN on e2, the smallest piece that can transform into a Queen! Two very different pieces — both with surprises in store. See you next session!`,
           task: null,
           taskType: 'complete',
           continueLabel: 'Finish lesson!',
