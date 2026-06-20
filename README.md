@@ -63,3 +63,4 @@
 <!-- sync: fix single-frame demoSeq stays at destination -->
 <!-- force-rebuild: 20260619-225124 -->
 <!-- sync: fenToPositionObj skipValidation fix -->
+<!-- sync: lessonData useEffect sets first board correctly -->
