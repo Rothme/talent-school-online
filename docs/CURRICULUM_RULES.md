@@ -262,3 +262,142 @@ verified individually with chess.js before being committed.
 - [ ] Run the audit script — zero violations before push
 - [ ] Total duration matches the target (55–60 min) with genuine depth, not
       padding
+
+---
+
+## 11. Board Rendering — `skipValidation` is Mandatory
+
+`fenToPositionObj` must always parse FENs using `c.load(fen, { skipValidation: true })`.
+Never use `new Chess(fen)` directly for board display. Chess.js throws on FENs missing
+both Kings (all solo-piece teaching boards). The catch block silently returns a raw
+string that react-chessboard cannot render — producing an empty board with no error.
+
+**Rule:** `fenToPositionObj` always uses `skipValidation`. This applies to every FEN
+passed to the board component, forever.
+
+---
+
+## 12. Prop-Derived State — Never Use `useState(derivedFromProp)`
+
+`useState(derivedValue)` only evaluates its initial value once — on the very first
+mount, before React has resolved prop values. If `lessonData` prop hasn't arrived yet,
+the board initialises from the wrong lesson (or from `undefined`, falling back to
+Lesson 1's empty board).
+
+**Rule:** Never initialise `boardFen` or any prop-derived state with
+`useState(derivedFromProp)`. Always use:
+```js
+useEffect(() => {
+  setBoardFen(step?.boardState || 'start');
+}, [lessonData]);
+```
+
+---
+
+## 13. Circuit Demonstrations — One Step Per Leg
+
+`demoSequence` returns the piece to `startFen` between every frame. For multi-direction
+teaching (showing 4 directions from e4) this is correct. For continuous circuit
+demonstrations (a1→h1→h8→a8→a1) it causes the piece to snap back after each leg —
+looking like an illegal jump.
+
+**Rule:** Circuits use one `observe` step per leg. Each step's `boardState` = piece
+at the START of that leg. One `demoSequence` frame per step = one clean move. Single-
+frame sequences never return to start (piece stays at destination until Continue).
+
+**Rule:** Never use a multi-frame `demoSequence` to represent a continuous circuit.
+
+---
+
+## 14. Timer Callbacks Must Use Refs, Not Closed-Over Variables
+
+Any `setTimeout` callback that references `step` captures the value at the time the
+timer is created — not at the time it fires. If the student advances to the next step
+before the timer fires, the callback runs in the NEW step but restores the OLD step's
+highlights (stale closure bug).
+
+**Rule:** All timer callbacks that need the current step use `currentStepRef.current`
+instead of the closed-over `step` variable. `currentStepRef` is updated synchronously
+at the top of every step-change `useEffect`.
+
+---
+
+## 15. Comparing Two Pieces — Always Separate Boards, Separate Steps
+
+Attempting to show two pieces on the same square with overlapping highlights, or to
+animate a piece-swap within a single step, produces consistent failures:
+stale closures overwrite highlights, animation timers interfere, highlights from
+the previous piece persist into the next step.
+
+**Rule:** When comparing two pieces (e.g. Rook vs Bishop reach), show each on its own
+board in its own step. Use DIFFERENT squares (e.g. Rook on e4, Bishop on e5) so there
+is zero visual ambiguity. Never animate a piece swap within a single step. Static
+boards with static highlights are always more reliable than animated transitions
+for teaching concepts.
+
+---
+
+## 16. Every Lesson Has a Bonus Export
+
+Every lesson file exports both the main lesson AND a bonus:
+```js
+export const LESSON_X = { ... };
+export const LESSON_X_BONUS = { ... };
+```
+
+The bonus must contain at minimum:
+- 8 trivia `recap-quiz` questions covering that lesson's content
+- 2 speed rounds using `targetCount` (not `targetSquares`) for random fresh squares
+- A `complete` step at the end
+
+The component `lessonBonusMap` is updated whenever a new lesson is added:
+```js
+const lessonBonusMap = {
+  'chess-lesson-1': LESSON_1_BONUS,
+  'chess-lesson-3': LESSON_3_BONUS,
+  // add each new lesson here
+};
+```
+
+---
+
+## 17. Speed Rounds in Bonus Phases — Use `targetCount`
+
+Speed round steps in bonus phases use `targetCount` instead of `targetSquares`.
+The component generates `targetCount` random squares, making every bonus play-through
+different. This keeps repeat sessions fresh for fast learners.
+
+Speed rounds in MAIN lesson phases use explicit `targetSquares` for pedagogical
+control over exactly which squares are tested.
+
+---
+
+## 18. Solo-Piece Boards — King Scan Before Every Deploy (Hardened)
+
+Kings must NEVER appear on solo-piece teaching boards. The pre-deploy King scan
+must pass with zero violations before any lesson data commit.
+
+Approved King-present steps (whitelist):
+- Steps using the full starting position (`boardState: 'start'`)
+- The King introduction step (`pl1` in Lesson 2)
+- Starting position review steps (`sp0`–`sp8` in Lesson 2)
+- Preview steps showing the NEXT lesson's featured pieces (`wu2` in Lessons 2/3)
+- Multi-piece boards where Kings are part of the lesson subject
+
+Any FEN not in this whitelist that contains K or k is a violation. Zero exceptions.
+
+---
+
+## Updated Pre-Deploy Checklist
+
+- [ ] Rules 1-10 (original checklist)
+- [ ] `fenToPositionObj` uses `skipValidation` (Rule 11)
+- [ ] No `useState(derivedFromProp)` for board or lesson state (Rule 12)
+- [ ] Circuit demonstrations use one step per leg (Rule 13)
+- [ ] Timer callbacks use `currentStepRef.current` not closed-over `step` (Rule 14)
+- [ ] Piece comparisons use separate boards on separate steps (Rule 15)
+- [ ] Lesson has a `LESSON_X_BONUS` export (Rule 16)
+- [ ] Bonus speed rounds use `targetCount` not `targetSquares` (Rule 17)
+- [ ] King scan passes with zero violations against whitelist (Rule 18)
+- [ ] Run `node scripts/auditLesson.js` — zero violations
+- [ ] Build compiles with no errors
