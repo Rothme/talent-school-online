@@ -64,3 +64,4 @@
 <!-- force-rebuild: 20260619-225124 -->
 <!-- sync: fenToPositionObj skipValidation fix -->
 <!-- sync: lessonData useEffect sets first board correctly -->
+<!-- sync: lesson3 bonus + speed fix + lesson-specific bonus map -->
