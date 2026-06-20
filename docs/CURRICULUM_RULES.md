@@ -383,6 +383,9 @@ Approved King-present steps (whitelist):
 - Starting position review steps (`sp0`–`sp8` in Lesson 2)
 - Preview steps showing the NEXT lesson's featured pieces (`wu2` in Lessons 2/3)
 - Multi-piece boards where Kings are part of the lesson subject
+- Promotion teaching boards where a black King or black pieces serve as contextual
+  opponents, provided the lesson subject is the Pawn's promotion mechanic, not the
+  King itself.
 
 Any FEN not in this whitelist that contains K or k is a violation. Zero exceptions.
 
@@ -401,6 +404,11 @@ and wrap-up steps equally.
 **Implementation:** If a single voice covers multiple pieces, split it into
 separate steps — one per piece — each with the correct `boardState`. Never
 describe a piece in voice that isn't currently on the board.
+
+**Exception — Bonus trivia recap-quiz steps:** These steps are exempt from Rule 19
+board-presence requirements. They are memory recall tests where the absence of the
+piece on the board is intentional. The `pieceLetterRef` panel must still be present
+for all pieces named in the voice or question text.
 
 ---
 
