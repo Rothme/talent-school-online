@@ -388,6 +388,22 @@ Any FEN not in this whitelist that contains K or k is a violation. Zero exceptio
 
 ---
 
+## 19. Board-Voice Synchronisation
+
+Every piece Ms. Momo names or discusses must be visibly present on the board at
+the moment she speaks about it. When she transitions from one piece to another
+mid-step, the board must update to show the new piece. When she describes a
+piece's movement, the piece must demonstrate that movement on the board. A static
+board showing the wrong piece — or no piece — while Ms. Momo speaks about a
+different one is a Rule 19 violation. This applies to warm-up, teaching, recap,
+and wrap-up steps equally.
+
+**Implementation:** If a single voice covers multiple pieces, split it into
+separate steps — one per piece — each with the correct `boardState`. Never
+describe a piece in voice that isn't currently on the board.
+
+---
+
 ## Updated Pre-Deploy Checklist
 
 - [ ] Rules 1-10 (original checklist)
@@ -399,5 +415,6 @@ Any FEN not in this whitelist that contains K or k is a violation. Zero exceptio
 - [ ] Lesson has a `LESSON_X_BONUS` export (Rule 16)
 - [ ] Bonus speed rounds use `targetCount` not `targetSquares` (Rule 17)
 - [ ] King scan passes with zero violations against whitelist (Rule 18)
+- [ ] Board-voice sync: every spoken piece is visible on the board at the moment it's named (Rule 19)
 - [ ] Run `node scripts/auditLesson.js` — zero violations
 - [ ] Build compiles with no errors
