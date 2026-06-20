@@ -320,13 +320,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const lesson = lessonData || LESSON_1;
   const phases = bonusActive ? (LESSON_1_BONUS?.phases || lesson.phases) : lesson.phases;
 
-  // Derive the first step's board so it shows immediately — no empty flash on load
-  const firstStep = phases?.[0]?.steps?.[0];
-  const firstBoardFen = firstStep?.boardState && firstStep.boardState !== 'start' && firstStep.boardState !== 'empty'
-    ? firstStep.boardState : 'start';
-
   // Piece-based interaction state (Lesson 2+)
-  const [boardFen, setBoardFen] = useState(firstBoardFen);
+  const [boardFen, setBoardFen] = useState('start');
   const [selectedSq, setSelectedSq] = useState(null);
   const [moveDone, setMoveDone] = useState(false);
   const [pieceQuizIdx, setPieceQuizIdx] = useState(0);
@@ -350,6 +345,19 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
   const phase = phases[phaseIdx];
   const steps = phase?.steps || [];
   const step = steps[stepIdx];
+
+  // When lessonData changes (different lesson selected), set the board to the
+  // first step's boardState immediately so pieces are visible before Start Class.
+  // useEffect runs after every render where lessonData changes — unlike useState
+  // which only uses its initial value once on mount.
+  useEffect(() => {
+    const firstSt = phases?.[0]?.steps?.[0];
+    if (firstSt?.boardState && firstSt.boardState !== 'start' && firstSt.boardState !== 'empty') {
+      setBoardFen(firstSt.boardState);
+    } else {
+      setBoardFen('start');
+    }
+  }, [lessonData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function applyNeon(text) {
     // Step-level static highlights (set from lesson data directly)
