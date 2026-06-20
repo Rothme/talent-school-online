@@ -412,6 +412,44 @@ for all pieces named in the voice or question text.
 
 ---
 
+## 20. Piece Path Animation
+
+Every piece move must animate the piece sequentially through each square in the path
+array, one square at a time, before arriving at the destination. The piece must never
+teleport or jump directly to the destination square.
+
+**Rule:** The yellow path dots and the piece animation must be in sync — the piece
+travels through each dot in order. This applies to all `demoSequence` frames and all
+drag-and-drop feedback animations. The Knight is not exempt — its L-shape path must
+be broken into its two legs (e.g. two squares forward, one square right) and the piece
+must travel each leg visibly.
+
+---
+
+## 21. Bonus Round Fills Remaining Time
+
+The bonus round must continue running for the full duration of remaining lesson time.
+If time remains after the bonus trivia questions are exhausted, the speed rounds must
+loop or extend until time expires. The bonus round must never end early while the
+session timer still has minutes remaining.
+
+**Rule:** A `complete` step only triggers when time has genuinely run out.
+
+---
+
+## 22. Quiz and Challenge Variety
+
+No more than two consecutive steps in any phase may use the same quiz or challenge
+mechanic. Each lesson must include at least three distinct challenge types drawn from:
+square-identification, piece-placement, capture-target, path-counting, speed-tap, and
+story-framed challenges.
+
+**Rule:** "Choose the correct square" type tasks must not exceed 40% of all quiz steps
+in a lesson. Designers must consult Lichess puzzle patterns and Chess Kid challenge
+formats for inspiration when building quiz phases.
+
+---
+
 ## Updated Pre-Deploy Checklist
 
 - [ ] Rules 1-10 (original checklist)
@@ -424,5 +462,8 @@ for all pieces named in the voice or question text.
 - [ ] Bonus speed rounds use `targetCount` not `targetSquares` (Rule 17)
 - [ ] King scan passes with zero violations against whitelist (Rule 18)
 - [ ] Board-voice sync: every spoken piece is visible on the board at the moment it's named (Rule 19)
+- [ ] Piece moves animate through every square in the path array sequentially; Knight travels both legs visibly (Rule 20)
+- [ ] Bonus round loops until time expires; `complete` step only fires when time runs out (Rule 21)
+- [ ] No more than two consecutive steps with same mechanic; ≥3 distinct challenge types; "choose the correct square" ≤40% of quiz steps (Rule 22)
 - [ ] Run `node scripts/auditLesson.js` — zero violations
 - [ ] Build compiles with no errors
