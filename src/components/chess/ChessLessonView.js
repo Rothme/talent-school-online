@@ -5,7 +5,7 @@ import confetti from 'canvas-confetti';
 import { ChevronRight, ChevronLeft, CheckCircle2, BookOpen, Swords, Award, Clock, RotateCcw } from 'lucide-react';
 import { Chess } from 'chess.js';
 import { LESSON_1, LESSON_1_BONUS } from '../../data/chessLesson1';
-import { LESSON_2 } from '../../data/chessLesson2';
+import { LESSON_2, LESSON_2_BONUS } from '../../data/chessLesson2';
 import { LESSON_3_BONUS } from '../../data/chessLesson3';
 import { LESSON_4_BONUS } from '../../data/chessLesson4';
 import { LESSON_5_BONUS } from '../../data/chessLesson5';
@@ -1250,6 +1250,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         // Select the bonus for the current lesson
       const lessonBonusMap = {
         'chess-lesson-1': LESSON_1_BONUS,
+        'chess-lesson-2': LESSON_2_BONUS,
         'chess-lesson-3': LESSON_3_BONUS,
         'chess-lesson-4': LESSON_4_BONUS,
         'chess-lesson-5': LESSON_5_BONUS,
@@ -1677,6 +1678,86 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
             </div>
           )}
 
+          {/* Name-the-square quiz */}
+          {step?.taskType === 'name-the-square' && voiceFinished && !speakingFb && !isPlaying && (
+            <div className="cl-recap">
+              <div className="cl-recap-q">{step.task}</div>
+              <div className="cl-recap-opts">
+                {(step.options || []).map((opt, i) => {
+                  const correctIdx = (step.options || []).indexOf(step.correct);
+                  let cls = 'cl-recap-opt';
+                  if (recapAnswer !== null) {
+                    if (i === correctIdx) cls += ' cl-recap-correct';
+                    else if (i === recapAnswer) cls += ' cl-recap-wrong';
+                  }
+                  return (
+                    <button key={i} className={cls}
+                      onClick={() => {
+                        if (recapAnswer !== null) return;
+                        unlockAudio();
+                        const correctIdx = (step.options || []).indexOf(step.correct);
+                        setRecapAnswer(i);
+                        setTotal(t => t + 1);
+                        const correct = i === correctIdx;
+                        const unlock = () => setRecapFeedbackDone(true);
+                        if (correct) {
+                          setScore(s => s + 1); setStreak(s => s + 1);
+                          const vm = fill(step.successVoice || 'Correct!', childName);
+                          showFb(vm, 'success', vm, unlock);
+                        } else {
+                          setStreak(0);
+                          const vm = fill(step.wrongVoice || 'Not quite!', childName);
+                          showFb(vm, 'error', vm, unlock);
+                        }
+                      }}
+                      disabled={recapAnswer !== null || speakingFb}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* True-or-false quiz */}
+          {step?.taskType === 'true-or-false' && voiceFinished && !speakingFb && !isPlaying && (
+            <div className="cl-recap">
+              <div className="cl-recap-q">{step.task}</div>
+              <div className="cl-recap-opts cl-tof-opts">
+                {[true, false].map(val => {
+                  let cls = 'cl-recap-opt';
+                  if (recapAnswer !== null) {
+                    if (val === step.correct) cls += ' cl-recap-correct';
+                    else if (val === recapAnswer) cls += ' cl-recap-wrong';
+                  }
+                  return (
+                    <button key={String(val)} className={cls}
+                      onClick={() => {
+                        if (recapAnswer !== null) return;
+                        unlockAudio();
+                        setRecapAnswer(val);
+                        setTotal(t => t + 1);
+                        const correct = val === step.correct;
+                        const unlock = () => setRecapFeedbackDone(true);
+                        if (correct) {
+                          setScore(s => s + 1); setStreak(s => s + 1);
+                          const vm = fill(step.successVoice || 'Correct!', childName);
+                          showFb(vm, 'success', vm, unlock);
+                        } else {
+                          setStreak(0);
+                          const vm = fill(step.wrongVoice || 'Not quite!', childName);
+                          showFb(vm, 'error', vm, unlock);
+                        }
+                      }}
+                      disabled={recapAnswer !== null || speakingFb}>
+                      {val ? 'TRUE' : 'FALSE'}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Piece letter quiz / piece spot quiz */}
           {['piece-letter-quiz', 'piece-spot-quiz'].includes(step?.taskType) && voiceFinished && !speakingFb && !isPlaying && step.quizItems?.[pieceQuizIdx] && (
             <div className="cl-recap">
@@ -1801,9 +1882,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
             if (speedState?.active || quizState?.active || fileQS?.active) return null;
             if (ownControls) return null;
             if (boardTask && !taskComplete) return null; // wait for task completion
-            if (step?.taskType === 'recap-quiz' && voiceFinished && recapAnswer === null) return null;
+            if (['recap-quiz', 'name-the-square', 'true-or-false'].includes(step?.taskType) && voiceFinished && recapAnswer === null) return null;
 
-            const isRecap = step?.taskType === 'recap-quiz';
+            const isRecap = ['recap-quiz', 'name-the-square', 'true-or-false'].includes(step?.taskType);
             const locked = !voiceFinished || speakingFb || isPlaying
               || (isRecap && (recapAnswer === null || !recapFeedbackDone));
             return (
