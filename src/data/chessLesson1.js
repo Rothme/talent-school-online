@@ -52,7 +52,6 @@ export const LESSON_1 = {
             { fen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1', path: ['e2','e4'], delay: 1200 },
             { fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2', path: ['e7','e5'], delay: 1200 },
             { fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5Q2/PPPP1PPP/RNBQKBNR b KQkq - 1 2', path: ['d1','h5'], delay: 1200 },
-            { fen: 'rnbqkbnr/pppp1ppp/8/4p2Q/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 1 2', path: ['h5','h5'], delay: 800 },
             { fen: 'rnbqkb1r/pppp1ppp/5n2/4p2Q/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 2 3', path: ['g8','f6'], delay: 1200 },
             { fen: 'rnbqkb1r/pppp1ppp/5n2/4p2Q/2B1P3/8/PPPP1PPP/RNBQ1KNR b KQkq - 3 3', path: ['f1','c4'], delay: 1200 },
             { fen: 'rnbqkb1r/pppp1Qpp/5n2/4p3/2B1P3/8/PPPP1PPP/RNBQ1KNR b KQkq - 0 4', path: ['h5','f7'], delay: 1200 },
@@ -455,7 +454,7 @@ export const LESSON_1 = {
           type: 'observe',
           boardState: '3QP3/8/8/8/8/8/8/8 w - - 0 1',
           highlightRank: 8,
-          highlights: ['e8'],
+          highlights: ['d8','e8'],
           voice: `And if your pawn reaches rank eight. It becomes a Queen. Instantly. That is called promotion. One of the most exciting moments in chess.`,
           task: null,
           taskType: 'observe',
@@ -863,7 +862,7 @@ export const LESSON_1 = {
         {
           id: 'mp3c',
           type: 'observe',
-          boardState: '4k3/8/8/8/3Q4/8/8/4K3 w - - 0 1',
+          boardState: '8/8/8/8/3Q4/8/8/4K3 w - - 0 1',
           highlights: ['d4'],
           voice: `Drag the Queen to every square she can reach from the centre. Show me her power.`,
           task: 'Drag the Queen to every square it can reach',
@@ -903,7 +902,7 @@ export const LESSON_1 = {
         {
           id: 'mp4c',
           type: 'observe',
-          boardState: '4k3/8/8/8/3R4/8/8/4K3 w - - 0 1',
+          boardState: '8/8/8/8/3R4/8/8/4K3 w - - 0 1',
           highlights: ['d4'],
           voice: `Drag the Rook to every square it can reach.`,
           task: 'Drag the Rook to every square it can reach',
@@ -943,7 +942,7 @@ export const LESSON_1 = {
         {
           id: 'mp5c',
           type: 'observe',
-          boardState: '4k3/8/8/8/3B4/8/8/4K3 w - - 0 1',
+          boardState: '8/8/8/8/3B4/8/8/4K3 w - - 0 1',
           highlights: ['d4'],
           voice: `Drag the Bishop to every square it can reach.`,
           task: 'Drag the Bishop to every square it can reach',
@@ -987,7 +986,7 @@ export const LESSON_1 = {
         {
           id: 'mp6c',
           type: 'observe',
-          boardState: '4k3/8/8/8/3N4/8/8/4K3 w - - 0 1',
+          boardState: '8/8/8/8/3N4/8/8/4K3 w - - 0 1',
           highlights: ['d4'],
           voice: `Drag the Knight to every square it can reach.`,
           task: 'Drag the Knight to every square it can reach',
@@ -1049,12 +1048,12 @@ export const LESSON_1 = {
           task: 'Identify each piece',
           taskType: 'piece-spot-quiz',
           quizItems: [
-            { fen: '4k3/8/8/8/3K4/8/8/8 w - - 0 1', piece: 'King', options: ['King','Queen','Rook','Bishop'] },
-            { fen: '4k3/8/8/8/3Q4/8/8/8 w - - 0 1', piece: 'Queen', options: ['Rook','Queen','Knight','Pawn'] },
-            { fen: '4k3/8/8/8/3R4/8/8/8 w - - 0 1', piece: 'Rook', options: ['Bishop','Knight','Rook','Queen'] },
-            { fen: '4k3/8/8/8/3B4/8/8/8 w - - 0 1', piece: 'Bishop', options: ['Rook','Bishop','King','Pawn'] },
-            { fen: '4k3/8/8/8/3N4/8/8/8 w - - 0 1', piece: 'Knight', options: ['Queen','Pawn','Knight','Rook'] },
-            { fen: '4k3/8/8/8/3P4/8/8/8 w - - 0 1', piece: 'Pawn', options: ['Bishop','King','Queen','Pawn'] },
+            { fen: '8/8/8/8/3K4/8/8/8 w - - 0 1', piece: 'King', options: ['King','Queen','Rook','Bishop'] },
+            { fen: '8/8/8/8/3Q4/8/8/8 w - - 0 1', piece: 'Queen', options: ['Rook','Queen','Knight','Pawn'] },
+            { fen: '8/8/8/8/3R4/8/8/8 w - - 0 1', piece: 'Rook', options: ['Bishop','Knight','Rook','Queen'] },
+            { fen: '8/8/8/8/3B4/8/8/8 w - - 0 1', piece: 'Bishop', options: ['Rook','Bishop','King','Pawn'] },
+            { fen: '8/8/8/8/3N4/8/8/8 w - - 0 1', piece: 'Knight', options: ['Queen','Pawn','Knight','Rook'] },
+            { fen: '8/8/8/8/3P4/8/8/8 w - - 0 1', piece: 'Pawn', options: ['Bishop','King','Queen','Pawn'] },
           ],
           successVoice: `You know all six pieces, {name}. King. Queen. Rook. Bishop. Knight. Pawn. Your army is ready.`,
           successVoiceAge: {
@@ -1219,10 +1218,7 @@ export const LESSON_1_BONUS = {
           task: 'Find every square called',
           taskType: 'speed-round',
           roundNum: 1,
-          targetSquares: [
-            'h7','a3','f5','b4','g6','c1','e7','d2',
-            'h3','a6','f1','b8','g4','c5','e2'
-          ],
+          targetCount: 15,
           timeLimitSecs: 60,
           targetScore: 12,
           successVoice: `Bonus round complete. Well done.`,
