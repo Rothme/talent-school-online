@@ -37,7 +37,7 @@ export default function ChildLogin() {
       // Real Firebase login
       const child = await loginChild(studentId, p);
       sessionStorage.setItem('childSession', JSON.stringify({
-        id: child.id, name: child.name, avatar: child.avatar,
+        id: child.id, name: child.name, age: child.age, avatar: child.avatar,
         avatarColor: child.avatarColor, studentId: child.studentId,
         learningPrefs: child.learningPrefs, progress: child.progress,
         streak: child.streak, totalXP: child.totalXP,

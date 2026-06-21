@@ -133,7 +133,7 @@ export default function MainSession() {
 
       <div className="main-session-body">
         {subject === 'chess'  && lessonIndex >= 0 && lessonIndex <= 4
-          ? <ChessLessonView lessonData={[LESSON_1, LESSON_2, LESSON_3, LESSON_4, LESSON_5][lessonIndex]} childName={child.name} isTest={isTest} onComplete={handleLessonComplete} />
+          ? <ChessLessonView lessonData={[LESSON_1, LESSON_2, LESSON_3, LESSON_4, LESSON_5][lessonIndex]} childName={child.name} childAge={child.age} isTest={isTest} onComplete={handleLessonComplete} />
           : subject === 'chess'
           ? <ChessLesson lessonIndex={lessonIndex} childName={child.name} onComplete={handleLessonComplete} />
           : null}
