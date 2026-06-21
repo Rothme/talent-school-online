@@ -70,47 +70,47 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     styles[sq] = { ...(styles[sq] || {}), ...style };
   }
 
-  // STYLE 1 — Full fill: entire file column in neon yellow
+  // STYLE 1 — Full fill: entire file column in subtle tint
   if (neonFile) {
     for (let r = 1; r <= 8; r++) {
-      setStyle(`${neonFile}${r}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
+      setStyle(`${neonFile}${r}`, { backgroundColor: 'rgba(255,210,0,0.18)' });
     }
   }
 
-  // STYLE 1 — Full fill: primary rank row in neon yellow
+  // STYLE 1 — Full fill: primary rank row in subtle tint
   if (neonRank) {
     FILES.forEach(f => {
-      setStyle(`${f}${neonRank}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
+      setStyle(`${f}${neonRank}`, { backgroundColor: 'rgba(255,210,0,0.18)' });
     });
   }
 
   // STYLE 1 — Additional ranks (from highlightRanks array)
   (extraRanks || []).forEach(r => {
     FILES.forEach(f => {
-      setStyle(`${f}${r}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
+      setStyle(`${f}${r}`, { backgroundColor: 'rgba(255,210,0,0.18)' });
     });
   });
 
-  // STYLE 2 — Border only: intersection square when both file AND rank active
-  // Shows the named square clearly while preserving its true dark/light colour
+  // STYLE 2 — Vivid orange spotlight: intersection square when both file AND rank active
   if (neonFile && neonRank) {
     setStyle(`${neonFile}${neonRank}`, {
-      backgroundColor: 'transparent',
-      boxShadow: 'inset 0 0 0 4px rgba(255,210,0,1)',
+      backgroundColor: 'rgba(249,115,22,0.92)',
+      boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.9)',
+      borderRadius: '4px',
     });
   }
 
   // Named squares from lesson data (e.g. step.highlights)
-  // Always STYLE 2 — border only — because a specific square is being discussed
   (neonSquares || []).forEach(sq => {
     if ((borderOnlySquares || []).includes(sq)) {
-      // Colour-teaching blink — neon yellow border so it catches the child's eye
+      // Colour-teaching blink — kept exactly as is
       setStyle(sq, { animation: 'cl-sq-blink-yellow 0.9s step-end infinite' });
     } else {
-      // Standard named-square highlight — static neon yellow border, true colour shows
+      // Vivid orange spotlight — unmissable for a child
       setStyle(sq, {
-        backgroundColor: 'transparent',
-        boxShadow: 'inset 0 0 0 4px rgba(255,210,0,1)',
+        backgroundColor: 'rgba(249,115,22,0.92)',
+        boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.9)',
+        borderRadius: '4px',
       });
     }
   });
