@@ -166,7 +166,22 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
 // ─────────────────────────────────────────────────────
 // MAIN — Chess Lesson View (Lesson 1: board fundamentals)
 // ─────────────────────────────────────────────────────
-export default function ChessLessonView({ lessonData, childName = 'Student', isTest = false, onComplete }) {
+export default function ChessLessonView({ lessonData, childName = 'Student', childAge = 10, isTest = false, onComplete }) {
+
+  const getAgeGroup = (age) => {
+    if (age <= 8) return 'young';
+    if (age <= 12) return 'mid';
+    return 'teen';
+  };
+
+  const pickVoice = (step, field) => {
+    const ageField = field + 'VoiceAge';
+    if (step[ageField]) {
+      const group = getAgeGroup(childAge);
+      return step[ageField][group] || step[field] || '';
+    }
+    return step[field] || '';
+  };
 
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [stepIdx, setStepIdx] = useState(0);
@@ -866,13 +881,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           setNeonSqs([]);
           setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
           const notation = step.correctNotation || result.san;
-          completeTask(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), step.successVoice);
+          completeTask(`${notation} - ${pickVoice(step, 'success') ? '' : 'Correct!'}`.trim(), pickVoice(step, 'success'));
           return true;
         }
         return false;
       } else {
         setWrongSqs([targetSquare]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
-        showFb(step.wrongVoice || 'Not quite - try again!', 'error', step.wrongVoice);
+        showFb(pickVoice(step, 'wrong') || 'Not quite - try again!', 'error', pickVoice(step, 'wrong'));
         return false;
       }
     }
@@ -887,7 +902,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         setStreak(s => s + 1);
         if (nc.length === step.targetSquares.length) {
           setScore(s => s + nc.length); setTotal(t => t + nc.length); setTargetSqs([]);
-          completeTask(step.successVoice || 'Complete!', step.successVoice);
+          completeTask(pickVoice(step, 'success') || 'Complete!', pickVoice(step, 'success'));
         } else {
           showFb(`${nc.length} of ${step.targetSquares.length} found!`, 'hint');
         }
@@ -916,7 +931,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         const nc = [...clicked, sq]; setClicked(nc); setStreak(s => s + 1);
         if (nc.length === step.targetSquares.length) {
           setScore(s => s + nc.length); setTotal(t => t + nc.length); setTargetSqs([]);
-          completeTask(step.successVoice || 'Complete!', step.successVoice);
+          completeTask(pickVoice(step, 'success') || 'Complete!', pickVoice(step, 'success'));
         } else showFb(`${nc.length} of ${step.targetSquares.length} found!`, 'hint');
       } else if (!step.targetSquares?.includes(sq)) {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
@@ -932,10 +947,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       setTotal(t => t + 1);
       if (step.targetSquares?.includes(sq)) {
         setClicked([sq]); setScore(s => s + 1); setStreak(s => s + 1); setTargetSqs([]);
-        completeTask(step.successVoice || 'Correct!', step.successVoice);
+        completeTask(pickVoice(step, 'success') || 'Correct!', pickVoice(step, 'success'));
       } else {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
-        showFb(step.wrongVoice || 'Not quite - try again!', 'error', step.wrongVoice);
+        showFb(pickVoice(step, 'wrong') || 'Not quite - try again!', 'error', pickVoice(step, 'wrong'));
       }
       return;
     }
@@ -951,7 +966,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         if (ni >= tgts.length) {
           const finalScore = score + 1;
           showFb(vm, 'success', vm, () => {
-            const vm2 = fill((step.successVoice || 'Done!').replace('{score}', finalScore), childName);
+            const vm2 = fill((pickVoice(step, 'success') || 'Done!').replace('{score}', finalScore), childName);
             const threshold = step.retryThreshold || 0;
             if (threshold > 0 && finalScore < threshold) {
               // Below threshold — offer retry
@@ -1016,12 +1031,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
           setNeonSqs([]);
           setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
           const notation = step.correctNotation || result.san;
-          completeTask(`${notation} - ${step.successVoice ? '' : 'Correct!'}`.trim(), step.successVoice);
+          completeTask(`${notation} - ${pickVoice(step, 'success') ? '' : 'Correct!'}`.trim(), pickVoice(step, 'success'));
         }
       } else {
         setSelectedSq(null); setNeonSqs([]);
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
-        showFb(step.wrongVoice || 'Not quite - try again!', 'error', step.wrongVoice);
+        showFb(pickVoice(step, 'wrong') || 'Not quite - try again!', 'error', pickVoice(step, 'wrong'));
       }
       return;
     }
@@ -1039,7 +1054,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
         if (!rem.length) {
           setTotal(t => t + (step.targetPieces?.length || 0));
           setMoveDone(true);
-          completeTask(step.successVoice || 'Setup complete!', step.successVoice);
+          completeTask(pickVoice(step, 'success') || 'Setup complete!', pickVoice(step, 'success'));
         } else {
           showFb(`Placed! ${rem.length} piece${rem.length === 1 ? '' : 's'} left.`, 'hint');
         }
@@ -1121,7 +1136,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
 
     const advance = () => {
       if (ni >= items.length) {
-        completeTask(fill(step.successVoice || 'Done!', childName), step.successVoice);
+        completeTask(fill(pickVoice(step, 'success') || 'Done!', childName), pickVoice(step, 'success'));
       } else {
         setPieceQuizIdx(ni); setPieceQuizAnswer(null);
         setFeedback(''); setFbType('info');
@@ -1147,10 +1162,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
     const correct = answer === step.correctNotation;
     if (correct) {
       setScore(s => s + 1); setStreak(s => s + 1);
-      completeTask(`${step.correctNotation} is correct!`, step.successVoice);
+      completeTask(`${step.correctNotation} is correct!`, pickVoice(step, 'success'));
     } else {
       setStreak(0);
-      completeTask(`Not quite - the correct notation was ${step.correctNotation}.`, step.wrongVoice);
+      completeTask(`Not quite - the correct notation was ${step.correctNotation}.`, pickVoice(step, 'wrong'));
     }
   }
 
@@ -1167,7 +1182,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
       if (ni >= qs.length) {
         setQuizState({ active: false });
         showFb(vm, 'success', vm, () => {
-          const vm2 = fill((step.successVoice || 'Done!').replace('{score}', score + 1), childName);
+          const vm2 = fill((pickVoice(step, 'success') || 'Done!').replace('{score}', score + 1), childName);
           completeTask(vm2, vm2);
         });
       } else {
@@ -1702,11 +1717,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                         const unlock = () => setRecapFeedbackDone(true);
                         if (correct) {
                           setScore(s => s + 1); setStreak(s => s + 1);
-                          const vm = fill(step.successVoice || 'Correct!', childName);
+                          const vm = fill(pickVoice(step, 'success') || 'Correct!', childName);
                           showFb(vm, 'success', vm, unlock);
                         } else {
                           setStreak(0);
-                          const vm = fill(step.wrongVoice || 'Not quite!', childName);
+                          const vm = fill(pickVoice(step, 'wrong') || 'Not quite!', childName);
                           showFb(vm, 'error', vm, unlock);
                         }
                       }}
@@ -1741,11 +1756,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', isT
                         const unlock = () => setRecapFeedbackDone(true);
                         if (correct) {
                           setScore(s => s + 1); setStreak(s => s + 1);
-                          const vm = fill(step.successVoice || 'Correct!', childName);
+                          const vm = fill(pickVoice(step, 'success') || 'Correct!', childName);
                           showFb(vm, 'success', vm, unlock);
                         } else {
                           setStreak(0);
-                          const vm = fill(step.wrongVoice || 'Not quite!', childName);
+                          const vm = fill(pickVoice(step, 'wrong') || 'Not quite!', childName);
                           showFb(vm, 'error', vm, unlock);
                         }
                       }}
