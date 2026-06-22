@@ -846,6 +846,16 @@ export const LESSON_1 = {
           recapWrongVoice: `Remember. The file letter always comes first. Then the rank number. So the answer is E4. Not 4E. Not E dash four. E4.`,
         },
         {
+          id: 'wu1b',
+          type: 'wrapup',
+          boardState: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+          highlights: [],
+          voice: `You have learned the battlefield today. Files. Ranks. Squares. Every address on this board. Two more quick questions and we are done.`,
+          task: null,
+          taskType: 'observe',
+          continueLabel: 'Two more!',
+        },
+        {
           id: 'wu2',
           type: 'wrapup',
           boardState: 'empty',
