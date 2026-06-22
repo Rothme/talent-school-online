@@ -425,7 +425,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       'independent-squares', 'speed-round', 'colour-quiz',
       'piece-letter-quiz', 'piece-spot-quiz', 'recap-quiz',
       'click-file', 'click-rank', 'click-square', 'piece-range',
-      'file-name-quiz',
+      'file-name-quiz', 'true-or-false',
     ];
     if (suppressTypes.includes(step?.taskType)) {
       lastSpokenWord.current = word.toLowerCase();
