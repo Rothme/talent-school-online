@@ -448,6 +448,8 @@ story-framed challenges.
 in a lesson. Designers must consult Lichess puzzle patterns and Chess Kid challenge
 formats for inspiration when building quiz phases.
 
+**Exception** — LESSON_X_BONUS recap-quiz steps are exempt from the consecutive-mechanic limit. The bonus trivia bank is an optional recall phase, not a teaching sequence, and consecutive recap-quiz steps are intentional by design.
+
 ---
 
 ## Updated Pre-Deploy Checklist
