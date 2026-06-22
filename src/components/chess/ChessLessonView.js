@@ -73,21 +73,21 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
   // STYLE 1 — Full fill: entire file column in subtle tint
   if (neonFile) {
     for (let r = 1; r <= 8; r++) {
-      setStyle(`${neonFile}${r}`, { backgroundColor: 'rgba(255,210,0,0.18)' });
+      setStyle(`${neonFile}${r}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
     }
   }
 
   // STYLE 1 — Full fill: primary rank row in subtle tint
   if (neonRank) {
     FILES.forEach(f => {
-      setStyle(`${f}${neonRank}`, { backgroundColor: 'rgba(255,210,0,0.18)' });
+      setStyle(`${f}${neonRank}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
     });
   }
 
   // STYLE 1 — Additional ranks (from highlightRanks array)
   (extraRanks || []).forEach(r => {
     FILES.forEach(f => {
-      setStyle(`${f}${r}`, { backgroundColor: 'rgba(255,210,0,0.18)' });
+      setStyle(`${f}${r}`, { backgroundColor: 'rgba(255,210,0,0.55)' });
     });
   });
 
