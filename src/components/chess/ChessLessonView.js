@@ -1561,6 +1561,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
           <div className="cl-battlefield-label">🏰 THE BATTLEFIELD</div>
 
           <div className="cl-board-wrap" ref={boardWrapRef}>
+            <div style={{position:'relative', width:'100%', paddingBottom:'100%'}}>
+              <div style={{position:'absolute', inset:0}}>
             <div className="cl-board-frame-new">
               <div className="cl-board-inner" style={{position:'relative'}}>
                 <Chessboard
@@ -1609,6 +1611,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                 )}
               </div>
             </div>
+              </div>{/* absolute inset */}
+            </div>{/* padding-bottom square hack */}
           </div>
 
           {step?.task && (
