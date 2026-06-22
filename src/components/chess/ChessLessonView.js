@@ -1450,6 +1450,18 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   return (
     <div className="cl-root">
 
+      {/* Decorative dot stars */}
+      {[
+        { top: '5%',  left: '17%', size: 3, opacity: 0.65 },
+        { top: '11%', left: '71%', size: 2, opacity: 0.5  },
+        { top: '3%',  left: '47%', size: 4, opacity: 0.38 },
+        { top: '8%',  left: '87%', size: 2, opacity: 0.58 },
+        { top: '2%',  left: '32%', size: 3, opacity: 0.32 },
+        { top: '7%',  left: '60%', size: 2, opacity: 0.52 },
+      ].map((d, i) => (
+        <span key={i} className="cl-dot-star" style={{ top: d.top, left: d.left, width: d.size, height: d.size, opacity: d.opacity }} />
+      ))}
+
       {audioBlocked && !isTest && (
         <div className="cl-audio-overlay" onClick={handleAudioOverlayTap}>
           <div className="cl-audio-overlay-card">
@@ -1459,17 +1471,18 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         </div>
       )}
 
-      {/* Scope banner */}
-      <div className="cl-banner">
-        <div>
-          <div className="cl-banner-tags">
-            <span className="cl-pill">Talent School Interactive Chess</span>
-            <span className="cl-banner-month">{lesson.subtitle}</span>
+      {/* Top bar */}
+      <div className="cl-topbar">
+        <div className="cl-topbar-left">
+          <div className="cl-lesson-badge">
+            <span>📚</span>
+            <span>{lesson.subtitle || 'Chess'}</span>
           </div>
-          <h2 className="cl-banner-title">{lesson.title}</h2>
         </div>
-        <div className="cl-banner-right">
-          {/* Test account phase jumper — not visible to real students */}
+        <div className="cl-topbar-center">
+          <h1 className="cl-lesson-title">{lesson.title}</h1>
+        </div>
+        <div className="cl-topbar-right">
           {isTest && (
             <select
               className="cl-test-jumper"
@@ -1490,119 +1503,153 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
               }}
             >
               {phases.map((p, i) => (
-                <option key={p.id} value={i}>
-                  {i + 1}. {p.title}
-                </option>
+                <option key={p.id} value={i}>{i + 1}. {p.title}</option>
               ))}
             </select>
           )}
-          <div className={`cl-timer ${timerWarning ? 'cl-timer-warn' : ''}`}>
-            <Clock size={13} />
+          <div className="cl-timer-pill">
+            <span>⏱</span>
             <span>{timerStr}</span>
-          </div>
-          <div className="cl-progress">
-            <div className="cl-progress-track"><div className="cl-progress-fill" style={{ width: `${pct}%` }} /></div>
-            <span className="cl-progress-label">{phase?.title} · {pct}%</span>
           </div>
         </div>
       </div>
 
-      <div className="cl-grid">
+      {/* Progress bar */}
+      <div className="cl-progbar">
+        <div className="cl-progbar-fill" style={{ width: `${Math.max(2, pct)}%` }}>
+          <span className="cl-progbar-star">⭐</span>
+        </div>
+      </div>
 
-        {/* COLUMN 1 — Compact tutor */}
-        <div className="cl-tutor">
-          <div className="cl-tutor-card">
-            <div className="cl-tutor-head">
-              <div className="cl-tutor-avatar">MM</div>
-              <div>
-                <div className="cl-tutor-name-row">
-                  <span className="cl-tutor-name">Ms. Momo</span>
-                  <span className="cl-tutor-role">Chess tutor</span>
-                </div>
-                <h4 className="cl-step-title">{phase?.title}</h4>
-                <span className="cl-step-duration">{phase?.durationMins} minutes</span>
-              </div>
+      {/* Three-column layout */}
+      <div className="cl-columns">
+
+        {/* LEFT — Ms. Momo + Phase Progress */}
+        <div className="cl-col-left">
+
+          <div className="cl-momo-card">
+            <div className="cl-momo-avatar">🎓</div>
+            <div className="cl-momo-name">Ms. Momo</div>
+            <div className="cl-momo-sub">YOUR CHESS TUTOR</div>
+            <div className="cl-momo-bubble">
+              "{currentNarration || fill(step?.voice || '', childName)}"
             </div>
-
-            <div className="cl-dialogue">
-              <span className="cl-listen-label">
-                {isPlaying ? 'Ms. Momo is speaking...' : 'Listen to Ms. Momo'}
-              </span>
-              <p className="cl-dialogue-text">"{currentNarration || fill(step?.voice || '', childName)}"</p>
-
-              <div className="cl-dialogue-actions">
-                {(isPlaying || isPaused) && (
-                  <button className="cl-pause-btn" onClick={handlePauseResume} title={isPaused ? 'Resume Ms. Momo' : 'Pause Ms. Momo'}>
-                    {isPaused ? '▶ Resume' : '⏸ Pause'}
-                  </button>
-                )}
-                <button className="cl-repeat-btn" onClick={handleRepeat} title="Repeat from beginning">
-                  <RotateCcw size={13} /> Repeat
-                </button>
-              </div>
+            <div className="cl-momo-controls">
+              <button className="cl-ctrl-btn" onClick={handleRepeat} title="Replay from start">⏮</button>
+              <button className="cl-ctrl-btn cl-ctrl-main" onClick={handlePauseResume} title={isPaused ? 'Resume Ms. Momo' : 'Pause Ms. Momo'}>
+                {isPaused ? '▶' : '⏸'}
+              </button>
             </div>
           </div>
+
+          <div className="cl-phase-card">
+            <div className="cl-phase-title">⚔️ YOUR QUEST</div>
+            {phases.map((p, i) => (
+              <div key={p.id} className={`cl-phase-row ${i < phaseIdx ? 'cl-phase-done' : i === phaseIdx ? 'cl-phase-active' : 'cl-phase-upcoming'}`}>
+                <div className="cl-phase-icon">
+                  {i < phaseIdx ? '✓' : i === phaseIdx ? '▶' : '·'}
+                </div>
+                <span className="cl-phase-name">{p.title}</span>
+              </div>
+            ))}
+          </div>
+
         </div>
 
-        {/* COLUMN 2 — Board */}
-        <div className="cl-board-col">
-          <div className="cl-board-frame" ref={boardWrapRef}>
-            <div className="cl-board-inner" style={{position:'relative'}}>
-              <Chessboard
-                id="tso-chess-lesson"
-                position={resolveBoardPosition(boardFen, placedPieces)}
-                boardWidth={Math.max(200, boardWidth - 32)}
-                showAnimations={true}
-                animationDuration={500}
-                showBoardNotation={true}
-                arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
-                onPieceDrop={handlePieceDrop}
-                customSquareStyles={squareStyles}
-                customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
-                customDarkSquareStyle={{ backgroundColor: '#b58863' }}
-                onSquareClick={handleSquareClickArgs}
-                customSquareRenderer={(() => {
-                  // Show square name label ONLY on highlighted teaching squares
-                  // (guided examples during instruction — NOT during tests/quizzes)
-                  const isTeaching = ['click-square','observe'].includes(step?.taskType);
-                  const labelSqs = isTeaching ? (neonSqs || []) : [];
-                  if (!labelSqs.length) return undefined;
-                  return ({ square, squareColor, children }) => (
-                    <div style={{position:'relative', width:'100%', height:'100%'}}>
-                      {children}
-                      {labelSqs.includes(square) && (
-                        <div style={{
-                          position:'absolute', bottom:2, right:3,
-                          fontSize: Math.max(9, (boardWidth - 56) / 8 * 0.28) + 'px',
-                          fontWeight:900, color:'#fff',
-                          textShadow:'0 1px 3px rgba(0,0,0,0.9)',
-                          pointerEvents:'none', lineHeight:1,
-                          fontFamily:'var(--font-main)',
-                        }}>
-                          {square.toUpperCase()}
-                        </div>
-                      )}
+        {/* CENTER — Board */}
+        <div className="cl-col-center">
+          <div className="cl-battlefield-label">🏰 THE BATTLEFIELD</div>
+
+          <div className="cl-board-wrap" ref={boardWrapRef}>
+            <div className="cl-board-frame-new">
+              <div className="cl-board-inner" style={{position:'relative'}}>
+                <Chessboard
+                  id="tso-chess-lesson"
+                  position={resolveBoardPosition(boardFen, placedPieces)}
+                  boardWidth={Math.max(200, boardWidth - 16)}
+                  showAnimations={true}
+                  animationDuration={500}
+                  showBoardNotation={true}
+                  arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
+                  onPieceDrop={handlePieceDrop}
+                  customSquareStyles={squareStyles}
+                  customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
+                  customDarkSquareStyle={{ backgroundColor: '#b58863' }}
+                  onSquareClick={handleSquareClickArgs}
+                  customSquareRenderer={(() => {
+                    const isTeaching = ['click-square','observe'].includes(step?.taskType);
+                    const labelSqs = isTeaching ? (neonSqs || []) : [];
+                    if (!labelSqs.length) return undefined;
+                    return ({ square, squareColor, children }) => (
+                      <div style={{position:'relative', width:'100%', height:'100%'}}>
+                        {children}
+                        {labelSqs.includes(square) && (
+                          <div style={{
+                            position:'absolute', bottom:2, right:3,
+                            fontSize: Math.max(9, (boardWidth - 56) / 8 * 0.28) + 'px',
+                            fontWeight:900, color:'#fff',
+                            textShadow:'0 1px 3px rgba(0,0,0,0.9)',
+                            pointerEvents:'none', lineHeight:1,
+                            fontFamily:'var(--font-main)',
+                          }}>
+                            {square.toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                />
+                {!classStarted && (
+                  <div className="cl-start-overlay" onClick={handleStartClass}>
+                    <div className="cl-start-btn">
+                      <span className="cl-start-icon">▶</span>
+                      <span>Start Class</span>
                     </div>
-                  );
-                })()}
-              />
-              {/* Start Class button — shows until student clicks it */}
-              {!classStarted && (
-                <div className="cl-start-overlay" onClick={handleStartClass}>
-                  <div className="cl-start-btn">
-                    <span className="cl-start-icon">▶</span>
-                    <span>Start Class</span>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
+
+          {step?.task && (
+            <div className="cl-taskbar">
+              <span className="cl-taskbar-icon">🎯</span>
+              <span className="cl-taskbar-text">{step.task}</span>
+            </div>
+          )}
         </div>
 
-        {/* COLUMN 3 — Exercise / practice engine */}
-        <div className="cl-exercise">
+        {/* RIGHT — Score + Achievements + Exercise + Age Mode */}
+        <div className="cl-col-right">
 
-          {/* Letter + piece visual reference panel — builds up as Ms. Momo names each piece */}
+          <div className="cl-score-card">
+            <div className="cl-score-label">SQUARES FOUND</div>
+            <div className="cl-score-big">{score}</div>
+            <div className="cl-score-sub">{total > 0 ? `of ${total} attempts` : "Let's go!"}</div>
+            <div className="cl-star-row">
+              {score >= 5 ? '⭐' : '☆'}{score >= 10 ? '⭐' : '☆'}{score >= 20 ? '⭐' : '☆'}
+            </div>
+          </div>
+
+          <div className="cl-achieve-card">
+            <div className="cl-achieve-title">🏅 ACHIEVEMENTS</div>
+            <div className="cl-badge-grid">
+              {[
+                { icon: '🎯', name: 'First Hit',  earned: score >= 1 },
+                { icon: '🔥', name: 'On Fire',    earned: streak >= 3 },
+                { icon: '⚡', name: 'Speed Star', earned: step?.taskType === 'speed-round' && taskComplete },
+                { icon: '🏆', name: 'Champion',   earned: phaseIdx >= phases.length - 1 && taskComplete },
+              ].map((b, i) => (
+                <div key={i} className={`cl-badge${b.earned ? ' cl-badge-earned' : ''}`}>
+                  <span className="cl-badge-icon">{b.icon}</span>
+                  <span className="cl-badge-name">{b.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="cl-exercise">
+
           {visibleLetterCards.length > 0 && (
             <div className="cl-letter-panel">
               <div className="cl-letter-panel-lbl">Piece Letters</div>
@@ -1618,13 +1665,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             </div>
           )}
 
-          {/* Task card */}
-          {step?.task && (
-            <div className="cl-task-card">
-              <div className="cl-task-lbl">Your task</div>
-              <div className="cl-task-txt">{step.task}</div>
-            </div>
-          )}
+          {/* placeholder — task is now shown in taskbar below board */}
 
           {/* Score */}
           {total > 0 && (
@@ -1885,18 +1926,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             </div>
           )}
 
-          {/* Continue */}
           {(() => {
-            // Steps that advance via their own in-panel controls (quizzes with
-            // their own option buttons) never show the Continue button.
             const ownControls = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'write-notation'].includes(step?.taskType);
-            // Board-interaction tasks: Continue is hidden UNTIL the task is done,
-            // then it appears (orange) so the student's click drives the next voice.
             const boardTask = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'speed-round', 'file-name-quiz'].includes(step?.taskType);
 
             if (speedState?.active || quizState?.active || fileQS?.active) return null;
             if (ownControls) return null;
-            if (boardTask && !taskComplete) return null; // wait for task completion
+            if (boardTask && !taskComplete) return null;
             if (['recap-quiz', 'name-the-square', 'true-or-false'].includes(step?.taskType) && voiceFinished && recapAnswer === null) return null;
 
             const isRecap = ['recap-quiz', 'name-the-square', 'true-or-false'].includes(step?.taskType);
@@ -1919,9 +1955,28 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             );
           })()}
 
-        </div>
+          </div>{/* end cl-exercise */}
 
-      </div>
+          <div className="cl-agemode-card">
+            {[
+              { label: '6–8',  group: 'young' },
+              { label: '9–12', group: 'mid'   },
+              { label: '13+',  group: 'teen'  },
+            ].map(a => (
+              <button key={a.label} className={`cl-age-btn${getAgeGroup(childAge) === a.group ? ' cl-age-active' : ''}`}>
+                {a.label}
+              </button>
+            ))}
+          </div>
+
+        </div>{/* end cl-col-right */}
+
+      </div>{/* end cl-columns */}
+
+      {/* Decorative castles */}
+      <span className="cl-castle cl-castle-left">🏰</span>
+      <span className="cl-castle cl-castle-right">🏰</span>
+
     </div>
   );
 }
