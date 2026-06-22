@@ -615,8 +615,6 @@ export const LESSON_1 = {
           id: 's5',
           type: 'square-guided',
           highlights: ['h8'],
-          highlightFile: 'h',
-          highlightRank: 8,
           voice: `This corner square is H8. File H. Rank eight. Top right corner. Here is a surprise. H8 is a dark square. Just like A1. The two far corners are always the same colour. Click on H8.`,
           task: 'Click on h8',
           taskType: 'click-square',
