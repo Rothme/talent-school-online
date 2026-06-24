@@ -603,7 +603,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   useEffect(() => {
     currentStepRef.current = step; // always keep ref current — avoids stale closures
     voiceRef.current = false;
-    setClicked([]); setWrongSqs([]); setFeedback(''); setFbType('info');
+    // Explicitly reset all highlight and interaction states before applying new step values
+    setClicked([]); setWrongSqs([]); setNeonFile(null); setNeonRank(null); setNeonSqs([]);
+    setFeedback(''); setFbType('info');
     setSpeed(null); setIndepIdx(0); clearNeon();
     setRecapAnswer(null); setRecapFeedbackDone(false);
     setTaskComplete(false);
@@ -620,6 +622,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     clearTimeout(pieceNeonTimer.current);
     clearTimeout(voiceFinishTimer.current);
     setVoiceFinished(false);
+
+    if (step?.id === 's5') {
+      console.log('[s5 debug] highlightFile:', step.highlightFile, '| highlightRank:', step.highlightRank);
+    }
 
     if (step?.highlightFile) setNeonFile(step.highlightFile);
     if (step?.highlightRank) setNeonRank(String(step.highlightRank));
