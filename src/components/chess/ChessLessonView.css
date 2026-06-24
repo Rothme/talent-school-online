@@ -578,11 +578,14 @@
 .cl-speed-meta  { display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; font-weight: 700; }
 
 .cl-continue {
-  width: 100%; padding: 10px;
+  width: 100%; padding: 8px 0;
   border: none; border-radius: 11px;
   font-size: 13px; font-weight: 900; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 5px;
   font-family: 'Fredoka One', cursive; transition: all .25s ease;
+  position: sticky;
+  bottom: 0;
+  background: inherit;
 }
 .cl-continue-locked {
   background: rgba(100,116,139,.25); color: #64748b;
