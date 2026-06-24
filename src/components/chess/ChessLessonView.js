@@ -141,8 +141,8 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     (targets || []).forEach(sq => {
       if (!(clicked || []).includes(sq)) {
         setStyle(sq, {
-          backgroundColor: 'rgba(60,220,90,0.55)',
-          boxShadow: 'inset 0 0 0 3px rgba(50,210,80,0.95)',
+          backgroundColor: 'rgba(249,115,22,0.92)',
+          boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
         });
       }
     });
@@ -603,8 +603,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   useEffect(() => {
     currentStepRef.current = step; // always keep ref current — avoids stale closures
     voiceRef.current = false;
+    // Force neonFile/neonRank to null first so React flushes the clear before applying new values
+    setNeonFile(null); setNeonRank(null);
     // Explicitly reset all highlight and interaction states before applying new step values
-    setClicked([]); setWrongSqs([]); setNeonFile(null); setNeonRank(null); setNeonSqs([]);
+    setClicked([]); setWrongSqs([]); setNeonSqs([]);
     setFeedback(''); setFbType('info');
     setSpeed(null); setIndepIdx(0); clearNeon();
     setRecapAnswer(null); setRecapFeedbackDone(false);
@@ -627,17 +629,20 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       console.log('[s5 debug] highlightFile:', step.highlightFile, '| highlightRank:', step.highlightRank);
     }
 
-    if (step?.highlightFile) setNeonFile(step.highlightFile);
-    if (step?.highlightRank) setNeonRank(String(step.highlightRank));
-    // highlightRanks: multiple ranks get Style 1 (full fill) via neonRank cycling
+    // Apply new step's file/rank highlights on the next tick so the null-reset above flushes first
+    setTimeout(() => {
+      if (step?.highlightFile) setNeonFile(step.highlightFile);
+      if (step?.highlightRank) setNeonRank(String(step.highlightRank));
+      // highlightRanks: multiple ranks get Style 1 (full fill) via neonRank cycling
+      if (step?.highlightRanks?.length) {
+        setNeonRank(String(step.highlightRanks[0]));
+        setExtraRanks(step.highlightRanks.slice(1).map(String));
+      }
+    }, 0);
     // We set neonSqs only for named squares (step.highlights) — Style 2
     if (step?.highlights?.length) setNeonSqs(step.highlights);
-    // For highlightRanks, use neonRank for the first, and store extras for rendering
-    if (step?.highlightRanks?.length) {
-      setNeonRank(String(step.highlightRanks[0]));
-      // Additional ranks stored in extraRanks state
-      setExtraRanks(step.highlightRanks.slice(1).map(String));
-    } else {
+    // extraRanks reset (non-highlightRanks steps clear it synchronously)
+    if (!step?.highlightRanks?.length) {
       setExtraRanks([]);
     }
 
