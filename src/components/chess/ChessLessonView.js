@@ -721,6 +721,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       setBoardFen(step.fromFen || 'start');
     } else if (step?.taskType === 'write-notation') {
       setBoardFen(step.beforeFen || 'start');
+    } else if (step?.taskType === 'piece-spot-quiz') {
+      setBoardFen(step.quizItems?.[0]?.fen || 'start');
     } else if (step?.taskType === 'piece-letter-quiz') {
       setBoardFen('start');
     } else if (step?.taskType === 'notation-puzzle-setup') {
@@ -746,6 +748,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       }
     }
   }, [phaseIdx, stepIdx]);
+
+  // piece-spot-quiz: update board to show the current quiz item's piece
+  useEffect(() => {
+    if (step?.taskType !== 'piece-spot-quiz') return;
+    const fen = step.quizItems?.[pieceQuizIdx]?.fen;
+    if (fen) setBoardFen(fen);
+  }, [pieceQuizIdx, step?.taskType]);
 
   // Auto-play voice — fires on step change.
   // Skipped if handleContinue already spoke (continueSpoke ref),
