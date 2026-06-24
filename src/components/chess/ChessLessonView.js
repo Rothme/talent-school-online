@@ -287,6 +287,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
 
   // Start Class — clicked by student on very first step
   function handleStartClass() {
+    // Unlock Chrome's autoplay restriction with a silent utterance immediately
+    // on the user gesture, before any async work or setState calls.
+    const unlock = new SpeechSynthesisUtterance('');
+    unlock.volume = 0;
+    speechSynthesis.speak(unlock);
+    speechSynthesis.cancel();
+
     if (step?.voice) {
       const text = fill(step.voice, childName);
       currentVoiceText.current = text;
@@ -1549,7 +1556,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                 <div className="cl-phase-icon">
                   {i < phaseIdx ? '✓' : i === phaseIdx ? '▶' : '·'}
                 </div>
-                <span className="cl-phase-name">{p.title}</span>
+                <span className="cl-phase-name">{p.label || p.title || p.id}</span>
               </div>
             ))}
           </div>

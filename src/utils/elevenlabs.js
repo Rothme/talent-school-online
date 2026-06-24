@@ -73,7 +73,8 @@ export function speakElevenLabs(text, {
     };
   }
 
-  // speak() — no cancel() before this, caller must handle stopping previous speech
+  // Cancel any stuck utterance before queuing the new one — required for Chrome
+  synth.cancel();
   synth.speak(u);
 
   setTimeout(() => {
