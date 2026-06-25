@@ -744,7 +744,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     } else if (step?.taskType === 'notation-puzzle-move') {
       setBoardFen(step.puzzleFen || 'start');
     } else if (step?.taskType === 'piece-range') {
-      setBoardFen(step.pieceRangeFen || 'start');
+      setBoardFen(step.pieceRangeFen || step.boardState || 'start');
     } else if (step?.boardState === 'start') {
       setBoardFen('start');
     } else if (step?.boardState === 'empty') {
