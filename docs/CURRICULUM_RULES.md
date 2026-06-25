@@ -133,6 +133,8 @@ Every chess piece, when first taught, follows exactly this sequence:
 counted FEN strings have produced real bugs (Queen jumping to non-diagonal
 squares, Knight jumping erratically) — always verify programmatically.
 
+Step 1 must show BOTH the White and Black versions of the piece on their real starting squares together on an otherwise empty board — never just one colour alone. Step 2 demo must begin from the piece's real starting square (e.g. King from E1, Queen from D1, Rook from A1), not from a central square — the central square is reserved for Step 3 practice only.
+
 ---
 
 ## 6. Yellow Path Dots (`pathSqs`)
@@ -386,6 +388,7 @@ Approved King-present steps (whitelist):
 - Promotion teaching boards where a black King or black pieces serve as contextual
   opponents, provided the lesson subject is the Pawn's promotion mechanic, not the
   King itself.
+- King introduction steps where both the White King and Black King appear together on their starting squares E1 and E8 on an otherwise empty board.
 
 Any FEN not in this whitelist that contains K or k is a violation. Zero exceptions.
 
@@ -409,6 +412,8 @@ describe a piece in voice that isn't currently on the board.
 board-presence requirements. They are memory recall tests where the absence of the
 piece on the board is intentional. The `pieceLetterRef` panel must still be present
 for all pieces named in the voice or question text.
+
+Target squares must display in vivid orange before the student clicks them. Green confirmation colour must only appear after a correct click is registered. Showing a target square in green before any interaction is a Rule 19 violation.
 
 ---
 
@@ -452,6 +457,12 @@ formats for inspiration when building quiz phases.
 
 ---
 
+## 23. Step State Reset
+
+Every step must load with a completely clean board state. The component must explicitly reset all of the following before applying new step values: clicked squares, wrong squares, neonFile, neonRank, neonSquares, and any active word-trigger highlights. No highlight colour, clicked state, or file/rank fill from a previous step may carry over into a new step. A step that inherits visual state from a previous step is always a Rule 23 violation.
+
+---
+
 ## Updated Pre-Deploy Checklist
 
 - [ ] Rules 1-10 (original checklist)
@@ -467,5 +478,6 @@ formats for inspiration when building quiz phases.
 - [ ] Piece moves animate through every square in the path array sequentially; Knight travels both legs visibly (Rule 20)
 - [ ] Bonus round loops until time expires; `complete` step only fires when time runs out (Rule 21)
 - [ ] No more than two consecutive steps with same mechanic; ≥3 distinct challenge types; "choose the correct square" ≤40% of quiz steps (Rule 22)
+- [ ] Step state fully reset on every step change: clicked, wrong, neonFile, neonRank, neonSquares, word-trigger highlights (Rule 23)
 - [ ] Run `node scripts/auditLesson.js` — zero violations
 - [ ] Build compiles with no errors
