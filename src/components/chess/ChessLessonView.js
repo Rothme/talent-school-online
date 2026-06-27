@@ -64,7 +64,7 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // ─────────────────────────────────────────────────────
 function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets,
   colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive, pathSqs, extraRanks,
-  guidedPieceSquare, narratedSquares, tickSquares }) {
+  guidedPieceSquare, narratedSquares, tickSquares, pathSquares }) {
   const styles = {};
 
   function setStyle(sq, style) {
@@ -159,6 +159,14 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
       ...(styles[sq] || {}),
       background: `radial-gradient(circle, rgba(255,210,0,0.9) 0%, rgba(255,210,0,0.9) 22%, transparent 23%)`,
     };
+  });
+
+  // piece-intro-guided: L-shape path trace (yellow with white border, shown before destination)
+  (pathSquares || []).forEach(sq => {
+    setStyle(sq, {
+      backgroundColor: 'rgba(255,220,0,0.85)',
+      boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.9)',
+    });
   });
 
   // piece-intro-guided: narrated squares (orange) then confirmed tick squares (green)
@@ -349,6 +357,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [narratedSquares, setNarratedSquares] = useState([]);
   const [narrationComplete, setNarrationComplete] = useState(false);
   const [tickSquares, setTickSquares] = useState([]);
+  const [pathSquares, setPathSquares] = useState([]);
 
   const [score, setScore] = useState(0);
   const [total, setTotal] = useState(0);
@@ -632,7 +641,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     setNeonFile(null); setNeonRank(null);
     // Explicitly reset all highlight and interaction states before applying new step values
     setClicked([]); setWrongSqs([]); setNeonSqs([]); setVisitedGuidedSquares([]);
-    setNarratedSquares([]); setNarrationComplete(false); setTickSquares([]);
+    setNarratedSquares([]); setNarrationComplete(false); setTickSquares([]); setPathSquares([]);
     narrationTimers.current.forEach(t => clearTimeout(t)); narrationTimers.current = [];
     setFeedback(''); setFbType('info');
     setSpeed(null); setIndepIdx(0); clearNeon();
@@ -932,15 +941,38 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         fired = true;
         if (currentStepRef.current?.id !== s.id) return;
         const squares = item.squares || [];
+        const pSqs = item.pathSquares || [];
         const delay = item.squareDelay || 400;
+
+        // Phase 1: trace L-shape path squares one by one (yellow)
+        pSqs.forEach((sq, j) => {
+          const t = setTimeout(() => {
+            if (currentStepRef.current?.id !== s.id) return;
+            setPathSquares(prev => [...prev, sq]);
+          }, (j + 1) * delay);
+          narrationTimers.current.push(t);
+        });
+        const pathPhaseEnd = pSqs.length > 0 ? pSqs.length * delay + 600 : 0;
+
+        // Phase 2: fade out path squares after 600ms pause
+        if (pSqs.length > 0) {
+          const t = setTimeout(() => {
+            if (currentStepRef.current?.id !== s.id) return;
+            setPathSquares([]);
+          }, pathPhaseEnd);
+          narrationTimers.current.push(t);
+        }
+
+        // Phase 3: reveal destination squares as orange targets
         squares.forEach((sq, j) => {
           const t = setTimeout(() => {
             if (currentStepRef.current?.id !== s.id) return;
             setNarratedSquares(prev => [...prev, sq]);
-          }, (j + 1) * delay);
+          }, pathPhaseEnd + (j + 1) * delay);
           narrationTimers.current.push(t);
         });
-        const totalDelay = squares.length > 0 ? squares.length * delay + 300 : 300;
+
+        const totalDelay = pathPhaseEnd + (squares.length > 0 ? squares.length * delay + 300 : 300);
         const t = setTimeout(() => speakItem(idx + 1), totalDelay);
         narrationTimers.current.push(t);
       };
@@ -1582,6 +1614,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     guidedPieceSquare,
     narratedSquares,
     tickSquares,
+    pathSquares,
   });
 
   function handleAudioOverlayTap() {
@@ -1772,6 +1805,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                       if (isPIG) {
                         const isTick = (tickSquares || []).includes(square);
                         const isNarrated = (narratedSquares || []).includes(square);
+                        const isPath = (pathSquares || []).includes(square);
                         if (isTick) {
                           return (
                             <div style={{
@@ -1797,6 +1831,17 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                               ...style,
                               backgroundColor: 'rgba(249,115,22,0.92)',
                               boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
+                            }}>
+                              {children}
+                            </div>
+                          );
+                        }
+                        if (isPath) {
+                          return (
+                            <div style={{
+                              ...style,
+                              backgroundColor: 'rgba(255,220,0,0.85)',
+                              boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.9)',
                             }}>
                               {children}
                             </div>

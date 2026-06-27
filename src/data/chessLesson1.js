@@ -1101,10 +1101,10 @@ export const LESSON_1 = {
           taskType: 'piece-intro-guided',
           targetSquares: ['a3','c3','d2'],
           narrationSequence: [
-            { voice: 'Two squares forward, one square right.', squares: ['c3'], squareDelay: 400 },
-            { voice: 'Two squares forward, one square left.', squares: ['a3'], squareDelay: 400 },
-            { voice: 'Two squares right, one square forward.', squares: ['d2'], squareDelay: 400 },
-            { voice: 'These are every square the Knight can reach from B1. The L shape. Every single time. Now drag it to each highlighted square.', squares: [], squareDelay: 0 },
+            { voice: 'Two squares forward, one square right.', pathSquares: ['b2','b3'], squares: ['c3'], squareDelay: 400 },
+            { voice: 'Two squares forward, one square left.', pathSquares: ['b2','b3'], squares: ['a3'], squareDelay: 400 },
+            { voice: 'Two squares right, one square forward.', pathSquares: ['c1','d1'], squares: ['d2'], squareDelay: 400 },
+            { voice: 'Three L shapes from B1. That is every square the Knight can reach. Now drag it to each highlighted square.', pathSquares: [], squares: [], squareDelay: 0 },
           ],
           successVoice: `The L shape. And it jumps over everything. The Knight is full of surprises.`,
           successVoiceAge: {
