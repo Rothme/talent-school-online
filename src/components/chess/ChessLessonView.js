@@ -896,18 +896,18 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
 
   function handlePieceDrop(sourceSquare, targetSquare, piece) {
     unlockAudio();
-    if (!step) return false;
-    const tt = step.taskType;
+    if (!currentStepRef.current) return false;
+    const tt = currentStepRef.current.taskType;
 
     if ((tt === 'notation-build' || tt === 'notation-puzzle-move') && !moveDone) {
-      if (sourceSquare !== step.moveFrom) {
+      if (sourceSquare !== currentStepRef.current.moveFrom) {
         showFb('That is not the piece Ms. Momo described - look again!', 'error');
         return false;
       }
       const game = new Chess();
       if (boardFen !== 'start' && boardFen !== 'empty-custom') game.load(boardFen);
 
-      if (targetSquare === step.moveTo) {
+      if (targetSquare === currentStepRef.current.moveTo) {
         const result = game.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
         if (result) {
           setBoardFen(game.fen());
@@ -915,14 +915,14 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
           setSelectedSq(null);
           setNeonSqs([]);
           setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
-          const notation = step.correctNotation || result.san;
-          completeTask(`${notation} - ${pickVoice(step, 'success') ? '' : 'Correct!'}`.trim(), pickVoice(step, 'success'));
+          const notation = currentStepRef.current.correctNotation || result.san;
+          completeTask(`${notation} - ${pickVoice(currentStepRef.current, 'success') ? '' : 'Correct!'}`.trim(), pickVoice(currentStepRef.current, 'success'));
           return true;
         }
         return false;
       } else {
         setWrongSqs([targetSquare]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
-        showFb(pickVoice(step, 'wrong') || 'Not quite - try again!', 'error', pickVoice(step, 'wrong'));
+        showFb(pickVoice(currentStepRef.current, 'wrong') || 'Not quite - try again!', 'error', pickVoice(currentStepRef.current, 'wrong'));
         return false;
       }
     }
@@ -931,18 +931,18 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     // Piece always snaps back to starting square so student can continue dragging
     if (tt === 'piece-range') {
       const sq = targetSquare;
-      if (step.targetSquares?.includes(sq) && !clicked.includes(sq)) {
+      if (currentStepRef.current.targetSquares?.includes(sq) && !clicked.includes(sq)) {
         const nc = [...clicked, sq];
         setClicked(nc);
-        if (step.guided) setVisitedGuidedSquares(v => [...v, sq]);
+        if (currentStepRef.current?.guided) setVisitedGuidedSquares(v => [...v, sq]);
         setStreak(s => s + 1);
-        if (nc.length === step.targetSquares.length) {
+        if (nc.length === currentStepRef.current.targetSquares.length) {
           setScore(s => s + nc.length); setTotal(t => t + nc.length); setTargetSqs([]);
-          completeTask(pickVoice(step, 'success') || 'Complete!', pickVoice(step, 'success'));
+          completeTask(pickVoice(currentStepRef.current, 'success') || 'Complete!', pickVoice(currentStepRef.current, 'success'));
         } else {
-          showFb(`${nc.length} of ${step.targetSquares.length} found!`, 'hint');
+          showFb(`${nc.length} of ${currentStepRef.current.targetSquares.length} found!`, 'hint');
         }
-      } else if (step.targetSquares?.includes(sq) && clicked.includes(sq)) {
+      } else if (currentStepRef.current.targetSquares?.includes(sq) && clicked.includes(sq)) {
         showFb('Already found that one!', 'hint');
       } else {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
