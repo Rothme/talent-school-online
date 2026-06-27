@@ -1790,7 +1790,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   boardOrientation="white"
                   snapToCursor={false}
                   showAnimations={true}
-                  animationDuration={100}
+                  animationDuration={500}
                   dropOffBoardAction="snapback"
                   showBoardNotation={true}
                   arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range', 'piece-intro-guided'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
@@ -1820,6 +1820,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                               backgroundColor: 'rgba(60,220,90,0.75)',
                               boxShadow: 'inset 0 0 0 3px rgba(40,180,70,0.95)',
                               position: 'relative',
+                              pointerEvents: 'none',
                             }}>
                               {children}
                               <div style={{
@@ -1838,6 +1839,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                               ...style,
                               backgroundColor: 'rgba(249,115,22,0.92)',
                               boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
+                              pointerEvents: 'none',
                             }}>
                               {children}
                             </div>
@@ -1849,12 +1851,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                               ...style,
                               backgroundColor: 'rgba(255,220,0,0.85)',
                               boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.9)',
+                              pointerEvents: 'none',
                             }}>
                               {children}
                             </div>
                           );
                         }
-                        return <div style={style}>{children}</div>;
+                        return <div style={{...style, pointerEvents: 'none'}}>{children}</div>;
                       }
                       if (isUnguidedRange && (clicked || []).includes(square)) {
                         return (
@@ -1863,6 +1866,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                             backgroundColor: 'rgba(60,220,90,0.75)',
                             boxShadow: 'inset 0 0 0 3px rgba(40,180,70,0.95)',
                             position: 'relative',
+                            pointerEvents: 'none',
                           }}>
                             {children}
                             <div style={{
@@ -1883,6 +1887,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                               ...style,
                               backgroundColor: 'rgba(60,220,90,0.75)',
                               boxShadow: 'inset 0 0 0 3px rgba(40,180,70,0.95)',
+                              pointerEvents: 'none',
                             }}>
                               {children}
                             </div>
@@ -1893,13 +1898,14 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                             ...style,
                             backgroundColor: 'rgba(249,115,22,0.92)',
                             boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
+                            pointerEvents: 'none',
                           }}>
                             {children}
                           </div>
                         );
                       }
                       return (
-                        <div style={{...style, position: 'relative'}}>
+                        <div style={{...style, position: 'relative', pointerEvents: 'none'}}>
                           {children}
                           {labelSqs.includes(square) && (
                             <div style={{
