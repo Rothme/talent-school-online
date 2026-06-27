@@ -395,7 +395,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [taskComplete, setTaskComplete] = useState(false);
   const [pathSqs, setPathSqs] = useState([]);
   const [speakingFb, setSpeakingFb] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const [extraRanks, setExtraRanks] = useState([]);
   const [visibleLetterCards, setVisibleLetterCards] = useState([]); // progressive letter+piece reveal // true when a board task is done, shows Continue
   const neonTimer = useRef(null);
@@ -1788,14 +1787,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   position={resolveBoardPosition(boardFen, placedPieces)}
                   boardWidth={Math.max(200, boardWidth - 16)}
                   boardOrientation="white"
-                  snapToCursor={false}
+                  snapToCursor={true}
                   showAnimations={true}
                   animationDuration={500}
-                  dropOffBoardAction="snapback"
                   showBoardNotation={true}
                   arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range', 'piece-intro-guided'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
-                  onPieceDragBegin={() => setIsDragging(true)}
-                  onPieceDragEnd={() => setIsDragging(false)}
                   onPieceDrop={handlePieceDrop}
                   customSquareStyles={squareStyles}
                   customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
