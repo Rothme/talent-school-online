@@ -64,7 +64,7 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // ─────────────────────────────────────────────────────
 function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets,
   colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive, pathSqs, extraRanks,
-  step, visitedGuidedSquares, guidedPieceSquare }) {
+  guidedPieceSquare }) {
   const styles = {};
 
   function setStyle(sq, style) {
@@ -163,21 +163,6 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
 
   (clicked || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(29,158,117,0.65)' }));
   (wrong || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(226,75,74,0.7)' }));
-
-  if (step && step.guided === true && Array.isArray(step.targetSquares)) {
-    const visited = Array.isArray(visitedGuidedSquares) ? visitedGuidedSquares : [];
-    for (let i = 0; i < step.targetSquares.length; i++) {
-      const sq = step.targetSquares[i];
-      if (!visited.includes(sq)) {
-        styles[sq] = {
-          background: 'rgba(249,115,22,0.92)',
-          backgroundColor: 'rgba(249,115,22,0.92)',
-          boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
-          outline: '3px solid rgba(255,150,0,0.9)',
-        };
-      }
-    }
-  }
 
   return styles;
 }
@@ -1457,8 +1442,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     speedActive: speedState?.active,
     pathSqs,
     extraRanks,
-    step,
-    visitedGuidedSquares,
     guidedPieceSquare,
   });
 
@@ -1637,30 +1620,44 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
                   onPieceDrop={handlePieceDrop}
                   customSquareStyles={squareStyles}
-                  customLightSquareStyle={step?.guided ? {} : { backgroundColor: '#f0d9b5' }}
-                  customDarkSquareStyle={step?.guided ? {} : { backgroundColor: '#b58863' }}
+                  customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
+                  customDarkSquareStyle={{ backgroundColor: '#b58863' }}
                   onSquareClick={handleSquareClickArgs}
-                  customSquareRenderer={(() => {
+                  customSquare={(() => {
                     const isTeaching = ['click-square','observe'].includes(step?.taskType);
                     const labelSqs = isTeaching ? (neonSqs || []) : [];
-                    if (!labelSqs.length) return undefined;
-                    return ({ square, squareColor, children }) => (
-                      <div style={{position:'relative', width:'100%', height:'100%'}}>
-                        {children}
-                        {labelSqs.includes(square) && (
+                    const isGuided = step?.guided === true && Array.isArray(step?.targetSquares);
+                    if (!isGuided && !labelSqs.length) return 'div';
+                    return ({ square, squareColor, style, children }) => {
+                      if (isGuided && step.targetSquares.includes(square) && !(visitedGuidedSquares || []).includes(square)) {
+                        return (
                           <div style={{
-                            position:'absolute', bottom:2, right:3,
-                            fontSize: Math.max(9, (boardWidth - 56) / 8 * 0.28) + 'px',
-                            fontWeight:900, color:'#fff',
-                            textShadow:'0 1px 3px rgba(0,0,0,0.9)',
-                            pointerEvents:'none', lineHeight:1,
-                            fontFamily:'var(--font-main)',
+                            ...style,
+                            backgroundColor: 'rgba(249,115,22,0.92)',
+                            boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
                           }}>
-                            {square.toUpperCase()}
+                            {children}
                           </div>
-                        )}
-                      </div>
-                    );
+                        );
+                      }
+                      return (
+                        <div style={{...style, position: 'relative'}}>
+                          {children}
+                          {labelSqs.includes(square) && (
+                            <div style={{
+                              position:'absolute', bottom:2, right:3,
+                              fontSize: Math.max(9, (boardWidth - 56) / 8 * 0.28) + 'px',
+                              fontWeight:900, color:'#fff',
+                              textShadow:'0 1px 3px rgba(0,0,0,0.9)',
+                              pointerEvents:'none', lineHeight:1,
+                              fontFamily:'var(--font-main)',
+                            }}>
+                              {square.toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    };
                   })()}
                 />
                 {!classStarted && (
