@@ -64,7 +64,7 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // ─────────────────────────────────────────────────────
 function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets,
   colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive, pathSqs, extraRanks,
-  guidedPieceRangeTargets }) {
+  guidedPieceRangeTargets, guidedPieceSquare }) {
   const styles = {};
 
   function setStyle(sq, style) {
@@ -103,6 +103,9 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
 
   // Named squares from lesson data (e.g. step.highlights)
   (neonSquares || []).forEach(sq => {
+    // In guided piece-range mode, the piece's home square must not be styled orange —
+    // it is the piece's position, not a target, and would confuse the student.
+    if (sq === guidedPieceSquare) return;
     if ((borderOnlySquares || []).includes(sq)) {
       // Colour-teaching blink — kept exactly as is
       setStyle(sq, { animation: 'cl-sq-blink-yellow 0.9s step-end infinite' });
@@ -152,6 +155,7 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
   // Guided piece-range — vivid orange on unvisited target squares when step.guided === true.
   // Squares are removed from this set as the student successfully drags to each one.
   (guidedPieceRangeTargets || []).forEach(sq => {
+    if (sq === guidedPieceSquare) return; // never highlight the square the piece is sitting on
     setStyle(sq, {
       backgroundColor: 'rgba(249,115,22,0.92)',
       boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
@@ -1426,6 +1430,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const observeNamedSquares = step?.taskType === 'observe' && step?.highlights?.length > 0;
   const borderOnlySquares = (colourTeachingStep || observeNamedSquares) ? boardNeonSqs : [];
 
+  const currentBoardPos = resolveBoardPosition(boardFen, placedPieces);
+  // For guided piece-range, determine the piece's current square from boardFen so it
+  // can be excluded from orange highlighting in buildSquareStyles.
+  const guidedPieceSquare = step?.taskType === 'piece-range' && step?.guided
+    ? (Object.keys(currentBoardPos).find(sq => currentBoardPos[sq]) ?? null)
+    : null;
+
   const squareStyles = buildSquareStyles({
     neonFile, neonRank,
     neonSquares: boardNeonSqs,
@@ -1434,7 +1445,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     colourQuizSq: step?.taskType === 'colour-quiz' && quizState?.active
       ? step.quizSquares?.[quizIdx]?.sq : null,
     glowPieces,
-    boardPosition: resolveBoardPosition(boardFen, placedPieces),
+    boardPosition: currentBoardPos,
     borderOnlySquares,
     speedActive: speedState?.active,
     pathSqs,
@@ -1442,6 +1453,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     guidedPieceRangeTargets: step?.taskType === 'piece-range' && step?.guided
       ? (step.targetSquares || []).filter(sq => !clicked.includes(sq))
       : [],
+    guidedPieceSquare,
   });
 
   function handleAudioOverlayTap() {
