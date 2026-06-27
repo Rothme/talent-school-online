@@ -770,12 +770,15 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     }
   }, [phaseIdx, stepIdx]);
 
-  // piece-spot-quiz: update board to show the current quiz item's piece
+  // piece-spot-quiz: update board to show the current quiz item's piece.
+  // Depends on phaseIdx/stepIdx (not step?.taskType) so it fires on every step
+  // change, including transitions between two piece-spot-quiz steps where taskType
+  // doesn't change and pieceQuizIdx is already 0.
   useEffect(() => {
     if (step?.taskType !== 'piece-spot-quiz') return;
     const fen = step.quizItems?.[pieceQuizIdx]?.fen;
     if (fen) setBoardFen(fen);
-  }, [pieceQuizIdx, step?.taskType]);
+  }, [phaseIdx, stepIdx, pieceQuizIdx]);
 
   // Auto-play voice — fires on step change.
   // Skipped if handleContinue already spoke (continueSpoke ref),
@@ -1167,6 +1170,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     setTotal(t => t + 1);
     const correctValue = curr.correctLetter !== undefined ? curr.correctLetter
       : curr.correctIdx !== undefined ? curr.options[curr.correctIdx]
+      : curr.piece !== undefined ? curr.piece
       : curr.pieceName;
     const correct = answer === correctValue;
     const ni = pieceQuizIdx + 1;
