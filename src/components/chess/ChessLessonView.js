@@ -1565,17 +1565,18 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     ...(['piece-letter-quiz', 'piece-spot-quiz'].includes(step?.taskType) ? [step.quizItems?.[pieceQuizIdx]?.square].filter(Boolean) : []),
   ];
 
-  // Responsive board width
+  // Responsive board width — measured from the div that directly wraps <Chessboard>
+  // so the prop matches the actual rendered pixel width and drop coords are accurate.
   const boardWrapRef = useRef(null);
+  const boardInnerRef = useRef(null);
   const [boardWidth, setBoardWidth] = useState(560);
   useEffect(() => {
-    const el = boardWrapRef.current;
+    const el = boardInnerRef.current || boardWrapRef.current;
     if (!el) return;
     const measure = () => {
       const w = Math.floor(el.offsetWidth);
-      const h = Math.floor(el.offsetHeight);
-      // Board must be a square — use the smaller of width and height
-      setBoardWidth(Math.min(w, h));
+      console.log('[boardWidth] measured inner offsetWidth:', w, '| passed to Chessboard:', Math.max(200, w));
+      setBoardWidth(w);
     };
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -1781,11 +1782,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             <div style={{position:'relative', width:'100%', paddingBottom:'100%'}}>
               <div style={{position:'absolute', inset:0}}>
             <div className="cl-board-frame-new">
-              <div className="cl-board-inner" style={{position:'relative'}}>
+              <div className="cl-board-inner" ref={boardInnerRef} style={{position:'relative'}}>
                 <Chessboard
                   id="tso-chess-lesson"
                   position={resolveBoardPosition(boardFen, placedPieces)}
-                  boardWidth={Math.max(200, boardWidth - 16)}
+                  boardWidth={Math.max(200, boardWidth)}
                   boardOrientation="white"
                   snapToCursor={true}
                   showAnimations={true}
