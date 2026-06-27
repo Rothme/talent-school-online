@@ -1786,6 +1786,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   id="tso-chess-lesson"
                   position={resolveBoardPosition(boardFen, placedPieces)}
                   boardWidth={Math.max(200, boardWidth - 16)}
+                  boardOrientation="white"
+                  snapToCursor={true}
                   showAnimations={true}
                   animationDuration={500}
                   showBoardNotation={true}
@@ -1800,7 +1802,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                     const labelSqs = isTeaching ? (neonSqs || []) : [];
                     const isGuided = currentStepRef.current?.guided === true && Array.isArray(currentStepRef.current?.targetSquares);
                     const isPIG = step?.taskType === 'piece-intro-guided';
-                    if (!isGuided && !labelSqs.length && !isPIG) return 'div';
+                    const isUnguidedRange = step?.taskType === 'piece-range' && !isGuided;
+                    if (!isGuided && !labelSqs.length && !isPIG && !isUnguidedRange) return 'div';
                     return ({ square, squareColor, style, children }) => {
                       if (isPIG) {
                         const isTick = (tickSquares || []).includes(square);
@@ -1848,6 +1851,25 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                           );
                         }
                         return <div style={style}>{children}</div>;
+                      }
+                      if (isUnguidedRange && (clicked || []).includes(square)) {
+                        return (
+                          <div style={{
+                            ...style,
+                            backgroundColor: 'rgba(60,220,90,0.75)',
+                            boxShadow: 'inset 0 0 0 3px rgba(40,180,70,0.95)',
+                            position: 'relative',
+                          }}>
+                            {children}
+                            <div style={{
+                              position:'absolute', top:'50%', left:'50%',
+                              transform:'translate(-50%,-50%)',
+                              color:'#fff', fontSize:'20px', fontWeight:'bold',
+                              lineHeight:1, pointerEvents:'none',
+                              textShadow:'0 1px 3px rgba(0,0,0,0.5)',
+                            }}>✓</div>
+                          </div>
+                        );
                       }
                       if (isGuided && currentStepRef.current?.targetSquares?.includes(square)) {
                         const isVisited = (clicked || []).includes(square);
