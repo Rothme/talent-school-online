@@ -1822,7 +1822,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                                 position:'absolute', top:'50%', left:'50%',
                                 transform:'translate(-50%,-50%)',
                                 color:'#fff', fontSize:'20px', fontWeight:'bold',
-                                lineHeight:1, pointerEvents:'none',
+                                lineHeight:1,
                                 textShadow:'0 1px 3px rgba(0,0,0,0.5)',
                               }}>✓</div>
                             </div>
@@ -1865,7 +1865,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                               position:'absolute', top:'50%', left:'50%',
                               transform:'translate(-50%,-50%)',
                               color:'#fff', fontSize:'20px', fontWeight:'bold',
-                              lineHeight:1, pointerEvents:'none',
+                              lineHeight:1,
                               textShadow:'0 1px 3px rgba(0,0,0,0.5)',
                             }}>✓</div>
                           </div>
@@ -1903,7 +1903,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                               fontSize: Math.max(9, (boardWidth - 56) / 8 * 0.28) + 'px',
                               fontWeight:900, color:'#fff',
                               textShadow:'0 1px 3px rgba(0,0,0,0.9)',
-                              pointerEvents:'none', lineHeight:1,
+                              lineHeight:1,
                               fontFamily:'var(--font-main)',
                             }}>
                               {square.toUpperCase()}
