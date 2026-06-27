@@ -1011,7 +1011,7 @@ export const LESSON_1 = {
             { voice: 'Backward.', pathSquares: [], squares: ['d3','d2','d1'], squareDelay: 150 },
             { voice: 'Right.', pathSquares: [], squares: ['e4','f4','g4','h4'], squareDelay: 150 },
             { voice: 'Left.', pathSquares: [], squares: ['c4','b4','a4'], squareDelay: 150 },
-            { voice: 'Diagonal forward right.', pathSquares: [], squares: ['e5','f6','g7'], squareDelay: 150 },
+            { voice: 'Diagonal forward right.', pathSquares: [], squares: ['e5','f6','g7','h8'], squareDelay: 150 },
             { voice: 'Diagonal forward left.', pathSquares: [], squares: ['c5','b6','a7'], squareDelay: 150 },
             { voice: 'Diagonal backward right.', pathSquares: [], squares: ['e3','f2','g1'], squareDelay: 150 },
             { voice: 'Diagonal backward left.', pathSquares: [], squares: ['c3','b2','a1'], squareDelay: 150 },
