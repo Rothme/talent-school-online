@@ -64,7 +64,7 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // ─────────────────────────────────────────────────────
 function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets,
   colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive, pathSqs, extraRanks,
-  guidedPieceRangeTargets, guidedPieceSquare }) {
+  step, visitedGuidedSquares, guidedPieceSquare }) {
   const styles = {};
 
   function setStyle(sq, style) {
@@ -152,15 +152,17 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     });
   }
 
-  // Guided piece-range — vivid orange on unvisited target squares when step.guided === true.
-  // Squares are removed from this set as the student successfully drags to each one.
-  (guidedPieceRangeTargets || []).forEach(sq => {
-    if (sq === guidedPieceSquare) return; // never highlight the square the piece is sitting on
-    setStyle(sq, {
-      backgroundColor: 'rgba(249,115,22,0.92)',
-      boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
+  if (step?.guided === true && step?.targetSquares?.length) {
+    const visited = visitedGuidedSquares || [];
+    step.targetSquares.forEach(sq => {
+      if (!visited.includes(sq)) {
+        setStyle(sq, {
+          backgroundColor: 'rgba(249,115,22,0.92)',
+          boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
+        });
+      }
     });
-  });
+  }
 
   // Movement path dots — yellow circle in centre of each path square
   // Shows the route the piece travels during demonstration
@@ -339,6 +341,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [clicked, setClicked] = useState([]);
   const [wrongSqs, setWrongSqs] = useState([]);
   const [targetSqs, setTargetSqs] = useState([]);
+  const [visitedGuidedSquares, setVisitedGuidedSquares] = useState([]);
 
   const [score, setScore] = useState(0);
   const [total, setTotal] = useState(0);
@@ -620,7 +623,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     // Force neonFile/neonRank to null first so React flushes the clear before applying new values
     setNeonFile(null); setNeonRank(null);
     // Explicitly reset all highlight and interaction states before applying new step values
-    setClicked([]); setWrongSqs([]); setNeonSqs([]);
+    setClicked([]); setWrongSqs([]); setNeonSqs([]); setVisitedGuidedSquares([]);
     setFeedback(''); setFbType('info');
     setSpeed(null); setIndepIdx(0); clearNeon();
     setRecapAnswer(null); setRecapFeedbackDone(false);
@@ -943,6 +946,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       if (step.targetSquares?.includes(sq) && !clicked.includes(sq)) {
         const nc = [...clicked, sq];
         setClicked(nc);
+        if (step.guided) setVisitedGuidedSquares(v => [...v, sq]);
         setStreak(s => s + 1);
         if (nc.length === step.targetSquares.length) {
           setScore(s => s + nc.length); setTotal(t => t + nc.length); setTargetSqs([]);
@@ -1450,9 +1454,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     speedActive: speedState?.active,
     pathSqs,
     extraRanks,
-    guidedPieceRangeTargets: step?.taskType === 'piece-range' && step?.guided
-      ? (step.targetSquares || []).filter(sq => !clicked.includes(sq))
-      : [],
+    step,
+    visitedGuidedSquares,
     guidedPieceSquare,
   });
 
