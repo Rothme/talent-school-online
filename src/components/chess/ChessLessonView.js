@@ -169,10 +169,12 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     for (let i = 0; i < step.targetSquares.length; i++) {
       const sq = step.targetSquares[i];
       if (!visited.includes(sq)) {
-        styles[sq] = Object.assign({}, styles[sq] || {}, {
+        styles[sq] = {
+          background: 'rgba(249,115,22,0.92)',
           backgroundColor: 'rgba(249,115,22,0.92)',
           boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
-        });
+          outline: '3px solid rgba(255,150,0,0.9)',
+        };
       }
     }
   }
@@ -1635,8 +1637,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
                   onPieceDrop={handlePieceDrop}
                   customSquareStyles={squareStyles}
-                  customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
-                  customDarkSquareStyle={{ backgroundColor: '#b58863' }}
+                  customLightSquareStyle={step?.guided ? {} : { backgroundColor: '#f0d9b5' }}
+                  customDarkSquareStyle={step?.guided ? {} : { backgroundColor: '#b58863' }}
                   onSquareClick={handleSquareClickArgs}
                   customSquareRenderer={(() => {
                     const isTeaching = ['click-square','observe'].includes(step?.taskType);
