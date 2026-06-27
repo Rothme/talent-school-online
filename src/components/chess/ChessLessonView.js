@@ -64,7 +64,7 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // ─────────────────────────────────────────────────────
 function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets,
   colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive, pathSqs, extraRanks,
-  guidedPieceSquare }) {
+  guidedPieceSquare, narratedSquares, tickSquares }) {
   const styles = {};
 
   function setStyle(sq, style) {
@@ -159,6 +159,22 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
       ...(styles[sq] || {}),
       background: `radial-gradient(circle, rgba(255,210,0,0.9) 0%, rgba(255,210,0,0.9) 22%, transparent 23%)`,
     };
+  });
+
+  // piece-intro-guided: narrated squares (orange) then confirmed tick squares (green)
+  (narratedSquares || []).forEach(sq => {
+    if (!(tickSquares || []).includes(sq)) {
+      setStyle(sq, {
+        backgroundColor: 'rgba(249,115,22,0.92)',
+        boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
+      });
+    }
+  });
+  (tickSquares || []).forEach(sq => {
+    setStyle(sq, {
+      backgroundColor: 'rgba(60,220,90,0.75)',
+      boxShadow: 'inset 0 0 0 3px rgba(40,180,70,0.95)',
+    });
   });
 
   (clicked || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(29,158,117,0.65)' }));
@@ -330,6 +346,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [wrongSqs, setWrongSqs] = useState([]);
   const [targetSqs, setTargetSqs] = useState([]);
   const [visitedGuidedSquares, setVisitedGuidedSquares] = useState([]);
+  const [narratedSquares, setNarratedSquares] = useState([]);
+  const [narrationComplete, setNarrationComplete] = useState(false);
+  const [tickSquares, setTickSquares] = useState([]);
 
   const [score, setScore] = useState(0);
   const [total, setTotal] = useState(0);
@@ -371,6 +390,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [visibleLetterCards, setVisibleLetterCards] = useState([]); // progressive letter+piece reveal // true when a board task is done, shows Continue
   const neonTimer = useRef(null);
   const seqTimers = useRef([]);
+  const narrationTimers = useRef([]);
 
   const phase = phases[phaseIdx];
   const steps = phase?.steps || [];
@@ -436,7 +456,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     const suppressTypes = [
       'independent-squares', 'speed-round', 'colour-quiz',
       'piece-letter-quiz', 'piece-spot-quiz', 'recap-quiz',
-      'click-file', 'click-rank', 'click-square', 'piece-range',
+      'click-file', 'click-rank', 'click-square', 'piece-range', 'piece-intro-guided',
       'file-name-quiz', 'true-or-false',
     ];
     if (suppressTypes.includes(step?.taskType)) {
@@ -612,6 +632,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     setNeonFile(null); setNeonRank(null);
     // Explicitly reset all highlight and interaction states before applying new step values
     setClicked([]); setWrongSqs([]); setNeonSqs([]); setVisitedGuidedSquares([]);
+    setNarratedSquares([]); setNarrationComplete(false); setTickSquares([]);
+    narrationTimers.current.forEach(t => clearTimeout(t)); narrationTimers.current = [];
     setFeedback(''); setFbType('info');
     setSpeed(null); setIndepIdx(0); clearNeon();
     setRecapAnswer(null); setRecapFeedbackDone(false);
@@ -778,8 +800,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   // Auto-play voice — fires on step change.
   // Skipped if handleContinue already spoke (continueSpoke ref),
   // or if Start Class already spoke (voiceRef).
+  // piece-intro-guided: skipped here — startNarration handles all speaking for that type.
   useEffect(() => {
     if (!classStarted) return;
+    if (step?.taskType === 'piece-intro-guided') return;
     if (continueSpoke.current) {
       continueSpoke.current = false; // consume the flag, don't speak again
       return;
@@ -789,6 +813,19 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     speakStepRef.current(step);
     voiceRef.current = true;
   }, [phaseIdx, stepIdx, isTest, classStarted]);
+
+  // piece-intro-guided: start narration sequence after step loads
+  useEffect(() => {
+    if (step?.taskType !== 'piece-intro-guided') return;
+    if (!classStarted) return;
+    narrationTimers.current.forEach(t => clearTimeout(t));
+    narrationTimers.current = [];
+    startNarration(currentStepRef.current);
+    return () => {
+      narrationTimers.current.forEach(t => clearTimeout(t));
+      narrationTimers.current = [];
+    };
+  }, [phaseIdx, stepIdx, classStarted]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Highlight sequence — fires timed setNeonSqs calls for steps with highlightSequence
   useEffect(() => {
@@ -867,6 +904,81 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       }
     } else if (afterVoice) {
       setTimeout(afterVoice, 1500);
+    }
+  }
+
+  // piece-intro-guided: sequentially speaks intro voice then narrationSequence items,
+  // lighting up squares one-by-one and finally setting narrationComplete + voiceFinished.
+  // Uses currentStepRef.current throughout to guard against stale closures (Rule 14).
+  function startNarration(s) {
+    if (!s || s.taskType !== 'piece-intro-guided') return;
+    narrationTimers.current.forEach(t => clearTimeout(t));
+    narrationTimers.current = [];
+    setVoiceFinished(false);
+
+    function speakItem(idx) {
+      if (currentStepRef.current?.id !== s.id) return;
+      const seq = s.narrationSequence || [];
+      if (idx >= seq.length) {
+        setNarrationComplete(true);
+        setVoiceFinished(true);
+        return;
+      }
+      const item = seq[idx];
+      const text = fill(item.voice || '', childName);
+      let fired = false;
+      const afterVoice = () => {
+        if (fired) return;
+        fired = true;
+        if (currentStepRef.current?.id !== s.id) return;
+        const squares = item.squares || [];
+        const delay = item.squareDelay || 400;
+        squares.forEach((sq, j) => {
+          const t = setTimeout(() => {
+            if (currentStepRef.current?.id !== s.id) return;
+            setNarratedSquares(prev => [...prev, sq]);
+          }, (j + 1) * delay);
+          narrationTimers.current.push(t);
+        });
+        const totalDelay = squares.length > 0 ? squares.length * delay + 300 : 300;
+        const t = setTimeout(() => speakItem(idx + 1), totalDelay);
+        narrationTimers.current.push(t);
+      };
+      if (text) {
+        speakElevenLabs(text, {
+          onStart: () => setIsPlaying(true),
+          onEnd: () => { setIsPlaying(false); afterVoice(); },
+          onError: () => { setIsPlaying(false); afterVoice(); },
+          onBlocked: () => afterVoice(),
+        });
+        const fallbackMs = Math.max(2000, text.length * 110) + 2000;
+        const ft = setTimeout(() => afterVoice(), fallbackMs);
+        narrationTimers.current.push(ft);
+      } else {
+        afterVoice();
+      }
+    }
+
+    if (s.voice) {
+      const introText = fill(s.voice, childName);
+      setCurrentNarration(introText);
+      let introDone = false;
+      const afterIntro = () => {
+        if (introDone) return;
+        introDone = true;
+        speakItem(0);
+      };
+      speakElevenLabs(introText, {
+        onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
+        onEnd: () => { setIsPlaying(false); afterIntro(); },
+        onError: () => { setIsPlaying(false); afterIntro(); },
+        onBlocked: () => { setAudioBlocked(true); afterIntro(); },
+      });
+      const fallbackMs = Math.max(3000, introText.length * 110) + 2000;
+      const ft = setTimeout(() => afterIntro(), fallbackMs);
+      narrationTimers.current.push(ft);
+    } else {
+      speakItem(0);
     }
   }
 
@@ -949,6 +1061,31 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         showFb('That square is not reachable — try dragging to a highlighted square!', 'error');
       }
       return false; // always return false so piece snaps back to origin
+    }
+
+    // piece-intro-guided: narration must finish before student can drag
+    if (tt === 'piece-intro-guided') {
+      if (!narrationComplete) return false;
+      const sq = targetSquare;
+      const targets = currentStepRef.current.targetSquares || [];
+      if (!targets.includes(sq)) return false;
+      if (tickSquares.includes(sq)) return false; // already confirmed
+      const newTicks = [...tickSquares, sq];
+      setTickSquares(newTicks);
+      setClicked(prev => [...prev, sq]);
+      setStreak(s => s + 1);
+      if (newTicks.length >= targets.length) {
+        setScore(s => s + newTicks.length);
+        setTotal(t => t + newTicks.length);
+        setTargetSqs([]);
+        completeTask(
+          pickVoice(currentStepRef.current, 'success') || 'Complete!',
+          pickVoice(currentStepRef.current, 'success'),
+        );
+      } else {
+        showFb(`${newTicks.length} of ${targets.length} found!`, 'hint');
+      }
+      return false; // piece always snaps back
     }
 
     return false; // not a draggable taskType — snap back
@@ -1443,6 +1580,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     pathSqs,
     extraRanks,
     guidedPieceSquare,
+    narratedSquares,
+    tickSquares,
   });
 
   function handleAudioOverlayTap() {
@@ -1480,7 +1619,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   }
 
   const pct = Math.round((phaseIdx / phases.length) * 100);
-  const boardTaskTypes = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'speed-round', 'file-name-quiz'];
+  const boardTaskTypes = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'piece-intro-guided', 'speed-round', 'file-name-quiz'];
   const contLabel = step?.taskType === 'speed-intro'
     ? 'Start speed challenge!'
     : step?.continueLabel
@@ -1617,7 +1756,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   showAnimations={true}
                   animationDuration={500}
                   showBoardNotation={true}
-                  arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
+                  arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range', 'piece-intro-guided'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
                   onPieceDrop={handlePieceDrop}
                   customSquareStyles={squareStyles}
                   customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
@@ -1627,8 +1766,44 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                     const isTeaching = ['click-square','observe'].includes(step?.taskType);
                     const labelSqs = isTeaching ? (neonSqs || []) : [];
                     const isGuided = currentStepRef.current?.guided === true && Array.isArray(currentStepRef.current?.targetSquares);
-                    if (!isGuided && !labelSqs.length) return 'div';
+                    const isPIG = step?.taskType === 'piece-intro-guided';
+                    if (!isGuided && !labelSqs.length && !isPIG) return 'div';
                     return ({ square, squareColor, style, children }) => {
+                      if (isPIG) {
+                        const isTick = (tickSquares || []).includes(square);
+                        const isNarrated = (narratedSquares || []).includes(square);
+                        if (isTick) {
+                          return (
+                            <div style={{
+                              ...style,
+                              backgroundColor: 'rgba(60,220,90,0.75)',
+                              boxShadow: 'inset 0 0 0 3px rgba(40,180,70,0.95)',
+                              position: 'relative',
+                            }}>
+                              {children}
+                              <div style={{
+                                position:'absolute', top:'50%', left:'50%',
+                                transform:'translate(-50%,-50%)',
+                                color:'#fff', fontSize:'20px', fontWeight:'bold',
+                                lineHeight:1, pointerEvents:'none',
+                                textShadow:'0 1px 3px rgba(0,0,0,0.5)',
+                              }}>✓</div>
+                            </div>
+                          );
+                        }
+                        if (isNarrated) {
+                          return (
+                            <div style={{
+                              ...style,
+                              backgroundColor: 'rgba(249,115,22,0.92)',
+                              boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
+                            }}>
+                              {children}
+                            </div>
+                          );
+                        }
+                        return <div style={style}>{children}</div>;
+                      }
                       if (isGuided && currentStepRef.current?.targetSquares?.includes(square)) {
                         const isVisited = (clicked || []).includes(square);
                         if (isVisited) {
@@ -2003,7 +2178,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
 
           {(() => {
             const ownControls = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'write-notation'].includes(step?.taskType);
-            const boardTask = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'speed-round', 'file-name-quiz'].includes(step?.taskType);
+            const boardTask = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'piece-intro-guided', 'speed-round', 'file-name-quiz'].includes(step?.taskType);
 
             if (speedState?.active || quizState?.active || fileQS?.active) return null;
             if (ownControls) return null;
