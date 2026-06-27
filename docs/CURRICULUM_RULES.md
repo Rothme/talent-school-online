@@ -49,11 +49,13 @@ overrides to Style 2.
 change or when the student completes the task. Quiz highlights stay lit until
 the student answers (not until they get distracted and the glow vanishes).
 
-**Suppression:** All highlights are OFF during exercises/tests/quizzes:
+**Suppression:** Orange teaching highlights are OFF during exercises/tests/quizzes:
 `independent-squares`, `speed-round`, `colour-quiz`, `file-name-quiz`,
 `click-file`, `click-rank`, `click-square`, `piece-range`, `recap-quiz`,
 `piece-spot-quiz`, `piece-letter-quiz`. The student must work from memory, not
-hints.
+hints. **Exception:** Green confirmation ticks (✓) after correct drops are always
+permitted in all exercise types including `piece-range` — these are feedback, not
+hints. See Rule 25.
 
 ---
 
@@ -107,43 +109,43 @@ square" exercises (`independent-squares`).
 
 ---
 
-## 5. Piece Introduction Pattern (3-Step Structure)
+## 5. Piece Introduction Pattern (4-Step Structure)
 
-Every chess piece, when first taught, follows exactly this sequence:
+Every chess piece, when first taught, follows exactly this sequence. See Rule 24 for full implementation detail of steps 2 and 3.
 
 1. **Intro step** (`observe`) — piece appears on its REAL game-starting square
    (King e1/e8, Queen d1/d8, Rook a1+h1/a8+h8, Bishop c1+f1/c8+f8, Knight
-   b1+g1/b8+g8, Pawn rank2/rank7). Solo board — every other piece type is absent.
-   For pieces with 2+ units per colour, show ALL of them (both Rooks, both
-   Bishops, both Knights, all 8 Pawns).
-2. **Demo step** (`observe` with `demoSequence`) — same solo board. The piece
-   slides through every direction it can legally move, ONE direction at a time,
-   returning to its starting square between each. Yellow path dots trail every
-   square along the route (see Rule 6). For multi-unit pieces, animate ONE unit
-   at a time — never move two pieces simultaneously in one frame, it reads as
-   erratic.
-3. **Practice step** (`piece-range`) — piece relocates to a CENTRAL square
-   (typically d5/e4) for maximum square coverage. Student drags the piece (not
-   click — drag and drop) to every reachable square. Piece snaps back to origin
-   after each successful drop so the student can continue to the next target.
+   b1+g1/b8+g8, Pawn rank2/rank7). BOTH White and Black versions must appear
+   together on an otherwise empty board — never just one colour alone. For pieces
+   with 2+ units per colour, show ALL of them (both Rooks, both Bishops, both
+   Knights, all 8 Pawns).
 
-**FEN verification is mandatory.** Every `demoSequence` frame and every
-`pieceRangeFen`/`targetSquares` set must be checked with chess.js
-(`c.moves({square, verbose:true})`) before being written into lesson data. Hand-
-counted FEN strings have produced real bugs (Queen jumping to non-diagonal
-squares, Knight jumping erratically) — always verify programmatically.
+2. **Narrated highlight from starting square** (`piece-intro-guided`) — piece
+   alone on its real starting square. Ms. Momo narrates each direction, squares
+   light up one by one along each path in orange, accumulate and stay lit. Student
+   drags piece to each orange square — snaps back, square turns green with ✓ tick.
+   See Rule 24 for full mechanic. Knight uses `pathSquares` to show L-shape legs.
 
-Step 1 must show BOTH the White and Black versions of the piece on their real starting squares together on an otherwise empty board — never just one colour alone. Step 2 demo must begin from the piece's real starting square (e.g. King from E1, Queen from D1, Rook from A1), not from a central square — the central square is reserved for Step 3 practice only.
+3. **Narrated highlight from central square** (`piece-intro-guided`) — same
+   mechanic from a central square (E4 or D4) for maximum directional coverage.
+
+4. **Unguided practice** (`piece-range`) — piece on a different square, no orange
+   highlights. Student drags from memory. Green ✓ tick on correct drops. Piece
+   snaps back after each drop.
+
+**FEN verification is mandatory.** Every `targetSquares` set must be checked with
+chess.js (`c.moves({square, verbose:true})`). The piece's current square must
+never appear in `targetSquares`. Hand-counted FEN strings are prohibited.
 
 ---
 
 ## 6. Yellow Path Dots (`pathSqs`)
 
-Any time a piece moves — in a `demoSequence` frame, a `notation-demo` step, or
-a `recap-quiz` move-reading question — every square along its path gets a small
-yellow dot in the centre (`radial-gradient`), not a full highlight. This lets the
-student mentally connect start → path → destination, especially for sliding
-pieces (Rook, Bishop, Queen) and the Knight's L-shape corner.
+Any time a piece moves in a `demoSequence` frame or a `notation-demo` step,
+every square along its path gets a small yellow dot in the centre
+(`radial-gradient`), not a full highlight. This lets the student mentally connect
+start → path → destination, especially for sliding pieces (Rook, Bishop, Queen)
+and the Knight's L-shape corner.
 
 `step.path` (single move) or `frame.path` (within a `demoSequence`) is an array
 of square names. Dots clear when the piece returns to its start square or when
@@ -152,6 +154,12 @@ the step changes.
 For `recap-quiz` steps with a single-frame `demoSequence`, the piece is left on
 its destination square (does NOT loop back to start) so the student has a visual
 reference while choosing their answer.
+
+**Exception — `piece-intro-guided` steps:** These use the narrated square-by-square
+orange highlight mechanic defined in Rule 24 instead of path dots. The Knight's
+`pathSquares` in `piece-intro-guided` show yellow trail squares for the L-shape
+legs, which serve the same visual purpose as path dots but are implemented
+differently. Rule 6 path dots do not apply to `piece-intro-guided` steps.
 
 ---
 
@@ -481,3 +489,97 @@ Every step must load with a completely clean board state. The component must exp
 - [ ] Step state fully reset on every step change: clicked, wrong, neonFile, neonRank, neonSquares, word-trigger highlights (Rule 23)
 - [ ] Run `node scripts/auditLesson.js` — zero violations
 - [ ] Build compiles with no errors
+- [ ] Piece intro follows 4-step narrated highlight pattern per Rule 24
+- [ ] All piece exercises show green ✓ tick on correct drops (Rule 25)
+- [ ] UI fits on screen without scrolling; continue button always visible (Rule 26)
+- [ ] boardWidth prop matches rendered board pixel width; no CSS transforms on board parent (Rule 27)
+- [ ] Piece always snaps back after drop; drag pickup not blocked by pointer-events (Rule 27)
+- [ ] Ms. Momo voice lines have age variants for meetpieces steps; no repeated encouragements (Rule 28)
+- [ ] True-or-false voice does not name coordinates that trigger answer-leaking highlights (Rule 28)
+- [ ] Quiz questions are unambiguous; piece-spot-quiz shows piece on board (Rule 29)
+
+---
+
+## 24. Piece Introduction — Narrated Highlight Sequence (piece-intro-guided)
+
+The standard 3-step piece introduction pattern (Rule 5) is replaced by a 4-step pattern for all pieces:
+
+1. **Intro step** (`observe`) — BOTH White and Black pieces on their real starting squares, empty board otherwise. Ms. Momo introduces the piece by name, starting square, and one-sentence description of its role.
+
+2. **Narrated highlight from starting square** (`piece-intro-guided`) — piece alone on its real starting square. Ms. Momo narrates each direction of movement. As she speaks each direction, squares light up one by one along the path in orange. Squares accumulate and stay lit. When narration ends, all reachable squares are orange. Student then drags the piece to each orange square — piece snaps back to start after each successful drop, square turns green with a ✓ tick. Step completes when all squares are visited.
+
+3. **Narrated highlight from central square** (`piece-intro-guided`) — same mechanic repeated from a central square (E4 or D4) so the student sees the full range of the piece from a position with maximum coverage. All 8 directions visible for King, Queen, Bishop, Knight. All 4 straight directions for Rook. Forward directions for Pawn.
+
+4. **Unguided practice** (`piece-range`) — piece on a different square, no orange highlights. Student drags from memory. Green tick appears on correct drops, same as guided. Piece snaps back after each drop.
+
+**Knight special case:** The Knight's narration must show the L-shape path using `pathSquares` — intermediate squares light up yellow (the two-square leg), then the destination lights up orange. Path squares fade after a brief pause, destination stays orange. This visually traces the L-shape so the student can follow the movement logic.
+
+**FEN verification is mandatory** for all `targetSquares` in every `piece-intro-guided` step. Use chess.js `c.moves({square, verbose:true})` to generate the correct squares programmatically. Never hand-count.
+
+**The piece's current square must never appear in `targetSquares`.** Only squares the piece can legally move TO are included.
+
+---
+
+## 25. Green Tick Feedback on All Piece Exercises
+
+Every piece exercise step — guided (`piece-intro-guided`) and unguided (`piece-range`) — must show a green background with a white ✓ tick on squares the student has successfully visited. This applies universally:
+
+- Orange squares = unvisited targets (guided only)
+- Green ✓ squares = correctly visited targets (both guided and unguided)
+- No orange squares = unguided (student works from memory, green ticks appear as reward)
+
+The tick must be rendered via `customSquareRenderer` so it appears on both light and dark squares consistently. The tick div must NOT have `pointer-events: none` — this blocks piece drag pickup.
+
+---
+
+## 26. UI Layout Standards (Beginner Tier)
+
+The chess lesson interface uses a fixed three-column layout:
+
+- **Left panel (20%)** — Ms. Momo card (avatar, name, subtitle, speech bubble showing current voice text, rewind/pause/play controls) + YOUR QUEST phase progress list
+- **Centre panel (60%)** — THE BATTLEFIELD label + chessboard + task bar below board
+- **Right panel (20%)** — SQUARES FOUND score card + ACHIEVEMENTS badges + age mode toggle (6–8 / 9–12 / 13+)
+
+**All content must fit on screen without scrolling.** The continue button must always be visible. Quiz options, score, and age toggle must all be simultaneously visible. If content overflows the right panel, reduce font sizes or card padding — never allow the continue button to be pushed off screen.
+
+**The board must always be a perfect square.** Use `aspect-ratio: 1/1` with `width: 100%` and `max-height: calc(100vh - 140px)`. The `boardWidth` prop passed to the Chessboard component must exactly match the rendered pixel width of the board wrapper — mismatch causes drop coordinate offset.
+
+**Phase progress list** shows all lesson phases with icons: ✓ green for completed, ▶ orange for active, · dim for upcoming. Phase names must always be visible — never truncated or hidden.
+
+---
+
+## 27. Piece Exercise Drag and Drop Standards
+
+**Piece always snaps back to starting square** after every drop in `piece-intro-guided` and `piece-range` steps. The piece never stays on the destination square during exercises. Return false from `onPieceDrop` always.
+
+**Drop acceptance must be forgiving.** The `boardWidth` prop must exactly match the rendered board pixel width so drop coordinates are correctly aligned. No CSS `transform`, `scale`, or `zoom` may be applied to any parent of the board wrapper — these shift the coordinate system and make drops register in the wrong square.
+
+**Drag pickup must never be blocked.** The `customSquareRenderer` divs must not have `pointer-events: none` — this blocks the student from grabbing pieces. React-chessboard handles its own piece drag events independently of the custom renderer.
+
+**Narration must complete before drag is enabled** in `piece-intro-guided` steps. While Ms. Momo is narrating and squares are lighting up, `onPieceDrop` returns false immediately. Only after narration is complete (`narrationComplete === true`) does drag become active.
+
+---
+
+## 28. Voice Quality Standards (Ms. Momo Character Bible)
+
+Ms. Momo speaks in short, punchy sentences. Maximum 12 words per sentence. No sentence starts with "I am going to" or "Let me" — she states directly. She never repeats the same encouragement phrase twice in a lesson.
+
+**Age variants are mandatory** for every voice line in meetpieces and complex teaching steps:
+- `young` (6–8): Enthusiastic, simple words, exclamation marks, child-friendly analogies
+- `mid` (9–12): Confident coach tone, slightly more technical, fewer exclamations  
+- `teen` (13–15): Minimal, direct, chess-specific terminology, no babying
+
+**Word-triggered highlights must not leak answers.** In true-or-false steps, Ms. Momo must not speak any coordinate that would trigger a board highlight and reveal the correct answer. If the step tests whether square X is named correctly, the voice must not mention X by name — use descriptions instead ("this glowing square", "the highlighted file").
+
+---
+
+## 29. Quiz Design Standards
+
+**Questions must be unambiguous.** Never ask "how many squares can a King move to?" without specifying the King's position — the answer varies by location. Ask about directions ("in how many directions can the King move?") or use a board-positioned question ("how many squares can the King reach from E4?").
+
+**True-or-false steps** must suppress all word-triggered highlights (Rule 3). The board highlight is the teaching clue — the voice must not add a second clue by naming the coordinate.
+
+**Piece-spot-quiz steps** must always show the piece being identified on the board. An empty board with an identification question is always a Rule 19 violation. The board must display `quizItems[currentQuizItemIndex].fen` during each question, not `step.boardState`.
+
+**Quiz options must be plausible distractors.** Wrong answers must be squares or names that a confused student might genuinely pick — not obviously wrong options that make the question trivial.
+
