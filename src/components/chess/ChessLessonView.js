@@ -1626,11 +1626,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   customSquare={(() => {
                     const isTeaching = ['click-square','observe'].includes(step?.taskType);
                     const labelSqs = isTeaching ? (neonSqs || []) : [];
-                    const isGuided = step?.guided === true && Array.isArray(step?.targetSquares);
+                    const isGuided = currentStepRef.current?.guided === true && Array.isArray(currentStepRef.current?.targetSquares);
                     if (!isGuided && !labelSqs.length) return 'div';
                     return ({ square, squareColor, style, children }) => {
-                      if (isGuided && step.targetSquares.includes(square)) {
-                        const isVisited = (visitedGuidedSquares || []).includes(square);
+                      if (isGuided && currentStepRef.current?.targetSquares?.includes(square)) {
+                        const isVisited = (clicked || []).includes(square);
                         if (isVisited) {
                           return (
                             <div style={{
