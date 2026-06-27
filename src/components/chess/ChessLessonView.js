@@ -63,7 +63,8 @@ function resolveBoardPosition(boardFen, placedPieces) {
 // Build square style overrides for neon highlights
 // ─────────────────────────────────────────────────────
 function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, targets,
-  colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive, pathSqs, extraRanks }) {
+  colourQuizSq, glowPieces, boardPosition, borderOnlySquares, speedActive, pathSqs, extraRanks,
+  guidedPieceRangeTargets }) {
   const styles = {};
 
   function setStyle(sq, style) {
@@ -147,6 +148,15 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
       }
     });
   }
+
+  // Guided piece-range — vivid orange on unvisited target squares when step.guided === true.
+  // Squares are removed from this set as the student successfully drags to each one.
+  (guidedPieceRangeTargets || []).forEach(sq => {
+    setStyle(sq, {
+      backgroundColor: 'rgba(249,115,22,0.92)',
+      boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
+    });
+  });
 
   // Movement path dots — yellow circle in centre of each path square
   // Shows the route the piece travels during demonstration
@@ -1425,6 +1435,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     speedActive: speedState?.active,
     pathSqs,
     extraRanks,
+    guidedPieceRangeTargets: step?.taskType === 'piece-range' && step?.guided
+      ? (step.targetSquares || []).filter(sq => !clicked.includes(sq))
+      : [],
   });
 
   function handleAudioOverlayTap() {
