@@ -152,18 +152,6 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
     });
   }
 
-  if (step?.guided === true && step?.targetSquares?.length) {
-    const visited = visitedGuidedSquares || [];
-    step.targetSquares.forEach(sq => {
-      if (!visited.includes(sq)) {
-        setStyle(sq, {
-          backgroundColor: 'rgba(249,115,22,0.92)',
-          boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
-        });
-      }
-    });
-  }
-
   // Movement path dots — yellow circle in centre of each path square
   // Shows the route the piece travels during demonstration
   (pathSqs || []).forEach(sq => {
@@ -175,6 +163,19 @@ function buildSquareStyles({ neonFile, neonRank, neonSquares, clicked, wrong, ta
 
   (clicked || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(29,158,117,0.65)' }));
   (wrong || []).forEach(sq => setStyle(sq, { backgroundColor: 'rgba(226,75,74,0.7)' }));
+
+  if (step && step.guided === true && Array.isArray(step.targetSquares)) {
+    const visited = Array.isArray(visitedGuidedSquares) ? visitedGuidedSquares : [];
+    for (let i = 0; i < step.targetSquares.length; i++) {
+      const sq = step.targetSquares[i];
+      if (!visited.includes(sq)) {
+        styles[sq] = Object.assign({}, styles[sq] || {}, {
+          backgroundColor: 'rgba(249,115,22,0.92)',
+          boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
+        });
+      }
+    }
+  }
 
   return styles;
 }
