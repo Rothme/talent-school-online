@@ -1629,7 +1629,19 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                     const isGuided = step?.guided === true && Array.isArray(step?.targetSquares);
                     if (!isGuided && !labelSqs.length) return 'div';
                     return ({ square, squareColor, style, children }) => {
-                      if (isGuided && step.targetSquares.includes(square) && !(visitedGuidedSquares || []).includes(square)) {
+                      if (isGuided && step.targetSquares.includes(square)) {
+                        const isVisited = (visitedGuidedSquares || []).includes(square);
+                        if (isVisited) {
+                          return (
+                            <div style={{
+                              ...style,
+                              backgroundColor: 'rgba(60,220,90,0.75)',
+                              boxShadow: 'inset 0 0 0 3px rgba(40,180,70,0.95)',
+                            }}>
+                              {children}
+                            </div>
+                          );
+                        }
                         return (
                           <div style={{
                             ...style,
