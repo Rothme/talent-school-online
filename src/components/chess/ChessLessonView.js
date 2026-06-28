@@ -254,6 +254,35 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     return () => clearInterval(id);
   }, []);
 
+  // Timer expiry — launch bonus round when time hits 0, or end lesson if bonus already active
+  useEffect(() => {
+    const totalSecs = (lesson?.totalMinutes || 55) * 60;
+    if (elapsedSecs < totalSecs) return;
+    if (lessonDone || bonusTriggeredRef.current) return;
+    bonusTriggeredRef.current = true;
+    if (bonusActive) {
+      // Bonus was running when time expired — end lesson
+      setLessonDone(true);
+      confetti({ particleCount: 200, spread: 120 });
+      const voice = fill(lesson?.doneVoice || `Amazing work, {name}! Your lesson is complete!`, childName);
+      speakElevenLabs(voice, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+      setTimeout(() => onComplete?.(), 4000);
+    } else if (activeBonus?.phases?.length) {
+      // Main lesson time expired — launch bonus immediately
+      window.speechSynthesis?.cancel();
+      pendingAudioClear();
+      setBonusActive(true);
+      setPhaseIdx(0); setStepIdx(0);
+      setVoiceFinished(false);
+      voiceRef.current = false;
+      continueSpoke.current = false;
+    } else {
+      setLessonDone(true);
+      confetti({ particleCount: 200, spread: 120 });
+      setTimeout(() => onComplete?.(), 3000);
+    }
+  }, [elapsedSecs, bonusActive, lessonDone]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Repeat — replay current step's voice narration from the beginning
   // Special case: during file-name-quiz, repeats CURRENT question with glow
   const currentVoiceText = useRef('');
@@ -394,7 +423,16 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [bonusActive, setBonusActive] = useState(false);
 
   const lesson = lessonData || LESSON_1;
-  const phases = bonusActive ? (LESSON_1_BONUS?.phases || lesson.phases) : lesson.phases;
+  const lessonBonusMap = {
+    'chess-lesson-1': LESSON_1_BONUS,
+    'chess-lesson-2': LESSON_2_BONUS,
+    'chess-lesson-3': LESSON_3_BONUS,
+    'chess-lesson-4': LESSON_4_BONUS,
+    'chess-lesson-5': LESSON_5_BONUS,
+  };
+  const activeBonus = lessonBonusMap[lesson?.id] || LESSON_1_BONUS;
+  const phases = bonusActive ? (activeBonus?.phases || lesson.phases) : lesson.phases;
+  const bonusTriggeredRef = useRef(false);
 
   // Piece-based interaction state (Lesson 2+)
   const [boardFen, setBoardFen] = useState('start');
@@ -446,11 +484,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     ['wK','bK','wQ','bQ','wR','bR','wB','bB','wN','bN','wP','bP'].forEach(code => {
       const letter = _PIECE_LETTER_OVERLAY_MAP[code];
       pieces[code] = ({ squareWidth }) => (
-        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <div style={{ position: 'relative', width: squareWidth, height: squareWidth }}>
           <img
             src={PIECE_SVG_URLS[code]}
             alt=""
-            style={{ width: '100%', height: '100%', display: 'block' }}
+            width={squareWidth}
+            height={squareWidth}
+            style={{ display: 'block' }}
             draggable={false}
           />
           {letter && overlays[letter] && (
@@ -1195,26 +1235,34 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         return false;
       }
       if (targetSquare === call.targetSquare) {
-        const newTicks = [...notationDragTicks, call.id];
-        setNotationDragTicks(newTicks);
+        // Show green ✓ tick on destination square for 800ms, then snap back and advance
+        setTickSquares([targetSquare]);
         setStreak(s => s + 1);
         setScore(s => s + 1); setTotal(t => t + 1);
-        const nextIdx = notationDragIdx + 1;
-        if (nextIdx >= calls.length) {
-          completeTask(
-            fill(currentStepRef.current.successVoice || 'All moves complete!', childName),
-            currentStepRef.current.successVoice,
-          );
-        } else {
-          const nextCall = calls[nextIdx];
-          showFb(`✓ ${call.notation} — correct!`, 'success', fill(nextCall.voice || `Next: ${nextCall.notation}`, childName), () => {
-            setNotationDragIdx(nextIdx);
-            setBoardFen(nextCall.boardState || 'start');
-          });
-        }
+        const newTicks = [...notationDragTicks, call.id];
+        setNotationDragTicks(newTicks);
+        const capturedStepId = currentStepRef.current?.id;
+        const capturedIdx = notationDragIdx;
+        setTimeout(() => {
+          if (currentStepRef.current?.id !== capturedStepId) return;
+          setTickSquares([]);
+          const nextIdx = capturedIdx + 1;
+          if (nextIdx >= calls.length) {
+            completeTask(
+              fill(currentStepRef.current?.successVoice || 'All moves complete!', childName),
+              currentStepRef.current?.successVoice,
+            );
+          } else {
+            const nextCall = calls[nextIdx];
+            showFb(`✓ ${call.notation} — correct!`, 'success', fill(nextCall.voice || `Next: ${nextCall.notation}`, childName), () => {
+              setNotationDragIdx(nextIdx);
+              setBoardFen(nextCall.boardState || 'start');
+            });
+          }
+        }, 800);
       } else {
         setWrongSqs([targetSquare]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
-        showFb(`Not quite — read the square in "${call.notation}". Drag to ${call.targetSquare.toUpperCase()}!`, 'error');
+        showFb(`Not quite — read the square in "${call.notation}". Drag to ${call.targetSquare.toUpperCase()}!`, 'error', 'Not quite — try again!');
       }
       return false; // piece always snaps back
     }
@@ -1618,34 +1666,25 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
 
   function handleContinue() {
     if (step?.taskType === 'complete') {
-      // Check if this is the bonus round completion or if time remains for bonus
-      const isBonus = phases.some(p => p.id?.startsWith('bonus'));
+      // bonusActive flag is the definitive check — also fall back to phase-id inspection
+      const isBonus = bonusActive || phases.some(p => p.id?.startsWith('bonus'));
       if (isBonus || remainSecsRef.current < 300) {
         // Bonus already active, or less than 5 min left — end the lesson
         setLessonDone(true);
         confetti({ particleCount: 200, spread: 120 });
-        setTimeout(() => onComplete?.(), 2000);
+        const closingVoice = fill(lesson?.doneVoice || `Amazing work, {name}! You have completed the lesson. You are a chess champion!`, childName);
+        speakElevenLabs(closingVoice, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+        setTimeout(() => onComplete?.(), 4000);
       } else {
         // Main lesson complete with time remaining — activate bonus round!
-        // Select the bonus for the current lesson
-      const lessonBonusMap = {
-        'chess-lesson-1': LESSON_1_BONUS,
-        'chess-lesson-2': LESSON_2_BONUS,
-        'chess-lesson-3': LESSON_3_BONUS,
-        'chess-lesson-4': LESSON_4_BONUS,
-        'chess-lesson-5': LESSON_5_BONUS,
-      };
-      const bonus = lessonBonusMap[lesson?.id] || LESSON_1_BONUS || null;
-        if (bonus && remainSecsRef.current > 300) {
-          // Merge bonus phases into current lesson
-          const bonusVoice = `Incredible, {name}! You finished all the main content with time to spare. Let's play the bonus round!`;
-          speakElevenLabs(fill(bonusVoice, childName), {
+        const bonus = activeBonus;
+        if (bonus?.phases?.length && remainSecsRef.current > 300) {
+          const bonusVoice = fill(`Incredible, {name}! You finished all the main content with time to spare. Let's play the bonus round!`, childName);
+          speakElevenLabs(bonusVoice, {
             onStart: () => setIsPlaying(true),
             onEnd: () => setIsPlaying(false),
           });
-          // Navigate to bonus phases by resetting to start of bonus
-          setPhaseIdx(phases.length); // will be caught below
-          // Actually we need to reload with bonus phases — simplest: trigger bonus state
+          bonusTriggeredRef.current = true;
           setBonusActive(true);
           setPhaseIdx(0); setStepIdx(0);
           setVoiceFinished(false);
@@ -1654,7 +1693,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         } else {
           setLessonDone(true);
           confetti({ particleCount: 200, spread: 120 });
-          setTimeout(() => onComplete?.(), 2000);
+          const closingVoice = fill(lesson?.doneVoice || `Amazing work, {name}! You have completed the lesson!`, childName);
+          speakElevenLabs(closingVoice, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+          setTimeout(() => onComplete?.(), 4000);
         }
       }
       return;
@@ -1807,7 +1848,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             ))}
           </div>
           <p className="cl-done-msg">
-            Ms. Momo says: "Well done, {childName}! You learned piece names, piece letters (K Q R B N), how to read a chess move, and where every piece starts. You are ready for Lesson 3!"
+            Ms. Momo says: "Well done, {childName}! {lesson?.doneMsg || 'You have completed this chess lesson!'}"
           </p>
           <div className="cl-done-score">
             <span className="cl-done-n">{score}</span>
@@ -1963,7 +2004,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   showAnimations={true}
                   animationDuration={500}
                   showBoardNotation={true}
-                  arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range', 'piece-intro-guided', 'notation-drag'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
+                  arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range', 'piece-intro-guided', 'notation-drag'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying && !(step?.taskType === 'notation-drag' && tickSquares.length > 0)}
                   onPieceDrop={handlePieceDrop}
                   customSquareStyles={squareStyles}
                   customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
@@ -1976,8 +2017,28 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                     const isGuided = currentStepRef.current?.guided === true && Array.isArray(currentStepRef.current?.targetSquares);
                     const isPIG = step?.taskType === 'piece-intro-guided';
                     const isUnguidedRange = step?.taskType === 'piece-range' && !isGuided;
-                    if (!isGuided && !labelSqs.length && !isPIG && !isUnguidedRange) return 'div';
+                    const isNDrag = step?.taskType === 'notation-drag';
+                    if (!isGuided && !labelSqs.length && !isPIG && !isUnguidedRange && !isNDrag) return 'div';
                     return ({ square, squareColor, style, children }) => {
+                      if (isNDrag && (tickSquares || []).includes(square)) {
+                        return (
+                          <div style={{
+                            ...style,
+                            backgroundColor: 'rgba(60,220,90,0.75)',
+                            boxShadow: 'inset 0 0 0 3px rgba(40,180,70,0.95)',
+                            position: 'relative',
+                          }}>
+                            {children}
+                            <div style={{
+                              position:'absolute', top:'50%', left:'50%',
+                              transform:'translate(-50%,-50%)',
+                              color:'#fff', fontSize:'20px', fontWeight:'bold',
+                              lineHeight:1,
+                              textShadow:'0 1px 3px rgba(0,0,0,0.5)',
+                            }}>✓</div>
+                          </div>
+                        );
+                      }
                       if (isPIG) {
                         const isTick = (tickSquares || []).includes(square);
                         const isNarrated = (narratedSquares || []).includes(square);
@@ -2487,7 +2548,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             if (speedState?.active || quizState?.active || fileQS?.active) return null;
             if (ownControls) return null;
             if (boardTask && !taskComplete) return null;
-            if (['recap-quiz', 'name-the-square', 'true-or-false'].includes(step?.taskType) && voiceFinished && recapAnswer === null) return null;
+            if (['recap-quiz', 'name-the-square', 'true-or-false'].includes(step?.taskType) && (recapAnswer === null || !recapFeedbackDone)) return null;
 
             const isRecap = ['recap-quiz', 'name-the-square', 'true-or-false'].includes(step?.taskType);
             const locked = !voiceFinished || speakingFb || isPlaying

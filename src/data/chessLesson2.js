@@ -29,6 +29,8 @@ export const LESSON_2 = {
   title: 'The Chess Pieces — Names and Letters',
   subtitle: 'Lesson 2 of 24 · Beginner Module',
   totalMinutes: 58,
+  doneMsg: 'You learned piece names, piece letters (K Q R B N), how to read a chess move, and where every piece starts on the board.',
+  doneVoice: '{name}, you were absolutely BRILLIANT today! You know every piece by name and letter, and you can read chess moves like a pro. See you in Lesson 3!',
 
   phases: [
 
