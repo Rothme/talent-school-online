@@ -144,9 +144,9 @@ export const LESSON_3 = {
           taskType: 'piece-intro-guided',
           targetSquares: ['a2','a3','a4','a5','a6','a7','a8','b1','c1','d1','e1','f1','g1','h1'],
           narrationSequence: [
-            { voice: 'Forward. All the way up the A file.', pathSquares: [], squares: ['a2','a3','a4','a5','a6','a7','a8'], squareDelay: 150 },
-            { voice: 'Right. All the way along rank one.', pathSquares: [], squares: ['b1','c1','d1','e1','f1','g1','h1'], squareDelay: 150 },
-            { voice: 'Straight lines only. Fourteen squares. Drag the Rook to every highlighted square.', pathSquares: [], squares: [], squareDelay: 0 },
+            { voice: 'Forward. All the way up the A file.', squares: ['a2','a3','a4','a5','a6','a7','a8'], squareDelay: 150 },
+            { voice: 'Right. All the way along rank one.', squares: ['b1','c1','d1','e1','f1','g1','h1'], squareDelay: 150 },
+            { voice: 'Straight lines only. Fourteen squares. Drag the Rook to every highlighted square.', squares: [], squareDelay: 0 },
           ],
           successVoice: 'Fourteen squares. Straight lines only. That is the Rook.',
           successVoiceAge: {
@@ -279,9 +279,9 @@ export const LESSON_3 = {
           taskType: 'piece-intro-guided',
           targetSquares: ['a3','b2','d2','e3','f4','g5','h6'],
           narrationSequence: [
-            { voice: 'Diagonal forward right. All the way.', pathSquares: [], squares: ['d2','e3','f4','g5','h6'], squareDelay: 150 },
-            { voice: 'Diagonal forward left.', pathSquares: [], squares: ['b2','a3'], squareDelay: 150 },
-            { voice: 'Seven squares. All dark. The dark Bishop stays on dark squares forever. Drag it to every highlighted square.', pathSquares: [], squares: [], squareDelay: 0 },
+            { voice: 'Diagonal forward right. All the way.', squares: ['d2','e3','f4','g5','h6'], squareDelay: 150 },
+            { voice: 'Diagonal forward left.', squares: ['b2','a3'], squareDelay: 150 },
+            { voice: 'Seven squares. All dark. The dark Bishop stays on dark squares forever. Drag it to every highlighted square.', squares: [], squareDelay: 0 },
           ],
           successVoice: 'Seven dark squares. The dark Bishop. Dark forever.',
           successVoiceAge: {
