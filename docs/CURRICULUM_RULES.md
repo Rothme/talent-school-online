@@ -497,6 +497,10 @@ Every step must load with a completely clean board state. The component must exp
 - [ ] Ms. Momo voice lines have age variants for meetpieces steps; no repeated encouragements (Rule 28)
 - [ ] True-or-false voice does not name coordinates that trigger answer-leaking highlights (Rule 28)
 - [ ] Quiz questions are unambiguous; piece-spot-quiz shows piece on board (Rule 29)
+- [ ] Warm-up tests previous lessons only; main lesson tests current lesson only; bonus round is the only cross-lesson phase (Rule 30)
+- [ ] Lesson ends with bonus round (if time remains) then animated celebration screen with student name, stars, and Next Lesson button (Rule 31)
+- [ ] Any notation-teaching phase includes at least one drag-based exercise after the click-based introduction (Rule 32)
+- [ ] Starting-square teaching uses piece-placement taskType with draggable palette, progressive board fill, green ✓ on correct placement, snap-back on incorrect (Rule 33)
 
 ---
 
@@ -546,6 +550,8 @@ The chess lesson interface uses a fixed three-column layout:
 
 **Phase progress list** shows all lesson phases with icons: ✓ green for completed, ▶ orange for active, · dim for upcoming. Phase names must always be visible — never truncated or hidden.
 
+**Context-sensitive right panel:** The right panel must only display metrics and widgets relevant to the current lesson's objectives. "Squares Found" must not appear in lessons where no square-finding exercise exists. Every achievement badge must display a short descriptive label beneath the badge name explaining the condition that earned it (e.g. "First Hit — answered correctly on first attempt"). Vague badge names alone are not sufficient.
+
 ---
 
 ## 27. Piece Exercise Drag and Drop Standards
@@ -582,4 +588,48 @@ Ms. Momo speaks in short, punchy sentences. Maximum 12 words per sentence. No se
 **Piece-spot-quiz steps** must always show the piece being identified on the board. An empty board with an identification question is always a Rule 19 violation. The board must display `quizItems[currentQuizItemIndex].fen` during each question, not `step.boardState`.
 
 **Quiz options must be plausible distractors.** Wrong answers must be squares or names that a confused student might genuinely pick — not obviously wrong options that make the question trivial.
+
+---
+
+## 30. Exercise Content Scope
+
+Exercises and challenges within a lesson must be scoped to appropriate content:
+
+- **Warm-up phase:** recap of previous lessons only. Never introduce current lesson content in the warm-up.
+- **Main lesson exercises:** current lesson content only. Never test knowledge from a previous lesson inside the core teaching flow.
+- **Bonus round:** open scope — may draw from all previous lessons plus the current lesson. This is the only phase where cross-lesson challenge content is permitted.
+
+A speed challenge, quiz, or interactive exercise that tests content from a different lesson appearing in the main teaching flow is always a Rule 30 violation.
+
+---
+
+## 31. Lesson Completion Flow
+
+A lesson must never end abruptly. When the final teaching step is complete:
+
+1. If time remains on the lesson timer, the bonus round triggers automatically before the completion screen.
+2. After the bonus round (or immediately if no time remains), a celebration screen fires showing: what the student learned today, stars earned, Ms. Momo's closing encouragement, and a clear "Next Lesson" button.
+3. The celebration screen must be animated — not a static card.
+4. Ms. Momo must speak a closing line personalised with the student's name.
+
+Ending a lesson on the final quiz step without a celebration screen or bonus round trigger is always a Rule 31 violation.
+
+---
+
+## 32. Drag-Based Notation Practice
+
+Any phase that teaches chess notation — piece letter plus square equals a move (e.g. "Ra4 means the Rook moved to a4") — must include at least one drag-based exercise where the student physically moves the piece to the notated square on the board. Click-to-answer quiz options alone are insufficient for notation teaching. The drag exercise must come after the click-based introduction, not replace it.
+
+---
+
+## 33. Piece Placement taskType (piece-placement)
+
+Phases teaching starting square positions ("Where Every Piece Starts") must use the `piece-placement` taskType:
+
+- Pieces are rendered outside the board as a draggable palette (left and right sides of the board, or below it).
+- Ms. Momo calls each piece and its starting square(s). The student drags the piece from the palette onto the correct square(s).
+- On correct placement, the piece stays on the square (does not snap back). A green ✓ tick confirms the placement.
+- On incorrect placement, the piece returns to the palette.
+- The board fills progressively as each piece is placed correctly.
+- This taskType is also used in the bonus round for timed full-board setup challenges.
 
