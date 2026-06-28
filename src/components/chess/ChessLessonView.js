@@ -12,6 +12,24 @@ import { LESSON_5_BONUS } from '../../data/chessLesson5';
 import { speakElevenLabs, stopSpeech, parseHighlights, unlockAudio, pendingAudioClear } from '../../utils/elevenlabs';
 import './ChessLessonView.css';
 
+// Piece SVGs imported so CRA bundles them with correct Content-Type (image/svg+xml).
+// The files in public/chesspieces/wikipedia/ are the same cburnett SVGs but
+// mis-named as .png, which causes browsers to reject them. These .svg copies
+// are imported here so webpack resolves them to hashed asset URLs.
+import wKSvg from '../../assets/pieces/wK.svg';
+import wQSvg from '../../assets/pieces/wQ.svg';
+import wRSvg from '../../assets/pieces/wR.svg';
+import wBSvg from '../../assets/pieces/wB.svg';
+import wNSvg from '../../assets/pieces/wN.svg';
+import wPSvg from '../../assets/pieces/wP.svg';
+import bKSvg from '../../assets/pieces/bK.svg';
+import bQSvg from '../../assets/pieces/bQ.svg';
+import bRSvg from '../../assets/pieces/bR.svg';
+import bBSvg from '../../assets/pieces/bB.svg';
+import bNSvg from '../../assets/pieces/bN.svg';
+import bPSvg from '../../assets/pieces/bP.svg';
+const PIECE_SVG_URLS = { wK:wKSvg, wQ:wQSvg, wR:wRSvg, wB:wBSvg, wN:wNSvg, wP:wPSvg, bK:bKSvg, bQ:bQSvg, bR:bRSvg, bB:bBSvg, bN:bNSvg, bP:bPSvg };
+
 const FILES = ['a','b','c','d','e','f','g','h'];
 
 function fill(text, name) {
@@ -414,11 +432,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const step = steps[stepIdx];
 
   // FIX 6 (corrected) — customPieces for pieceletters phase.
-  // Renders each piece as its Wikipedia PNG image + an orange letter overlay
-  // that appears progressively as Ms. Momo names each piece. Uses customPieces
-  // (not customSquare) so the letter is INSIDE the piece's own rendering tree,
-  // avoiding the z-index: 5 stacking context that the react-chessboard Piece
-  // component applies to flex items — which buried the overlay under the piece.
+  // Uses SVG piece images imported via webpack (correct Content-Type) so the
+  // browser can render them. The previous attempt used /chesspieces/wikipedia/*.png
+  // which are SVG files mis-named as .png; CRA serves them as image/png and
+  // browsers reject the SVG content, producing a missing piece image.
+  // By importing the same SVGs as .svg assets, webpack bundles them with the
+  // correct type and the img tag renders them correctly.
   const _PIECE_LETTER_OVERLAY_MAP = { wK:'K', bK:'K', wQ:'Q', bQ:'Q', wR:'R', bR:'R', wB:'B', bB:'B', wN:'N', bN:'N' };
   const customPiecesForLetters = useMemo(() => {
     if (phase?.id !== 'pieceletters') return undefined;
@@ -427,24 +446,25 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     ['wK','bK','wQ','bQ','wR','bR','wB','bB','wN','bN','wP','bP'].forEach(code => {
       const letter = _PIECE_LETTER_OVERLAY_MAP[code];
       pieces[code] = ({ squareWidth }) => (
-        <div style={{ position: 'relative', width: squareWidth, height: squareWidth }}>
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
           <img
-            src={`/chesspieces/wikipedia/${code}.png`}
+            src={PIECE_SVG_URLS[code]}
             alt=""
-            style={{ width: squareWidth, height: squareWidth, display: 'block' }}
+            style={{ width: '100%', height: '100%', display: 'block' }}
             draggable={false}
           />
           {letter && overlays[letter] && (
             <div style={{
-              position: 'absolute', top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              fontSize: Math.max(14, squareWidth * 0.42) + 'px',
-              fontWeight: 900,
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.8em',
+              fontWeight: 'bold',
               color: '#FF6B00',
-              textShadow: '0 0 6px #000, 0 0 12px rgba(0,0,0,0.8)',
-              lineHeight: 1,
+              textShadow: '0 0 4px #000, 0 0 8px #000',
               pointerEvents: 'none',
-              userSelect: 'none',
             }}>{letter}</div>
           )}
         </div>
