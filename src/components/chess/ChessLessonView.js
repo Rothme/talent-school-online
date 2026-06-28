@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Chessboard } from 'react-chessboard';
 import confetti from 'canvas-confetti';
 import { ChevronRight, ChevronLeft, CheckCircle2, BookOpen, Swords, Award, Clock, RotateCcw } from 'lucide-react';
@@ -412,6 +412,47 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const phase = phases[phaseIdx];
   const steps = phase?.steps || [];
   const step = steps[stepIdx];
+
+  // FIX 6 (corrected) — customPieces for pieceletters phase.
+  // Renders each piece as its Wikipedia PNG image + an orange letter overlay
+  // that appears progressively as Ms. Momo names each piece. Uses customPieces
+  // (not customSquare) so the letter is INSIDE the piece's own rendering tree,
+  // avoiding the z-index: 5 stacking context that the react-chessboard Piece
+  // component applies to flex items — which buried the overlay under the piece.
+  const _PIECE_LETTER_OVERLAY_MAP = { wK:'K', bK:'K', wQ:'Q', bQ:'Q', wR:'R', bR:'R', wB:'B', bB:'B', wN:'N', bN:'N' };
+  const customPiecesForLetters = useMemo(() => {
+    if (phase?.id !== 'pieceletters') return undefined;
+    const overlays = pieceLetterOverlays;
+    const pieces = {};
+    ['wK','bK','wQ','bQ','wR','bR','wB','bB','wN','bN','wP','bP'].forEach(code => {
+      const letter = _PIECE_LETTER_OVERLAY_MAP[code];
+      pieces[code] = ({ squareWidth }) => (
+        <div style={{ position: 'relative', width: squareWidth, height: squareWidth }}>
+          <img
+            src={`/chesspieces/wikipedia/${code}.png`}
+            alt=""
+            style={{ width: squareWidth, height: squareWidth, display: 'block' }}
+            draggable={false}
+          />
+          {letter && overlays[letter] && (
+            <div style={{
+              position: 'absolute', top: '50%', left: '50%',
+              transform: 'translate(-50%, -50%)',
+              fontSize: Math.max(14, squareWidth * 0.42) + 'px',
+              fontWeight: 900,
+              color: '#FF6B00',
+              textShadow: '0 0 6px #000, 0 0 12px rgba(0,0,0,0.8)',
+              lineHeight: 1,
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}>{letter}</div>
+          )}
+        </div>
+      );
+    });
+    return pieces;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase?.id, pieceLetterOverlays]);
 
   // When lessonData changes (different lesson selected), set the board to the
   // first step's boardState immediately so pieces are visible before Start Class.
@@ -1907,6 +1948,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   customSquareStyles={squareStyles}
                   customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
                   customDarkSquareStyle={{ backgroundColor: '#b58863' }}
+                  customPieces={customPiecesForLetters}
                   onSquareClick={handleSquareClickArgs}
                   customSquare={(() => {
                     const isTeaching = ['click-square','observe'].includes(step?.taskType);
@@ -1914,10 +1956,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                     const isGuided = currentStepRef.current?.guided === true && Array.isArray(currentStepRef.current?.targetSquares);
                     const isPIG = step?.taskType === 'piece-intro-guided';
                     const isUnguidedRange = step?.taskType === 'piece-range' && !isGuided;
-                    const hasLetterOverlay = phase?.id === 'pieceletters' && Object.keys(pieceLetterOverlays).length > 0;
-                    // FIX 6: piece letter overlay — map piece codes to their notation letter
-                    const PIECE_LETTER = { wK:'K', bK:'K', wQ:'Q', bQ:'Q', wR:'R', bR:'R', wB:'B', bB:'B', wN:'N', bN:'N' };
-                    if (!isGuided && !labelSqs.length && !isPIG && !isUnguidedRange && !hasLetterOverlay) return 'div';
+                    if (!isGuided && !labelSqs.length && !isPIG && !isUnguidedRange) return 'div';
                     return ({ square, squareColor, style, children }) => {
                       if (isPIG) {
                         const isTick = (tickSquares || []).includes(square);
@@ -2005,41 +2044,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                             boxShadow: 'inset 0 0 0 3px rgba(255,150,0,0.9)',
                           }}>
                             {children}
-                          </div>
-                        );
-                      }
-                      // FIX 6: piece letter overlay for pieceletters phase
-                      if (hasLetterOverlay) {
-                        const pieceCode = currentBoardPos[square];
-                        const letter = pieceCode ? PIECE_LETTER[pieceCode] : null;
-                        const showLetter = letter && pieceLetterOverlays[letter];
-                        return (
-                          <div style={{...style, position: 'relative'}}>
-                            {children}
-                            {showLetter && (
-                              <div style={{
-                                position:'absolute', top:'50%', left:'50%',
-                                transform:'translate(-50%,-50%)',
-                                fontSize: Math.max(14, boardWidth / 8 * 0.38) + 'px',
-                                fontWeight:900,
-                                color:'#ff9500',
-                                textShadow:'0 0 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.7)',
-                                lineHeight:1,
-                                pointerEvents:'none',
-                                fontFamily:'var(--font-main)',
-                                animation: 'cl-letter-pop 0.3s ease-out',
-                              }}>{letter}</div>
-                            )}
-                            {labelSqs.includes(square) && (
-                              <div style={{
-                                position:'absolute', bottom:2, right:3,
-                                fontSize: Math.max(9, (boardWidth - 56) / 8 * 0.28) + 'px',
-                                fontWeight:900, color:'#fff',
-                                textShadow:'0 1px 3px rgba(0,0,0,0.9)',
-                                lineHeight:1,
-                                fontFamily:'var(--font-main)',
-                              }}>{square.toUpperCase()}</div>
-                            )}
                           </div>
                         );
                       }
