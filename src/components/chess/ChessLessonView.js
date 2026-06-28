@@ -385,8 +385,16 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [pieceQuizIdx, setPieceQuizIdx] = useState(0);
   const [pieceQuizAnswer, setPieceQuizAnswer] = useState(null);
   const [writeAnswer, setWriteAnswer] = useState(null);
-  const [placedPieces, setPlacedPieces] = useState({}); // for notation-puzzle-setup
+  const [placedPieces, setPlacedPieces] = useState({}); // for notation-puzzle-setup and piece-placement
   const [pieceTrayOrder, setPieceTrayOrder] = useState([]); // shuffled tray order
+  // notation-drag state
+  const [notationDragIdx, setNotationDragIdx] = useState(0);
+  const [notationDragTicks, setNotationDragTicks] = useState([]); // completed call ids
+  // piece-placement state
+  const [placementIdx, setPlacementIdx] = useState(0);
+  const [selectedPalettePiece, setSelectedPalettePiece] = useState(null);
+  // piece letter overlay (FIX 6) — tracks which letters are currently displayed on pieces
+  const [pieceLetterOverlays, setPieceLetterOverlays] = useState({});
 
   const speedRef = useRef(null);
   const voiceRef = useRef(false);
@@ -564,6 +572,17 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
           prev.some(c => c.letter === card.letter) ? prev : [...prev, card]
         );
       }
+
+      // FIX 6 — Piece letter overlay during pieceletters phase:
+      // As Ms. Momo names each piece, its letter appears overlaid on the board.
+      // Letters accumulate and stay until step changes.
+      if (phase?.id === 'pieceletters') {
+        const LETTER_MAP = { king:'K', queen:'Q', rook:'R', bishop:'B', knight:'N' };
+        const letter = LETTER_MAP[w];
+        if (letter) {
+          setPieceLetterOverlays(prev => ({ ...prev, [letter]: true }));
+        }
+      }
       return;
     }
 
@@ -701,6 +720,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     setSelectedSq(null); setMoveDone(false);
     setPieceQuizIdx(0); setPieceQuizAnswer(null);
     setWriteAnswer(null);
+    setNotationDragIdx(0); setNotationDragTicks([]);
+    setPlacementIdx(0); setSelectedPalettePiece(null);
+    setPieceLetterOverlays({});
 
     // Compute board FEN for this step
     if (step?.taskType === 'notation-demo') {
@@ -772,6 +794,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       setBoardFen(step.quizItems?.[0]?.fen || 'start');
     } else if (step?.taskType === 'piece-letter-quiz') {
       setBoardFen('start');
+    } else if (step?.taskType === 'notation-drag') {
+      const firstCall = step.notationCalls?.[0];
+      if (firstCall?.boardState) setBoardFen(firstCall.boardState);
+      else setBoardFen('start');
+    } else if (step?.taskType === 'piece-placement') {
+      setBoardFen('empty-custom');
+      setPlacedPieces({});
     } else if (step?.taskType === 'notation-puzzle-setup') {
       setBoardFen('empty-custom');
       setPlacedPieces({});
@@ -1095,6 +1124,40 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       return false; // always return false so piece snaps back to origin
     }
 
+    // notation-drag: student reads notation on right panel and drags piece to target square
+    if (tt === 'notation-drag') {
+      const calls = currentStepRef.current.notationCalls || [];
+      const call = calls[notationDragIdx];
+      if (!call) return false;
+      if (sourceSquare !== call.pieceSquare) {
+        showFb(`That is not the right piece — read the notation! Drag the ${call.notation[0] === 'N' ? 'Knight' : call.notation[0] === 'R' ? 'Rook' : call.notation[0] === 'B' ? 'Bishop' : call.notation[0] === 'Q' ? 'Queen' : 'piece'} from its square.`, 'error');
+        return false;
+      }
+      if (targetSquare === call.targetSquare) {
+        const newTicks = [...notationDragTicks, call.id];
+        setNotationDragTicks(newTicks);
+        setStreak(s => s + 1);
+        setScore(s => s + 1); setTotal(t => t + 1);
+        const nextIdx = notationDragIdx + 1;
+        if (nextIdx >= calls.length) {
+          completeTask(
+            fill(currentStepRef.current.successVoice || 'All moves complete!', childName),
+            currentStepRef.current.successVoice,
+          );
+        } else {
+          const nextCall = calls[nextIdx];
+          showFb(`✓ ${call.notation} — correct!`, 'success', fill(nextCall.voice || `Next: ${nextCall.notation}`, childName), () => {
+            setNotationDragIdx(nextIdx);
+            setBoardFen(nextCall.boardState || 'start');
+          });
+        }
+      } else {
+        setWrongSqs([targetSquare]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
+        showFb(`Not quite — read the square in "${call.notation}". Drag to ${call.targetSquare.toUpperCase()}!`, 'error');
+      }
+      return false; // piece always snaps back
+    }
+
     // piece-intro-guided: narration must finish before student can drag
     if (tt === 'piece-intro-guided') {
       if (!narrationComplete) return false;
@@ -1242,6 +1305,41 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         setSelectedSq(null); setNeonSqs([]);
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 600);
         showFb(pickVoice(step, 'wrong') || 'Not quite - try again!', 'error', pickVoice(step, 'wrong'));
+      }
+      return;
+    }
+
+    if (tt === 'piece-placement') {
+      if (!selectedPalettePiece) {
+        showFb('Click a piece in the palette first, then click its starting square!', 'hint');
+        return;
+      }
+      const items = step.placementItems || [];
+      const item = items[placementIdx];
+      if (!item) return;
+      if (sq === item.square) {
+        const np = { ...placedPieces, [sq]: { piece: item.piece, color: item.color } };
+        setPlacedPieces(np);
+        setSelectedPalettePiece(null);
+        setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
+        const nextIdx = placementIdx + 1;
+        if (nextIdx >= items.length) {
+          completeTask(
+            fill(step.successVoice || 'All pieces placed!', childName),
+            step.successVoice,
+          );
+        } else {
+          const nextItem = items[nextIdx];
+          showFb(`✓ ${item.icon} on ${item.square.toUpperCase()}!`, 'success',
+            fill(nextItem.callVoice || `Place the ${nextItem.piece} on ${nextItem.square}`, childName),
+            () => setPlacementIdx(nextIdx));
+        }
+      } else if (placedPieces[sq]) {
+        showFb('That square is already occupied!', 'hint');
+      } else {
+        setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
+        showFb(`Not quite — drag the ${item.icon} to ${item.square.toUpperCase()}!`, 'error');
+        setSelectedPalettePiece(null);
       }
       return;
     }
@@ -1634,19 +1732,31 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   }
 
   if (lessonDone) {
+    const stars = score >= 20 ? 3 : score >= 10 ? 2 : score >= 1 ? 1 : 0;
     return (
-      <div className="cl-done">
-        <div className="cl-done-card">
+      <div className="cl-done cl-done-animated">
+        <div className="cl-done-card cl-done-card-animated">
+          <div className="cl-done-burst">🎉</div>
           <Award size={56} className="cl-done-icon" />
-          <h2>Lesson 1 complete!</h2>
-          <p className="cl-done-sub">The board, the squares, and the chess army</p>
+          <h2 className="cl-done-title">{lesson.title || 'Lesson'} — Complete!</h2>
+          <p className="cl-done-sub">{lesson.subtitle || ''}</p>
+          <div className="cl-done-stars">
+            {[0,1,2].map(i => (
+              <span key={i} className={`cl-done-star${i < stars ? ' cl-done-star-earned' : ''}`}>⭐</span>
+            ))}
+          </div>
           <p className="cl-done-msg">
-            Outstanding work {childName}! You know every square on the chess board, and you can recognise all six chess pieces. You are ready for Lesson 2 — the language of chess!
+            Ms. Momo says: "Well done, {childName}! You learned piece names, piece letters (K Q R B N), how to read a chess move, and where every piece starts. You are ready for Lesson 3!"
           </p>
           <div className="cl-done-score">
             <span className="cl-done-n">{score}</span>
             <span className="cl-done-l">correct answers</span>
           </div>
+          {onComplete && (
+            <button className="cl-done-next" onClick={() => onComplete()}>
+              Next Lesson →
+            </button>
+          )}
         </div>
       </div>
     );
@@ -1792,7 +1902,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   showAnimations={true}
                   animationDuration={500}
                   showBoardNotation={true}
-                  arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range', 'piece-intro-guided'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
+                  arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range', 'piece-intro-guided', 'notation-drag'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying}
                   onPieceDrop={handlePieceDrop}
                   customSquareStyles={squareStyles}
                   customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
@@ -1804,7 +1914,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                     const isGuided = currentStepRef.current?.guided === true && Array.isArray(currentStepRef.current?.targetSquares);
                     const isPIG = step?.taskType === 'piece-intro-guided';
                     const isUnguidedRange = step?.taskType === 'piece-range' && !isGuided;
-                    if (!isGuided && !labelSqs.length && !isPIG && !isUnguidedRange) return 'div';
+                    const hasLetterOverlay = phase?.id === 'pieceletters' && Object.keys(pieceLetterOverlays).length > 0;
+                    // FIX 6: piece letter overlay — map piece codes to their notation letter
+                    const PIECE_LETTER = { wK:'K', bK:'K', wQ:'Q', bQ:'Q', wR:'R', bR:'R', wB:'B', bB:'B', wN:'N', bN:'N' };
+                    if (!isGuided && !labelSqs.length && !isPIG && !isUnguidedRange && !hasLetterOverlay) return 'div';
                     return ({ square, squareColor, style, children }) => {
                       if (isPIG) {
                         const isTick = (tickSquares || []).includes(square);
@@ -1895,6 +2008,42 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                           </div>
                         );
                       }
+                      // FIX 6: piece letter overlay for pieceletters phase
+                      if (hasLetterOverlay) {
+                        const pieceCode = currentBoardPos[square];
+                        const letter = pieceCode ? PIECE_LETTER[pieceCode] : null;
+                        const showLetter = letter && pieceLetterOverlays[letter];
+                        return (
+                          <div style={{...style, position: 'relative'}}>
+                            {children}
+                            {showLetter && (
+                              <div style={{
+                                position:'absolute', top:'50%', left:'50%',
+                                transform:'translate(-50%,-50%)',
+                                fontSize: Math.max(14, boardWidth / 8 * 0.38) + 'px',
+                                fontWeight:900,
+                                color:'#ff9500',
+                                textShadow:'0 0 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.7)',
+                                lineHeight:1,
+                                pointerEvents:'none',
+                                fontFamily:'var(--font-main)',
+                                animation: 'cl-letter-pop 0.3s ease-out',
+                              }}>{letter}</div>
+                            )}
+                            {labelSqs.includes(square) && (
+                              <div style={{
+                                position:'absolute', bottom:2, right:3,
+                                fontSize: Math.max(9, (boardWidth - 56) / 8 * 0.28) + 'px',
+                                fontWeight:900, color:'#fff',
+                                textShadow:'0 1px 3px rgba(0,0,0,0.9)',
+                                lineHeight:1,
+                                fontFamily:'var(--font-main)',
+                              }}>{square.toUpperCase()}</div>
+                            )}
+                          </div>
+                        );
+                      }
+
                       return (
                         <div style={{...style, position: 'relative'}}>
                           {children}
@@ -1940,27 +2089,41 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         {/* RIGHT — Score + Achievements + Exercise + Age Mode */}
         <div className="cl-col-right">
 
-          <div className="cl-score-card">
-            <div className="cl-score-label">SQUARES FOUND</div>
-            <div className="cl-score-big">{score}</div>
-            <div className="cl-score-sub">{total > 0 ? `of ${total} attempts` : "Let's go!"}</div>
-            <div className="cl-star-row">
-              {score >= 5 ? '⭐' : '☆'}{score >= 10 ? '⭐' : '☆'}{score >= 20 ? '⭐' : '☆'}
-            </div>
-          </div>
+          {(() => {
+            // Context-sensitive score label — Rule 26
+            const isSquareFinding = ['independent-squares', 'speed-round'].includes(step?.taskType) ||
+              phase?.type === 'warmup';
+            const isPieceLetter = phase?.id === 'pieceletters' || phase?.id === 'letterquiz';
+            const isNotation = phase?.id === 'readmove';
+            const scoreLabel = isSquareFinding ? 'SQUARES FOUND'
+              : isPieceLetter ? 'PIECES LEARNED'
+              : isNotation ? 'MOVES READ'
+              : 'SCORE';
+            return (
+              <div className="cl-score-card">
+                <div className="cl-score-label">{scoreLabel}</div>
+                <div className="cl-score-big">{score}</div>
+                <div className="cl-score-sub">{total > 0 ? `of ${total} attempts` : "Let's go!"}</div>
+                <div className="cl-star-row">
+                  {score >= 5 ? '⭐' : '☆'}{score >= 10 ? '⭐' : '☆'}{score >= 20 ? '⭐' : '☆'}
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="cl-achieve-card">
             <div className="cl-achieve-title">🏅 ACHIEVEMENTS</div>
             <div className="cl-badge-grid">
               {[
-                { icon: '🎯', name: 'First Hit',  earned: score >= 1 },
-                { icon: '🔥', name: 'On Fire',    earned: streak >= 3 },
-                { icon: '⚡', name: 'Speed Star', earned: step?.taskType === 'speed-round' && taskComplete },
-                { icon: '🏆', name: 'Champion',   earned: phaseIdx >= phases.length - 1 && taskComplete },
+                { icon: '🎯', name: 'First Hit',  desc: 'Answered correctly on first try',     earned: score >= 1 },
+                { icon: '🔥', name: 'On Fire',    desc: '3 correct answers in a row',           earned: streak >= 3 },
+                { icon: '⚡', name: 'Speed Star', desc: 'Completed a drag or move challenge',   earned: ['notation-drag','piece-placement','piece-range'].includes(step?.taskType) && taskComplete },
+                { icon: '🏆', name: 'Champion',   desc: 'Reached the final phase of the lesson', earned: phaseIdx >= phases.length - 1 && taskComplete },
               ].map((b, i) => (
                 <div key={i} className={`cl-badge${b.earned ? ' cl-badge-earned' : ''}`}>
                   <span className="cl-badge-icon">{b.icon}</span>
                   <span className="cl-badge-name">{b.name}</span>
+                  <span className="cl-badge-desc">{b.desc}</span>
                 </div>
               ))}
             </div>
@@ -2234,6 +2397,55 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             </div>
           )}
 
+          {/* Notation drag — current call display */}
+          {step?.taskType === 'notation-drag' && !taskComplete && (() => {
+            const call = step.notationCalls?.[notationDragIdx];
+            if (!call) return null;
+            return (
+              <div className="cl-notation-drag-panel">
+                <div className="cl-nd-label">Drag the piece shown:</div>
+                <div className="cl-nd-notation">{call.notation}</div>
+                <div className="cl-nd-explain">{call.explain}</div>
+                <div className="cl-nd-progress">{notationDragIdx + 1} of {step.notationCalls.length}</div>
+              </div>
+            );
+          })()}
+
+          {/* Piece placement — palette */}
+          {step?.taskType === 'piece-placement' && !taskComplete && (() => {
+            const items = step.placementItems || [];
+            const remaining = items.slice(placementIdx);
+            const current = items[placementIdx];
+            return (
+              <div className="cl-placement-panel">
+                <div className="cl-placement-label">
+                  {current ? `Place the ${current.icon} on ${current.square.toUpperCase()}` : 'All placed!'}
+                </div>
+                <div className="cl-palette">
+                  {remaining.map((item, i) => (
+                    <button
+                      key={item.square}
+                      className={`cl-palette-piece${i === 0 && selectedPalettePiece ? ' cl-palette-selected' : ''}`}
+                      onClick={() => {
+                        if (i === 0) {
+                          setSelectedPalettePiece(item);
+                          const vt = fill(item.callVoice || `Place the piece!`, childName);
+                          showFb(`${item.icon} selected — now click ${item.square.toUpperCase()} on the board!`, 'hint', vt);
+                        }
+                      }}
+                      disabled={i !== 0}
+                      title={i === 0 ? `Click to select, then click ${item.square} on the board` : 'Place current piece first'}
+                    >
+                      <span className="cl-palette-icon">{item.icon}</span>
+                      <span className="cl-palette-ltr">{item.letter}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="cl-placement-progress">{placementIdx} of {items.length} placed</div>
+              </div>
+            );
+          })()}
+
           {/* Speed round */}
           {speedState?.active && (
             <div className="cl-speed">
@@ -2246,7 +2458,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
 
           {(() => {
             const ownControls = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'write-notation'].includes(step?.taskType);
-            const boardTask = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'piece-intro-guided', 'speed-round', 'file-name-quiz'].includes(step?.taskType);
+            const boardTask = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'piece-intro-guided', 'speed-round', 'file-name-quiz', 'notation-drag', 'piece-placement'].includes(step?.taskType);
 
             if (speedState?.active || quizState?.active || fileQS?.active) return null;
             if (ownControls) return null;

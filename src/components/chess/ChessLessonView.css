@@ -223,10 +223,13 @@
   font-size: 11px;
   font-style: italic;
   color: rgba(255,255,255,0.88);
-  line-height: 1.5;
+  line-height: 1.45;
   min-height: 80px;
-  max-height: 120px;
-  overflow-y: auto;
+  max-height: 92px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
   box-sizing: border-box;
 }
 .cl-momo-controls {
@@ -750,3 +753,92 @@
 .cl-move-label   { font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: .08em; }
 .cl-move-text    { font-size: 38px; font-weight: 900; color: #fde047; letter-spacing: .04em; line-height: 1; text-shadow: 0 0 20px rgba(253,224,71,0.5); font-family: 'Courier New', monospace; }
 .cl-move-explain { font-size: 10px; color: #94a3b8; font-weight: 600; text-align: center; }
+
+/* ── FIX 5: Badge description label ── */
+.cl-badge-desc {
+  font-size: 8px; color: rgba(255,255,255,0.35); text-align: center;
+  line-height: 1.3; margin-top: 2px; font-weight: 600;
+  max-width: 68px; word-break: break-word;
+}
+.cl-badge.cl-badge-earned .cl-badge-desc { color: rgba(255,149,0,0.65); }
+.cl-badge { flex-direction: column; gap: 1px; padding: 6px 4px; }
+
+/* ── FIX 2: Notation-drag panel ── */
+.cl-notation-drag-panel {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 12px 10px;
+  background: rgba(13,19,33,.88); border: 2px solid rgba(255,210,0,0.4);
+  border-radius: 12px;
+}
+.cl-nd-label   { font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: .08em; }
+.cl-nd-notation { font-size: 44px; font-weight: 900; color: #fde047; letter-spacing: .04em; line-height: 1; text-shadow: 0 0 20px rgba(253,224,71,0.6); font-family: 'Courier New', monospace; }
+.cl-nd-explain  { font-size: 11px; color: #cbd5e1; font-weight: 600; text-align: center; }
+.cl-nd-progress { font-size: 9px; color: #64748b; font-weight: 700; }
+
+/* ── FIX 3: Piece-placement palette ── */
+.cl-placement-panel {
+  display: flex; flex-direction: column; gap: 8px; padding: 10px;
+  background: rgba(13,19,33,.88); border: 2px solid rgba(255,210,0,0.3);
+  border-radius: 12px;
+}
+.cl-placement-label { font-size: 10px; font-weight: 900; color: #fde047; text-align: center; }
+.cl-palette {
+  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+}
+.cl-palette-piece {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 2px; padding: 6px 8px;
+  background: rgba(255,210,0,0.12); border: 2px solid rgba(255,210,0,0.35);
+  border-radius: 10px; cursor: pointer; transition: all 0.15s;
+  min-width: 42px;
+}
+.cl-palette-piece:disabled { opacity: 0.35; cursor: not-allowed; }
+.cl-palette-piece:first-child:not(:disabled):hover { background: rgba(255,210,0,0.25); border-color: #fde047; }
+.cl-palette-selected { background: rgba(255,149,0,0.25) !important; border-color: #ff9500 !important; box-shadow: 0 0 10px rgba(255,149,0,0.4); }
+.cl-palette-icon { font-size: 22px; line-height: 1; }
+.cl-palette-ltr  { font-size: 11px; font-weight: 900; color: #fde047; }
+.cl-placement-progress { font-size: 9px; color: #64748b; font-weight: 700; text-align: center; }
+
+/* ── FIX 4: Animated celebration screen ── */
+.cl-done-animated { animation: cl-done-fadein 0.5s ease-out; }
+@keyframes cl-done-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.cl-done-card-animated { animation: cl-done-slide 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes cl-done-slide {
+  from { opacity: 0; transform: scale(0.85) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.cl-done-burst { font-size: 42px; margin-bottom: 4px; animation: cl-burst 0.6s ease-out; }
+@keyframes cl-burst {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.cl-done-title { color: #fff; font-size: 20px; margin: 4px 0 4px; font-family: 'Fredoka One', cursive; font-weight: 400; }
+.cl-done-stars { display: flex; gap: 6px; justify-content: center; margin: 8px 0; font-size: 24px; }
+.cl-done-star { opacity: 0.2; filter: grayscale(1); transition: all 0.3s; }
+.cl-done-star-earned { opacity: 1; filter: none; animation: cl-star-pop 0.4s ease-out; }
+@keyframes cl-star-pop {
+  0%   { transform: scale(0); }
+  70%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+.cl-done-next {
+  margin-top: 16px; padding: 11px 28px;
+  background: linear-gradient(135deg, #ff9500, #ff6b00);
+  border: none; border-radius: 24px;
+  color: #fff; font-size: 15px; font-weight: 800;
+  cursor: pointer; font-family: 'Fredoka One', cursive;
+  box-shadow: 0 4px 18px rgba(255,149,0,0.45);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.cl-done-next:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,149,0,0.6); }
+
+/* ── FIX 6: Piece letter overlay pop animation ── */
+@keyframes cl-overlay-letter-pop {
+  0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+  70%  { transform: translate(-50%,-50%) scale(1.2); }
+  100% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+}
