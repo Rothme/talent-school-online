@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Palette Test — piece-placement layout</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1a2e;
+      color: #fff;
+      font-family: sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    h1 { font-size: 14px; opacity: 0.5; letter-spacing: 1px; text-transform: uppercase; }
+
+    .scene {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* ── Palette ── */
+    .palette {
+      display: grid;
+      grid-template-columns: 52px 52px;
+      grid-template-rows: 52px 52px 52px;
+      gap: 6px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .palette img {
+      display: block;
+      cursor: grab;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.08);
+      transition: background 0.15s;
+    }
+
+    .palette img:hover { background: rgba(255,210,0,0.25); }
+
+    /* ── Board ── */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, 60px);
+      grid-template-rows: repeat(8, 60px);
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .sq {
+      width: 60px;
+      height: 60px;
+    }
+
+    .sq.light { background: #F0D9B5; }
+    .sq.dark  { background: #B58863; }
+
+    /* rank/file labels */
+    .labels {
+      display: grid;
+      grid-template-columns: repeat(8, 60px);
+      gap: 0;
+    }
+
+    .file-label {
+      width: 60px;
+      text-align: center;
+      font-size: 11px;
+      opacity: 0.45;
+      padding-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>piece-placement palette layout — visual test</h1>
+
+  <div class="scene">
+
+    <!-- White palette (left) -->
+    <div class="palette" id="white-palette">
+      <!-- Row 1 -->
+      <img src="/static/media/wK.14b9d201ad093b1e11b78e7951fdf7e3.svg" alt="wK" width="52" height="52" title="White King" />
+      <img src="/static/media/wQ.89a8a70ba71db28f6af4d6f3ea84e30b.svg" alt="wQ" width="52" height="52" title="White Queen" />
+      <!-- Row 2 -->
+      <img src="/static/media/wR.e3901eb6776726454181e3f45818ea00.svg" alt="wR" width="52" height="52" title="White Rook" />
+      <img src="/static/media/wB.7a61d9974970b22ca3eef3fbd5be5f03.svg" alt="wB" width="52" height="52" title="White Bishop" />
+      <!-- Row 3 -->
+      <img src="/static/media/wN.16b978a03a9ae000c632d0e8b93d0be0.svg" alt="wN" width="52" height="52" title="White Knight" />
+      <img src="/static/media/wP.ad0cc98f64bc1dff264c1a29f35a189f.svg" alt="wP" width="52" height="52" title="White Pawn" />
+    </div>
+
+    <!-- Board (centre) -->
+    <div>
+      <div class="board" id="board"></div>
+      <div class="labels" id="file-labels"></div>
+    </div>
+
+    <!-- Black palette (right) -->
+    <div class="palette" id="black-palette">
+      <!-- Row 1 -->
+      <img src="/static/media/bK.854c444a98da3f3ea06fe213171e5f62.svg" alt="bK" width="52" height="52" title="Black King" />
+      <img src="/static/media/bQ.57ff3d75bdcaaf7f985006bc7de797aa.svg" alt="bQ" width="52" height="52" title="Black Queen" />
+      <!-- Row 2 -->
+      <img src="/static/media/bR.47a2684b28143718f27deefc5cea721c.svg" alt="bR" width="52" height="52" title="Black Rook" />
+      <img src="/static/media/bB.7560bae03782495785aa28a0217f6537.svg" alt="bB" width="52" height="52" title="Black Bishop" />
+      <!-- Row 3 -->
+      <img src="/static/media/bN.5e5d5e36c549caa0cb562e79970cc6bb.svg" alt="bN" width="52" height="52" title="Black Knight" />
+      <img src="/static/media/bP.47f4b2ac6c8478b5ceb993338c534706.svg" alt="bP" width="52" height="52" title="Black Pawn" />
+    </div>
+
+  </div>
+
+  <script>
+    // Build the 8×8 board. Rank 8 is the top row (index 0), rank 1 is bottom (index 7).
+    const board = document.getElementById('board');
+    const files = ['a','b','c','d','e','f','g','h'];
+    const labels = document.getElementById('file-labels');
+
+    for (let rank = 8; rank >= 1; rank--) {
+      for (let fileIdx = 0; fileIdx < 8; fileIdx++) {
+        const sq = document.createElement('div');
+        sq.className = 'sq ' + ((rank + fileIdx) % 2 === 0 ? 'dark' : 'light');
+        sq.title = files[fileIdx] + rank;
+        board.appendChild(sq);
+      }
+    }
+
+    files.forEach(f => {
+      const lbl = document.createElement('div');
+      lbl.className = 'file-label';
+      lbl.textContent = f;
+      labels.appendChild(lbl);
+    });
+  </script>
+</body>
+</html>
