@@ -2092,7 +2092,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                 onDragEnd={() => { draggedPaletteItemRef.current = null; }}
                 title={slot.isCurrent && slot.remaining > 0 ? `Drag to ${currentItem?.square?.toUpperCase()}` : ''}
               >
-                <img src={PIECE_SVG_URLS[`${slot.color}${slot.type}`]} alt={slot.type} draggable={false} />
+                <img src={PIECE_SVG_URLS[`${slot.color}${slot.type}`]} alt={slot.type} draggable={false} style={{ width: '30px', height: '30px' }} />
                 {slot.remaining > 1 && <span className="cl-pp-slot-count">×{slot.remaining}</span>}
               </div>
             ));
