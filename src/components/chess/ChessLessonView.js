@@ -2047,37 +2047,43 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         <div className="cl-col-center">
           <div className="cl-battlefield-label">🏰 THE BATTLEFIELD</div>
 
-          <div className={isPP ? 'cl-board-and-palettes' : 'cl-board-solo'}>
+          <div className="cl-board-wrap" ref={boardWrapRef}>
           {isPP && (() => {
-            const items = step.placementItems || [];
+            const items = step?.placementItems || [];
             const currentItem = items[placementIdx];
             const canDrag = voiceFinished && !speakingFb && !isPlaying;
-            const whitePalette = items.filter(i => i.color === 'w' && !placedPieces[i.square]);
-            return (
-              <div className="cl-pp-palette cl-pp-left">
-                {whitePalette.map(item => {
-                  const isCurrent = currentItem && item.piece === currentItem.piece && item.color === currentItem.color;
-                  return (
-                    <div
-                      key={item.id}
-                      className={`cl-pp-piece${isCurrent ? ' cl-pp-piece-current' : ''}`}
-                      draggable={canDrag && isCurrent}
-                      onDragStart={e => {
-                        if (!canDrag || !isCurrent) { e.preventDefault(); return; }
-                        draggedPaletteItemRef.current = item;
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      onDragEnd={() => { draggedPaletteItemRef.current = null; }}
-                      title={isCurrent ? `Drag to ${currentItem.square.toUpperCase()}` : 'Place the highlighted piece first'}
-                    >
-                      <img src={PIECE_SVG_URLS[`${item.color}${item.piece}`]} alt={item.piece} draggable={false} />
-                    </div>
-                  );
-                })}
+            const TYPES = ['K','Q','R','B','N','P'];
+            const buildSlots = (color) => TYPES.map(type => {
+              const ofType = items.filter(i => i.color === color && i.piece === type);
+              if (!ofType.length) return null;
+              const remaining = ofType.length - ofType.filter(i => placedPieces[i.square]).length;
+              const isCurrent = currentItem?.color === color && currentItem?.piece === type;
+              return { type, color, remaining, isCurrent };
+            }).filter(Boolean);
+            const renderSlots = (slots) => slots.map(slot => (
+              <div
+                key={slot.type}
+                className={`cl-pp-slot${slot.remaining === 0 ? ' cl-pp-slot-done' : ''}${slot.isCurrent ? ' cl-pp-slot-current' : ''}`}
+                draggable={canDrag && slot.isCurrent && slot.remaining > 0}
+                onDragStart={e => {
+                  if (!canDrag || !slot.isCurrent || slot.remaining === 0) { e.preventDefault(); return; }
+                  draggedPaletteItemRef.current = { piece: slot.type, color: slot.color };
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragEnd={() => { draggedPaletteItemRef.current = null; }}
+                title={slot.isCurrent && slot.remaining > 0 ? `Drag to ${currentItem?.square?.toUpperCase()}` : ''}
+              >
+                <img src={PIECE_SVG_URLS[`${slot.color}${slot.type}`]} alt={slot.type} draggable={false} />
+                {slot.remaining > 1 && <span className="cl-pp-slot-count">×{slot.remaining}</span>}
               </div>
+            ));
+            return (
+              <>
+                <div className="cl-pp-palette cl-pp-left">{renderSlots(buildSlots('w'))}</div>
+                <div className="cl-pp-palette cl-pp-right">{renderSlots(buildSlots('b'))}</div>
+              </>
             );
           })()}
-          <div className={isPP ? 'cl-board-wrap cl-board-wrap-pp' : 'cl-board-wrap'} ref={boardWrapRef}>
             <div style={{position:'relative', width:'100%', paddingBottom:'100%'}}>
               <div style={{position:'absolute', inset:0}}>
             <div className="cl-board-frame-new">
@@ -2266,36 +2272,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
               </div>{/* absolute inset */}
             </div>{/* padding-bottom square hack */}
           </div>{/* cl-board-wrap */}
-          {isPP && (() => {
-            const items = step.placementItems || [];
-            const currentItem = items[placementIdx];
-            const canDrag = voiceFinished && !speakingFb && !isPlaying;
-            const blackPalette = items.filter(i => i.color === 'b' && !placedPieces[i.square]);
-            return (
-              <div className="cl-pp-palette cl-pp-right">
-                {blackPalette.map(item => {
-                  const isCurrent = currentItem && item.piece === currentItem.piece && item.color === currentItem.color;
-                  return (
-                    <div
-                      key={item.id}
-                      className={`cl-pp-piece${isCurrent ? ' cl-pp-piece-current' : ''}`}
-                      draggable={canDrag && isCurrent}
-                      onDragStart={e => {
-                        if (!canDrag || !isCurrent) { e.preventDefault(); return; }
-                        draggedPaletteItemRef.current = item;
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      onDragEnd={() => { draggedPaletteItemRef.current = null; }}
-                      title={isCurrent ? `Drag to ${currentItem.square.toUpperCase()}` : 'Place the highlighted piece first'}
-                    >
-                      <img src={PIECE_SVG_URLS[`${item.color}${item.piece}`]} alt={item.piece} draggable={false} />
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
-          </div>{/* cl-board-and-palettes / cl-board-solo */}
 
           {step?.task && (
             <div className="cl-taskbar">

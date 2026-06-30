@@ -343,6 +343,7 @@
   width: 100%;
   max-width: calc(100vh - 140px);
   flex-shrink: 0;
+  position: relative;
 }
 
 /* Gold frame around the board */
@@ -852,72 +853,52 @@
 
 /* ══════════════════════════════════════════════════════════════
    PIECE-PLACEMENT task type — Rule 33
-   Board + left/right palettes layout
+   Palettes sit absolutely OUTSIDE the board; board is untouched
 ══════════════════════════════════════════════════════════════ */
 
-/* Wrapper around board + side palettes */
-.cl-board-and-palettes {
-  display: flex;
-  align-items: stretch;
-  gap: 4px;
-  width: 100%;
-  flex-shrink: 0;
-}
-.cl-board-solo {
-  width: 100%;
-  flex-shrink: 0;
-}
-
-/* Board-wrap inside the flex row takes remaining space */
-.cl-board-wrap-pp {
-  flex: 1;
-  min-width: 0;
-  max-width: none; /* override the standalone max-width */
-}
-
-/* Vertical palette strip — left (white) and right (black) */
+/* Palette strip — absolutely positioned beside cl-board-wrap */
 .cl-pp-palette {
-  flex-shrink: 0;
-  width: 36px;
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 44px;
   display: flex;
   flex-direction: column;
-  padding: 3px;
-  gap: 2px;
-  background: rgba(10,8,40,0.75);
+  padding: 4px 3px;
+  gap: 3px;
+  background: rgba(10,8,40,0.82);
   border: 2px solid rgba(255,200,50,0.3);
   border-radius: 8px;
   box-sizing: border-box;
+  z-index: 5;
+  overflow: hidden;
 }
-.cl-pp-left  { border-color: rgba(240,220,160,0.4); } /* warm gold for white pieces */
-.cl-pp-right { border-color: rgba(140,120,200,0.4); } /* purple for black pieces */
+.cl-pp-left  {
+  right: calc(100% + 6px);
+  border-color: rgba(240,220,160,0.45);
+}
+.cl-pp-right {
+  left: calc(100% + 6px);
+  border-color: rgba(140,120,200,0.45);
+}
 
-/* Individual draggable piece in the palette */
-.cl-pp-piece {
+/* 6 type slots per palette */
+.cl-pp-slot {
   flex: 1;
   min-height: 0;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
+  border-radius: 4px;
   border: 2px solid transparent;
   cursor: default;
   box-sizing: border-box;
-  padding: 1px;
-  opacity: 0.45;
+  padding: 2px;
+  opacity: 0.38;
   transition: border-color 0.15s, background 0.15s, opacity 0.15s;
 }
-.cl-pp-piece[draggable="true"] {
-  cursor: grab;
-  opacity: 1;
-}
-.cl-pp-piece[draggable="true"]:active { cursor: grabbing; }
-.cl-pp-piece-current {
-  border-color: #ff9500;
-  background: rgba(255,149,0,0.18);
-  box-shadow: 0 0 6px rgba(255,149,0,0.5);
-  opacity: 1;
-}
-.cl-pp-piece img {
+.cl-pp-slot img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -925,6 +906,32 @@
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+.cl-pp-slot[draggable="true"] {
+  cursor: grab;
+  opacity: 1;
+}
+.cl-pp-slot[draggable="true"]:active { cursor: grabbing; }
+.cl-pp-slot-current {
+  border-color: #ff9500;
+  background: rgba(255,149,0,0.18);
+  box-shadow: 0 0 7px rgba(255,149,0,0.55);
+  opacity: 1;
+}
+.cl-pp-slot-done {
+  opacity: 0.12;
+}
+.cl-pp-slot-count {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  color: #fde047;
+  font-family: 'Fredoka One', cursive;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.85);
+  pointer-events: none;
 }
 
 /* Right panel — Pieces Placed counter (Rule 26) */
