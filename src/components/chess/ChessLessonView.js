@@ -526,6 +526,25 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase?.id, pieceLetterOverlays]);
 
+  // Same SVG source as pieceletters phase, without the letter overlay.
+  // Used during piece-placement so board pieces match palette pieces exactly.
+  const customPiecesForPP = useMemo(() => {
+    const pieces = {};
+    ['wK','bK','wQ','bQ','wR','bR','wB','bB','wN','bN','wP','bP'].forEach(code => {
+      pieces[code] = ({ squareWidth }) => (
+        <img
+          src={PIECE_SVG_URLS[code]}
+          alt=""
+          width={squareWidth}
+          height={squareWidth}
+          style={{ display: 'block' }}
+          draggable={false}
+        />
+      );
+    });
+    return pieces;
+  }, []); // PIECE_SVG_URLS is module-level constant — no deps
+
   // When lessonData changes (different lesson selected), set the board to the
   // first step's boardState immediately so pieces are visible before Start Class.
   // useEffect runs after every render where lessonData changes — unlike useState
@@ -2118,7 +2137,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   customSquareStyles={squareStyles}
                   customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
                   customDarkSquareStyle={{ backgroundColor: '#b58863' }}
-                  customPieces={customPiecesForLetters}
+                  customPieces={isPP ? customPiecesForPP : customPiecesForLetters}
                   onSquareClick={handleSquareClickArgs}
                   customSquare={(() => {
                     const isTeaching = ['click-square','observe'].includes(step?.taskType);
