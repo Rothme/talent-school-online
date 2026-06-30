@@ -64,6 +64,17 @@ function fenToPositionObj(fen) {
   }
 }
 
+// Convert browser clientX/Y into a board square name (white orientation).
+// rect = boardInnerRef.current.getBoundingClientRect()
+function coordsToSquare(clientX, clientY, rect) {
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  const sqSize = rect.width / 8;
+  const fileIdx = Math.min(7, Math.max(0, Math.floor(x / sqSize)));
+  const rankIdx = Math.min(7, Math.max(0, Math.floor(y / sqSize)));
+  return 'abcdefgh'[fileIdx] + (8 - rankIdx);
+}
+
 function resolveBoardPosition(boardFen, placedPieces) {
   if (boardFen === 'empty-custom') {
     // Convert placedPieces {square: {piece, color}} -> {square: 'wP'}
@@ -449,6 +460,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   // piece-placement state
   const [placementIdx, setPlacementIdx] = useState(0);
   const [selectedPalettePiece, setSelectedPalettePiece] = useState(null);
+  const draggedPaletteItemRef = useRef(null);
   // piece letter overlay (FIX 6) — tracks which letters are currently displayed on pieces
   const [pieceLetterOverlays, setPieceLetterOverlays] = useState({});
 
@@ -902,6 +914,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     } else if (step?.taskType === 'piece-placement') {
       setBoardFen('empty-custom');
       setPlacedPieces({});
+      setPlacementIdx(0);
     } else if (step?.taskType === 'notation-puzzle-setup') {
       setBoardFen('empty-custom');
       setPlacedPieces({});
@@ -1293,6 +1306,49 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     }
 
     return false; // not a draggable taskType — snap back
+  }
+
+  // Handles a drop from the side palette onto a board square (piece-placement taskType).
+  function handlePalettePieceDrop(sq, item) {
+    if (!voiceFinished || speakingFb || isPlaying) return;
+    const items = currentStepRef.current?.placementItems || [];
+    const currentItem = items[placementIdx];
+    if (!currentItem) return;
+
+    // Only accept the called piece type/color
+    if (item.piece !== currentItem.piece || item.color !== currentItem.color) {
+      showFb(`Drag the highlighted ${currentItem.icon} first!`, 'hint');
+      return;
+    }
+    if (placedPieces[sq]) {
+      showFb('That square is already occupied!', 'hint');
+      return;
+    }
+
+    if (sq === currentItem.square) {
+      // Correct placement
+      const np = { ...placedPieces, [currentItem.square]: { piece: currentItem.piece, color: currentItem.color } };
+      setPlacedPieces(np);
+      setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
+      setTickSquares([currentItem.square]);
+      setTimeout(() => setTickSquares([]), 800);
+      const nextIdx = placementIdx + 1;
+      if (nextIdx >= items.length) {
+        completeTask(
+          fill(currentStepRef.current?.successVoice || 'All pieces placed!', childName),
+          currentStepRef.current?.successVoice,
+        );
+      } else {
+        const nextItem = items[nextIdx];
+        showFb(`✓ ${currentItem.icon} on ${currentItem.square.toUpperCase()}!`, 'success',
+          fill(nextItem.callVoice || `Drag the ${nextItem.icon} to ${nextItem.square.toUpperCase()}`, childName),
+          () => setPlacementIdx(nextIdx));
+      }
+    } else {
+      // Wrong square
+      setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
+      showFb(`Not quite — drag to ${currentItem.square.toUpperCase()}!`, 'error', 'Not quite — try again!');
+    }
   }
 
   function handleSquareClickArgs(square) {
@@ -1864,6 +1920,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     );
   }
 
+  const isPP = step?.taskType === 'piece-placement' && !taskComplete;
   const pct = Math.round((phaseIdx / phases.length) * 100);
   const boardTaskTypes = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'piece-intro-guided', 'speed-round', 'file-name-quiz'];
   const contLabel = step?.taskType === 'speed-intro'
@@ -1990,11 +2047,57 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         <div className="cl-col-center">
           <div className="cl-battlefield-label">🏰 THE BATTLEFIELD</div>
 
-          <div className="cl-board-wrap" ref={boardWrapRef}>
+          <div className={isPP ? 'cl-board-and-palettes' : 'cl-board-solo'}>
+          {isPP && (() => {
+            const items = step.placementItems || [];
+            const currentItem = items[placementIdx];
+            const canDrag = voiceFinished && !speakingFb && !isPlaying;
+            const whitePalette = items.filter(i => i.color === 'w' && !placedPieces[i.square]);
+            return (
+              <div className="cl-pp-palette cl-pp-left">
+                {whitePalette.map(item => {
+                  const isCurrent = currentItem && item.piece === currentItem.piece && item.color === currentItem.color;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`cl-pp-piece${isCurrent ? ' cl-pp-piece-current' : ''}`}
+                      draggable={canDrag && isCurrent}
+                      onDragStart={e => {
+                        if (!canDrag || !isCurrent) { e.preventDefault(); return; }
+                        draggedPaletteItemRef.current = item;
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragEnd={() => { draggedPaletteItemRef.current = null; }}
+                      title={isCurrent ? `Drag to ${currentItem.square.toUpperCase()}` : 'Place the highlighted piece first'}
+                    >
+                      <img src={PIECE_SVG_URLS[`${item.color}${item.piece}`]} alt={item.piece} draggable={false} />
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+          <div className={isPP ? 'cl-board-wrap cl-board-wrap-pp' : 'cl-board-wrap'} ref={boardWrapRef}>
             <div style={{position:'relative', width:'100%', paddingBottom:'100%'}}>
               <div style={{position:'absolute', inset:0}}>
             <div className="cl-board-frame-new">
-              <div className="cl-board-inner" ref={boardInnerRef} style={{position:'relative'}}>
+              <div
+                className="cl-board-inner"
+                ref={boardInnerRef}
+                style={{position:'relative'}}
+                onDragOver={e => {
+                  if (isPP && draggedPaletteItemRef.current) e.preventDefault();
+                }}
+                onDrop={e => {
+                  if (!isPP || !draggedPaletteItemRef.current) return;
+                  e.preventDefault();
+                  const item = draggedPaletteItemRef.current;
+                  draggedPaletteItemRef.current = null;
+                  if (!boardInnerRef.current) return;
+                  const sq = coordsToSquare(e.clientX, e.clientY, boardInnerRef.current.getBoundingClientRect());
+                  handlePalettePieceDrop(sq, item);
+                }}
+              >
                 <Chessboard
                   id="tso-chess-lesson"
                   position={resolveBoardPosition(boardFen, placedPieces)}
@@ -2018,9 +2121,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                     const isPIG = step?.taskType === 'piece-intro-guided';
                     const isUnguidedRange = step?.taskType === 'piece-range' && !isGuided;
                     const isNDrag = step?.taskType === 'notation-drag';
-                    if (!isGuided && !labelSqs.length && !isPIG && !isUnguidedRange && !isNDrag) return 'div';
+                    const isPPlacement = step?.taskType === 'piece-placement';
+                    if (!isGuided && !labelSqs.length && !isPIG && !isUnguidedRange && !isNDrag && !isPPlacement) return 'div';
                     return ({ square, squareColor, style, children }) => {
-                      if (isNDrag && (tickSquares || []).includes(square)) {
+                      if ((isNDrag || isPPlacement) && (tickSquares || []).includes(square)) {
                         return (
                           <div style={{
                             ...style,
@@ -2161,7 +2265,37 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             </div>
               </div>{/* absolute inset */}
             </div>{/* padding-bottom square hack */}
-          </div>
+          </div>{/* cl-board-wrap */}
+          {isPP && (() => {
+            const items = step.placementItems || [];
+            const currentItem = items[placementIdx];
+            const canDrag = voiceFinished && !speakingFb && !isPlaying;
+            const blackPalette = items.filter(i => i.color === 'b' && !placedPieces[i.square]);
+            return (
+              <div className="cl-pp-palette cl-pp-right">
+                {blackPalette.map(item => {
+                  const isCurrent = currentItem && item.piece === currentItem.piece && item.color === currentItem.color;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`cl-pp-piece${isCurrent ? ' cl-pp-piece-current' : ''}`}
+                      draggable={canDrag && isCurrent}
+                      onDragStart={e => {
+                        if (!canDrag || !isCurrent) { e.preventDefault(); return; }
+                        draggedPaletteItemRef.current = item;
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragEnd={() => { draggedPaletteItemRef.current = null; }}
+                      title={isCurrent ? `Drag to ${currentItem.square.toUpperCase()}` : 'Place the highlighted piece first'}
+                    >
+                      <img src={PIECE_SVG_URLS[`${item.color}${item.piece}`]} alt={item.piece} draggable={false} />
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+          </div>{/* cl-board-and-palettes / cl-board-solo */}
 
           {step?.task && (
             <div className="cl-taskbar">
@@ -2216,7 +2350,26 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
 
           <div className="cl-exercise">
 
-          {visibleLetterCards.length > 0 && (
+          {/* Pieces Placed counter — Rule 26: replaces letter panel for piece-placement */}
+          {isPP && (() => {
+            const items = step?.placementItems || [];
+            const placed = Object.keys(placedPieces).length;
+            const currentItem = items[placementIdx];
+            return (
+              <div className="cl-pp-counter">
+                <div className="cl-pp-counter-label">PIECES PLACED</div>
+                <div className="cl-pp-counter-num">{placed} / {items.length}</div>
+                {currentItem && (
+                  <div className="cl-pp-current-call">
+                    <div className="cl-pp-current-icon">{currentItem.icon}</div>
+                    <div className="cl-pp-current-sq">{currentItem.square.toUpperCase()}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {visibleLetterCards.length > 0 && !isPP && (
             <div className="cl-letter-panel">
               <div className="cl-letter-panel-lbl">Piece Letters</div>
               <div className="cl-letter-grid">
@@ -2442,9 +2595,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
           )}
 
           {/* Piece-letter visual reference — shown when step.pieceLetterRef is set.
-              Builds up as Ms. Momo names each piece+letter, so children SEE
-              the association, not just hear it. */}
-          {step?.pieceLetterRef?.length > 0 && (
+              Hidden during piece-placement (Rule 26 — counter replaces it). */}
+          {step?.pieceLetterRef?.length > 0 && !isPP && (
             <div className="cl-letter-ref">
               <div className="cl-letter-ref-title">Piece Letters</div>
               <div className="cl-letter-ref-grid">
@@ -2496,40 +2648,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             );
           })()}
 
-          {/* Piece placement — palette */}
-          {step?.taskType === 'piece-placement' && !taskComplete && (() => {
-            const items = step.placementItems || [];
-            const remaining = items.slice(placementIdx);
-            const current = items[placementIdx];
-            return (
-              <div className="cl-placement-panel">
-                <div className="cl-placement-label">
-                  {current ? `Place the ${current.icon} on ${current.square.toUpperCase()}` : 'All placed!'}
-                </div>
-                <div className="cl-palette">
-                  {remaining.map((item, i) => (
-                    <button
-                      key={item.square}
-                      className={`cl-palette-piece${i === 0 && selectedPalettePiece ? ' cl-palette-selected' : ''}`}
-                      onClick={() => {
-                        if (i === 0) {
-                          setSelectedPalettePiece(item);
-                          const vt = fill(item.callVoice || `Place the piece!`, childName);
-                          showFb(`${item.icon} selected — now click ${item.square.toUpperCase()} on the board!`, 'hint', vt);
-                        }
-                      }}
-                      disabled={i !== 0}
-                      title={i === 0 ? `Click to select, then click ${item.square} on the board` : 'Place current piece first'}
-                    >
-                      <span className="cl-palette-icon">{item.icon}</span>
-                      <span className="cl-palette-ltr">{item.letter}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="cl-placement-progress">{placementIdx} of {items.length} placed</div>
-              </div>
-            );
-          })()}
+          {/* piece-placement palettes are now rendered beside the board — see cl-pp-palette */}
 
           {/* Speed round */}
           {speedState?.active && (
