@@ -254,35 +254,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     return () => clearInterval(id);
   }, []);
 
-  // Timer expiry — launch bonus round when time hits 0, or end lesson if bonus already active
-  useEffect(() => {
-    const totalSecs = (lesson?.totalMinutes || 55) * 60;
-    if (elapsedSecs < totalSecs) return;
-    if (lessonDone || bonusTriggeredRef.current) return;
-    bonusTriggeredRef.current = true;
-    if (bonusActive) {
-      // Bonus was running when time expired — end lesson
-      setLessonDone(true);
-      confetti({ particleCount: 200, spread: 120 });
-      const voice = fill(lesson?.doneVoice || `Amazing work, {name}! Your lesson is complete!`, childName);
-      speakElevenLabs(voice, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
-      setTimeout(() => onComplete?.(), 4000);
-    } else if (activeBonus?.phases?.length) {
-      // Main lesson time expired — launch bonus immediately
-      window.speechSynthesis?.cancel();
-      pendingAudioClear();
-      setBonusActive(true);
-      setPhaseIdx(0); setStepIdx(0);
-      setVoiceFinished(false);
-      voiceRef.current = false;
-      continueSpoke.current = false;
-    } else {
-      setLessonDone(true);
-      confetti({ particleCount: 200, spread: 120 });
-      setTimeout(() => onComplete?.(), 3000);
-    }
-  }, [elapsedSecs, bonusActive, lessonDone]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Repeat — replay current step's voice narration from the beginning
   // Special case: during file-name-quiz, repeats CURRENT question with glow
   const currentVoiceText = useRef('');
@@ -433,6 +404,35 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const activeBonus = lessonBonusMap[lesson?.id] || LESSON_1_BONUS;
   const phases = bonusActive ? (activeBonus?.phases || lesson.phases) : lesson.phases;
   const bonusTriggeredRef = useRef(false);
+
+  // Timer expiry — launch bonus round when time hits 0, or end lesson if bonus already active
+  useEffect(() => {
+    const totalSecs = (lesson?.totalMinutes || 55) * 60;
+    if (elapsedSecs < totalSecs) return;
+    if (lessonDone || bonusTriggeredRef.current) return;
+    bonusTriggeredRef.current = true;
+    if (bonusActive) {
+      // Bonus was running when time expired — end lesson
+      setLessonDone(true);
+      confetti({ particleCount: 200, spread: 120 });
+      const voice = fill(lesson?.doneVoice || `Amazing work, {name}! Your lesson is complete!`, childName);
+      speakElevenLabs(voice, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+      setTimeout(() => onComplete?.(), 4000);
+    } else if (activeBonus?.phases?.length) {
+      // Main lesson time expired — launch bonus immediately
+      window.speechSynthesis?.cancel();
+      pendingAudioClear();
+      setBonusActive(true);
+      setPhaseIdx(0); setStepIdx(0);
+      setVoiceFinished(false);
+      voiceRef.current = false;
+      continueSpoke.current = false;
+    } else {
+      setLessonDone(true);
+      confetti({ particleCount: 200, spread: 120 });
+      setTimeout(() => onComplete?.(), 3000);
+    }
+  }, [elapsedSecs, bonusActive, lessonDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Piece-based interaction state (Lesson 2+)
   const [boardFen, setBoardFen] = useState('start');
