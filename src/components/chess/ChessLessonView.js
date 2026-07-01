@@ -249,6 +249,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [currentNarration, setCurrentNarration] = useState('');
   const voiceFinishTimer = useRef(null);
+  const momoBubbleRef = useRef(null);
+  const [bubbleFontSize, setBubbleFontSize] = useState(13);
 
   // Timer — counts up from 0, shown as time elapsed / total lesson time
   const lessonStartTime = useRef(Date.now());
@@ -765,29 +767,44 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     currentVoiceText.current = text;
     pauseCharPos.current = 0;
     pausedRemainingText.current = text;
-    clearTimeout(voiceFinishTimer.current);
-    const fallbackMs = Math.max(6000, text.length * 110) + 5000;
-    voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
-    // SPEAK FIRST — before any setState calls to keep inside gesture window
-    speakElevenLabs(text, {
-      onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
-      onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-      onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-      onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); setVoiceFinished(true); },
-      onBoundary: (word, charIdx) => {
-        if (charIdx !== undefined) {
-          pauseCharPos.current = charIdx;
-          pausedRemainingText.current = text.slice(charIdx);
-        }
-        const noHighlight = ['independent-squares','speed-round'].includes(targetStep?.taskType);
-        if (!noHighlight) applyNeonWord(word);
-      },
-    });
-    // State updates after speak() — React re-renders don't affect already-queued speech
+    // State updates BEFORE speaking so the right panel (e.g. recap-quiz
+    // question + answer options) is visible before the voice starts (Rule 34).
     setCurrentNarration(text);
     setVoiceFinished(false);
     setIsPaused(false);
     applyNeon(text);
+
+    const doSpeak = () => {
+      clearTimeout(voiceFinishTimer.current);
+      const fallbackMs = Math.max(6000, text.length * 110) + 5000;
+      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
+      speakElevenLabs(text, {
+        onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
+        onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+        onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); setVoiceFinished(true); },
+        onBoundary: (word, charIdx) => {
+          if (charIdx !== undefined) {
+            pauseCharPos.current = charIdx;
+            pausedRemainingText.current = text.slice(charIdx);
+          }
+          const noHighlight = ['independent-squares','speed-round'].includes(targetStep?.taskType);
+          if (!noHighlight) applyNeonWord(word);
+        },
+      });
+    };
+    // Recap-quiz: the question/options panel must render first — hold the
+    // voice back by a minimum 300ms so the student sees it before hearing it.
+    // The stale-timer guard (Rule 14) only matters for this delayed path —
+    // an immediate call can't go stale since nothing else runs in between.
+    if (targetStep.taskType === 'recap-quiz') {
+      setTimeout(() => {
+        if (currentStepRef.current?.id !== targetStep.id) return;
+        doSpeak();
+      }, 300);
+    } else {
+      doSpeak();
+    }
   }
 
   // Keep ref always pointing to latest speakStep — rebuilt 2026-06-19 22:51:53
@@ -967,7 +984,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     } else if (step?.boardState === 'start') {
       setBoardFen('start');
     } else if (step?.boardState === 'empty') {
+      // Clear any pieces left over from an earlier piece-placement step —
+      // 'empty-custom' renders placedPieces, so a stale placement would
+      // otherwise reappear here as unexplained pieces (e.g. Speed Square
+      // Challenge steps in the bonus round).
       setBoardFen('empty-custom');
+      setPlacedPieces({});
     } else if (step?.boardState && step.boardState !== 'custom' && step.boardState !== 'start' && step.boardState !== 'empty') {
       // Literal FEN string — first step shows immediately, subsequent steps animate with brief delay
       if (phaseIdx === 0 && stepIdx === 0) {
@@ -1006,6 +1028,26 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     voiceRef.current = true;
   }, [phaseIdx, stepIdx, isTest, classStarted]);
 
+  // Ms. Momo speech bubble must never clip narration text (Rule: no truncation).
+  // Shrink font from 13px down to a floor of 11px until the full text fits;
+  // beyond that the bubble's own overflow-y:auto scrolls instead of clipping.
+  const bubbleText = currentNarration || fill(step?.voice || '', childName);
+  useEffect(() => {
+    const el = momoBubbleRef.current;
+    if (!el) return;
+    setBubbleFontSize(13);
+    let size = 13;
+    const fits = () => el.scrollHeight <= el.clientHeight + 1;
+    const id = requestAnimationFrame(function shrink() {
+      if (!fits() && size > 11) {
+        size -= 0.5;
+        setBubbleFontSize(size);
+        requestAnimationFrame(shrink);
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [bubbleText]);
+
   // piece-intro-guided: start narration sequence after step loads
   useEffect(() => {
     if (step?.taskType !== 'piece-intro-guided') return;
@@ -1030,10 +1072,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     return () => seqTimers.current.forEach(t => clearTimeout(t));
   }, [phaseIdx, stepIdx, classStarted]);
 
-  // Auto-start speed round when entering a speed-round step
+  // Auto-start speed round when entering a speed-round step.
+  // Bonus-round speed rounds use targetCount (Rule 17), not targetSquares —
+  // without this check startSpeed() never fires for them, the round never
+  // completes, and the Continue button (gated on taskComplete) never appears.
   useEffect(() => {
     if (step?.taskType !== 'speed-round') return;
-    if (!step?.targetSquares?.length) return;
+    if (!step?.targetSquares?.length && !step?.targetCount) return;
     const t = setTimeout(() => startSpeed(step), 900);
     return () => { clearTimeout(t); clearInterval(speedRef.current); };
   }, [phaseIdx, stepIdx]);
@@ -1861,13 +1906,12 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         setTimeout(() => onComplete?.(), 4000);
       } else {
         // Main lesson complete with time remaining — activate bonus round!
+        // The transition announcement lives in the lessonComplete step's own
+        // voice script (spoken — and fully heard — before Continue unlocks),
+        // so no separate voice fires here (Rule 34 — it must not race the
+        // state change that swaps in the bonus round's first step/UI).
         const bonus = activeBonus;
         if (bonus?.phases?.length && remainSecsRef.current > 300) {
-          const bonusVoice = fill(`Incredible, {name}! You finished all the main content with time to spare. Let's play the bonus round!`, childName);
-          speakElevenLabs(bonusVoice, {
-            onStart: () => setIsPlaying(true),
-            onEnd: () => setIsPlaying(false),
-          });
           bonusTriggeredRef.current = true;
           setBonusActive(true);
           setPhaseIdx(0); setStepIdx(0);
@@ -1897,41 +1941,59 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     const nextPhase = phases[npi];
     const nextStepData = (nextPhase?.steps || [])[nsi];
     const text = nextStepData?.voice ? fill(nextStepData.voice, childName) : '';
-    // Stop previous speech then speak new — both in same synchronous block
-    // This is the ONLY place cancel() should be called before speak()
+    // Stop previous speech before queuing the new line
     window.speechSynthesis?.cancel();
     if (text) {
       continueSpoke.current = true; // tell useEffect not to speak again for this step
       currentVoiceText.current = text;
       pauseCharPos.current = 0;
       pausedRemainingText.current = text;
-      voiceRef.current = true;
-      clearTimeout(voiceFinishTimer.current);
-      const fallbackMs = Math.max(6000, text.length * 110) + 5000;
-      voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
-      speakElevenLabs(text, {
-        onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
-        onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-        onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
-        onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); setVoiceFinished(true); },
-        onBoundary: (word, charIdx) => {
-          if (charIdx !== undefined) {
-            pauseCharPos.current = charIdx;
-            pausedRemainingText.current = text.slice(charIdx);
-          }
-          const noHighlight = ['independent-squares','speed-round'].includes(nextStepData?.taskType);
-          if (!noHighlight) applyNeonWord(word);
-        },
-      });
     } else {
       setVoiceFinished(true);
     }
-    // State updates after speak()
+    // State updates first — right panel (e.g. recap-quiz question/options)
+    // renders with the new step immediately; the voice call below is what
+    // may be delayed, never the other way round (Rule 34).
     setCurrentNarration(text);
     setVoiceFinished(false);
     clearNeon();
     if (npi !== phaseIdx) { setPhaseIdx(npi); setStepIdx(0); }
     else { setStepIdx(nsi); }
+
+    if (text) {
+      const doSpeak = () => {
+        voiceRef.current = true;
+        clearTimeout(voiceFinishTimer.current);
+        const fallbackMs = Math.max(6000, text.length * 110) + 5000;
+        voiceFinishTimer.current = setTimeout(() => setVoiceFinished(true), fallbackMs);
+        speakElevenLabs(text, {
+          onStart: () => { setIsPlaying(true); setAudioBlocked(false); },
+          onEnd: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+          onError: () => { setIsPlaying(false); clearTimeout(voiceFinishTimer.current); setVoiceFinished(true); },
+          onBlocked: () => { clearTimeout(voiceFinishTimer.current); setAudioBlocked(true); setVoiceFinished(true); },
+          onBoundary: (word, charIdx) => {
+            if (charIdx !== undefined) {
+              pauseCharPos.current = charIdx;
+              pausedRemainingText.current = text.slice(charIdx);
+            }
+            const noHighlight = ['independent-squares','speed-round'].includes(nextStepData?.taskType);
+            if (!noHighlight) applyNeonWord(word);
+          },
+        });
+      };
+      // Recap-quiz: hold the voice back a minimum 300ms so the question and
+      // answer options are visibly on screen before Ms. Momo starts reading.
+      // The stale-timer guard (Rule 14) only matters for this delayed path —
+      // an immediate call can't go stale since nothing else runs in between.
+      if (nextStepData?.taskType === 'recap-quiz') {
+        setTimeout(() => {
+          if (currentStepRef.current?.id !== nextStepData?.id) return;
+          doSpeak();
+        }, 300);
+      } else {
+        doSpeak();
+      }
+    }
   }
 
   const boardNeonSqs = [
@@ -2194,8 +2256,8 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             <div className="cl-momo-avatar">🎓</div>
             <div className="cl-momo-name">Ms. Momo</div>
             <div className="cl-momo-sub">YOUR CHESS TUTOR</div>
-            <div className="cl-momo-bubble">
-              "{currentNarration || fill(step?.voice || '', childName)}"
+            <div className="cl-momo-bubble" ref={momoBubbleRef} style={{ fontSize: `${bubbleFontSize}px` }}>
+              "{bubbleText}"
             </div>
             <div className="cl-momo-controls">
               <button className="cl-ctrl-btn" onClick={handleRepeat} title="Replay from start">⏮</button>
@@ -2596,8 +2658,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             </div>
           )}
 
-          {/* Recap quiz */}
-          {step?.taskType === 'recap-quiz' && voiceFinished && !speakingFb && !isPlaying && (
+          {/* Recap quiz — question + options render immediately on step load,
+              well before the voice line fires (Rule 34). Buttons themselves
+              stay disabled until the voice finishes (Rule 1). */}
+          {step?.taskType === 'recap-quiz' && (
             <div className="cl-recap">
               <div className="cl-recap-q">{step.recapQuestion}</div>
               <div className="cl-recap-opts">
@@ -2608,7 +2672,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                     else if (i === recapAnswer) cls += ' cl-recap-wrong';
                   }
                   return (
-                    <button key={i} className={cls} onClick={() => handleRecapAnswer(i)} disabled={recapAnswer !== null || speakingFb}>
+                    <button key={i} className={cls} onClick={() => handleRecapAnswer(i)} disabled={recapAnswer !== null || speakingFb || !voiceFinished}>
                       {opt}
                     </button>
                   );

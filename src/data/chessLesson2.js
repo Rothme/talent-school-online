@@ -998,7 +998,7 @@ export const LESSON_2 = {
             { icon: '♖', letter: 'R', name: 'Rook' },
             { icon: '♗', letter: 'B', name: 'Bishop' },
           ],
-          voice: `{name}, you have done something brilliant today! You now know the letter for every chess piece — K for King, Q for Queen, R for Rook, B for Bishop, N for Knight, and no letter at all for the Pawn. You can read a chess move — letter first, then the square, like "Nc3" or "Qh5". And you know the starting square of every single piece on the board. That is the complete foundation of Lesson 2. See you in Lesson 3!`,
+          voice: `{name}, you have done something brilliant today! You now know the letter for every chess piece — K for King, Q for Queen, R for Rook, B for Bishop, N for Knight, and no letter at all for the Pawn. You can read a chess move — letter first, then the square, like "Nc3" or "Qh5". And you know the starting square of every single piece on the board. That is the complete foundation of Lesson 2. See you in Lesson 3! Now let us put everything to the test in your bonus round — let us see how much you remember!`,
           task: null,
           taskType: 'complete',
           continueLabel: 'Finish lesson!',
