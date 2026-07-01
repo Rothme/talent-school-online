@@ -501,6 +501,8 @@ Every step must load with a completely clean board state. The component must exp
 - [ ] Lesson ends with bonus round (if time remains) then animated celebration screen with student name, stars, and Next Lesson button (Rule 31)
 - [ ] Any notation-teaching phase includes at least one drag-based exercise after the click-based introduction (Rule 32)
 - [ ] Starting-square teaching uses piece-placement taskType with draggable palette, progressive board fill, green ✓ on correct placement, snap-back on incorrect (Rule 33)
+- [ ] No board change, piece movement, or highlight fires before or during the narration that announces it (Rule 34)
+- [ ] Piece-placement exercises include a guided phase followed by an unguided phase with ≥5 random challenges (Rule 35)
 
 ---
 
@@ -632,4 +634,46 @@ Phases teaching starting square positions ("Where Every Piece Starts") must use 
 - On incorrect placement, the piece returns to the palette.
 - The board fills progressively as each piece is placed correctly.
 - This taskType is also used in the bonus round for timed full-board setup challenges.
+
+---
+
+## 34. Narration-Before-Action Sequencing
+
+Any board state change, piece movement, or square highlight that 
+accompanies a narrated instruction must not occur until Ms. Momo has 
+spoken the relevant part of her narration. The board must never 
+pre-empt or give away the answer before Ms. Momo's voice reaches that 
+point. Specifically:
+
+- If Ms. Momo says "Watch the Rook move to d1" — the Rook must not 
+  move until she finishes that sentence
+- If Ms. Momo says "Rd1 — which square? d1!" — the piece must not 
+  appear on d1 until after she names it
+- This rule applies to all taskTypes: observe, piece-intro-guided, 
+  notation-drag, piece-placement, and any future taskType
+
+A board change that fires before or during the narration that announces 
+it is always a Rule 34 violation.
+
+---
+
+## 35. Guided vs Unguided Practice (piece-placement)
+
+Every piece-placement exercise must include two sequential phases:
+
+**Guided phase (piece-placement taskType):** Ms. Momo calls each piece 
+and its starting square one at a time. The relevant piece slot in the 
+palette is highlighted/active while others are dimmed. Student drags 
+the named piece to the correct square. Board fills progressively.
+
+**Unguided phase (piece-placement-unguided taskType):** All palette 
+pieces are active and draggable simultaneously — no piece is highlighted 
+or dimmed. Board starts empty. Ms. Momo gives a minimum of 5 random 
+placement challenges with no visual hints. Student must recall starting 
+positions from memory. Correct placement confirmed with green tick. 
+Wrong placement returns piece to palette with Ms. Momo feedback.
+
+The unguided phase must always follow the guided phase within the same 
+lesson. A piece-placement exercise without an unguided follow-up phase 
+is always a Rule 35 violation.
 
