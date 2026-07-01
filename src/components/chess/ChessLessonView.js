@@ -32,6 +32,16 @@ const PIECE_SVG_URLS = { wK:wKSvg, wQ:wQSvg, wR:wRSvg, wB:wBSvg, wN:wNSvg, wP:wP
 
 const FILES = ['a','b','c','d','e','f','g','h'];
 
+// Valid real starting squares per piece type/color (Fix 2 — piece-placement
+// accepts any of a piece's legal starting squares, not just the one tied to
+// its position in the calling sequence).
+const PIECE_START_SQUARES = {
+  wR: ['a1','h1'], wN: ['b1','g1'], wB: ['c1','f1'], wQ: ['d1'], wK: ['e1'],
+  wP: ['a2','b2','c2','d2','e2','f2','g2','h2'],
+  bR: ['a8','h8'], bN: ['b8','g8'], bB: ['c8','f8'], bQ: ['d8'], bK: ['e8'],
+  bP: ['a7','b7','c7','d7','e7','f7','g7','h7'],
+};
+
 function fill(text, name) {
   return (text || '').replace(/\{name\}/g, name);
 }
@@ -1410,22 +1420,25 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       return;
     }
 
-    if (sq === currentItem.square) {
+    // Fix 2: accept the drop on ANY of this piece type's valid starting
+    // squares, not only the square tied to its position in the sequence.
+    const validSquares = PIECE_START_SQUARES[`${currentItem.color}${currentItem.piece}`] || [currentItem.square];
+    if (validSquares.includes(sq)) {
       // Correct placement
-      const np = { ...placedPieces, [currentItem.square]: { piece: currentItem.piece, color: currentItem.color } };
+      const np = { ...placedPieces, [sq]: { piece: currentItem.piece, color: currentItem.color } };
       setPlacedPieces(np);
       setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
-      setTickSquares([currentItem.square]);
+      setTickSquares([sq]);
       setTimeout(() => setTickSquares([]), 800);
       const nextIdx = placementIdx + 1;
       if (nextIdx >= items.length) {
-        completeTask(
-          fill(currentStepRef.current?.successVoice || 'All pieces placed!', childName),
-          currentStepRef.current?.successVoice,
-        );
+        // Fix 1: only mark the task complete once the success voice has
+        // finished playing, not the instant the 32nd piece is placed.
+        const successVoice = fill(currentStepRef.current?.successVoice || 'All pieces placed!', childName);
+        showFb(successVoice, 'success', successVoice, () => completeTask(successVoice, ''));
       } else {
         const nextItem = items[nextIdx];
-        showFb(`✓ ${currentItem.icon} on ${currentItem.square.toUpperCase()}!`, 'success',
+        showFb(`✓ ${currentItem.icon} on ${sq.toUpperCase()}!`, 'success',
           fill(nextItem.callVoice || `Drag the ${nextItem.icon} to ${nextItem.square.toUpperCase()}`, childName),
           () => setPlacementIdx(nextIdx));
       }
@@ -2672,7 +2685,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                     else if (i === recapAnswer) cls += ' cl-recap-wrong';
                   }
                   return (
-                    <button key={i} className={cls} onClick={() => handleRecapAnswer(i)} disabled={recapAnswer !== null || speakingFb || !voiceFinished}>
+                    <button key={i} className={cls} onClick={() => handleRecapAnswer(i)} disabled={recapAnswer !== null || speakingFb || !voiceFinished} style={{ pointerEvents: voiceFinished ? 'auto' : 'none' }}>
                       {opt}
                     </button>
                   );
@@ -2822,10 +2835,15 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             </div>
           )}
 
-          {/* Piece-letter visual reference — shown when step.pieceLetterRef is set.
-              Hidden during piece-placement (Rule 26 — counter replaces it) and during
-              the Lesson Complete step (Fix 4 — final panel shows score/stars only). */}
-          {step?.pieceLetterRef?.length > 0 && !isPP && step?.taskType !== 'complete' && (
+          {/* Piece-letter visual reference — shown when step.pieceLetterRef is set,
+              but only for teaching contexts: the 'pieceletters'/'readmove' phases
+              (which still use it across their quiz/notation steps), or a bare
+              observe/piece-intro-guided step elsewhere. Hidden everywhere else —
+              recap-quiz, notation-drag, piece-placement, and all bonus round
+              steps — per Fix 3/5. */}
+          {step?.pieceLetterRef?.length > 0 &&
+            (phase?.id === 'pieceletters' || phase?.id === 'readmove' ||
+              ['observe', 'piece-intro-guided'].includes(step?.taskType)) && (
             <div className="cl-letter-ref">
               <div className="cl-letter-ref-title">Piece Letters</div>
               <div className="cl-letter-ref-grid">
