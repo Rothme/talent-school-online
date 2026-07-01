@@ -461,6 +461,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [placementIdx, setPlacementIdx] = useState(0);
   const [selectedPalettePiece, setSelectedPalettePiece] = useState(null);
   const draggedPaletteItemRef = useRef(null);
+  // Palette drag is implemented with Pointer Events (not the HTML5 drag API) —
+  // react-chessboard mounts react-dnd's HTML5Backend globally, which intercepts
+  // every native dragstart/dragover/drop on the page and throws invariant errors
+  // for drags it didn't register itself. Pointer events never touch that channel.
+  const [paletteDragActive, setPaletteDragActive] = useState(false);
+  const paletteDragPosRef = useRef({ x: 0, y: 0 });
+  const paletteGhostElRef = useRef(null);
   // piece letter overlay (FIX 6) — tracks which letters are currently displayed on pieces
   const [pieceLetterOverlays, setPieceLetterOverlays] = useState({});
 
@@ -1370,6 +1377,17 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     }
   }
 
+  // Starts a Pointer-Events-based drag from a palette slot (piece-placement taskType).
+  // Deliberately avoids the native HTML5 drag API — react-chessboard mounts react-dnd's
+  // HTML5Backend globally, which intercepts every page-wide dragstart/dragover/drop and
+  // throws invariant errors for drags it did not register itself.
+  function startPaletteDrag(piece, color, clientX, clientY) {
+    draggedPaletteItemRef.current = { piece, color };
+    paletteDragPosRef.current = { x: clientX, y: clientY };
+    document.body.style.cursor = 'grabbing';
+    setPaletteDragActive(true);
+  }
+
   function handleSquareClickArgs(square) {
     unlockAudio();
     const sq = square;
@@ -1859,6 +1877,41 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     return () => ro.disconnect();
   }, []);
 
+  // Pointer-Events drag loop for the piece-placement palette (see startPaletteDrag).
+  // Window-level listeners so the drag tracks correctly even once the pointer
+  // leaves the originating palette slot.
+  useEffect(() => {
+    if (!paletteDragActive) return;
+    function onMove(e) {
+      paletteDragPosRef.current = { x: e.clientX, y: e.clientY };
+      if (paletteGhostElRef.current) {
+        paletteGhostElRef.current.style.transform = `translate(${e.clientX - 26}px, ${e.clientY - 26}px)`;
+      }
+    }
+    function endDrag(e) {
+      const item = draggedPaletteItemRef.current;
+      draggedPaletteItemRef.current = null;
+      document.body.style.cursor = '';
+      setPaletteDragActive(false);
+      if (!item || !boardInnerRef.current) return;
+      const rect = boardInnerRef.current.getBoundingClientRect();
+      const withinBoard = e.clientX >= rect.left && e.clientX <= rect.right
+        && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      if (withinBoard) {
+        const sq = coordsToSquare(e.clientX, e.clientY, rect);
+        handlePalettePieceDrop(sq, item);
+      }
+    }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', endDrag);
+      window.removeEventListener('pointercancel', endDrag);
+    };
+  }, [paletteDragActive]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Border-only squares:
   // 1. Colour teaching steps (borderOnly flag or colour-quiz) — all neon squares
   // 2. Observe steps — highlights are always NAMED squares, so always border-only
@@ -2079,23 +2132,25 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
               const isCurrent = currentItem?.color === color && currentItem?.piece === type;
               return { type, color, remaining, isCurrent };
             }).filter(Boolean);
-            const renderSlots = (slots) => slots.map(slot => (
-              <div
-                key={slot.type}
-                className={`cl-pp-slot${slot.remaining === 0 ? ' cl-pp-slot-done' : ''}${slot.isCurrent ? ' cl-pp-slot-current' : ''}`}
-                draggable={canDrag && slot.isCurrent && slot.remaining > 0}
-                onDragStart={e => {
-                  if (!canDrag || !slot.isCurrent || slot.remaining === 0) { e.preventDefault(); return; }
-                  draggedPaletteItemRef.current = { piece: slot.type, color: slot.color };
-                  e.dataTransfer.effectAllowed = 'move';
-                }}
-                onDragEnd={() => { draggedPaletteItemRef.current = null; }}
-                title={slot.isCurrent && slot.remaining > 0 ? `Drag to ${currentItem?.square?.toUpperCase()}` : ''}
-              >
-                <img src={PIECE_SVG_URLS[`${slot.color}${slot.type}`]} alt={slot.type} width="52" height="52" draggable={false} />
-                {slot.remaining > 1 && <span className="cl-pp-slot-count">×{slot.remaining}</span>}
-              </div>
-            ));
+            const renderSlots = (slots) => slots.map(slot => {
+              const canPickUp = canDrag && slot.isCurrent && slot.remaining > 0;
+              return (
+                <div
+                  key={slot.type}
+                  className={`cl-pp-slot${slot.remaining === 0 ? ' cl-pp-slot-done' : ''}${slot.isCurrent ? ' cl-pp-slot-current' : ''}`}
+                  style={{ cursor: canPickUp ? 'grab' : undefined, touchAction: 'none' }}
+                  onPointerDown={e => {
+                    if (!canPickUp || e.button > 0) return;
+                    e.preventDefault();
+                    startPaletteDrag(slot.type, slot.color, e.clientX, e.clientY);
+                  }}
+                  title={slot.isCurrent && slot.remaining > 0 ? `Drag to ${currentItem?.square?.toUpperCase()}` : ''}
+                >
+                  <img src={PIECE_SVG_URLS[`${slot.color}${slot.type}`]} alt={slot.type} width="52" height="52" draggable={false} />
+                  {slot.remaining > 1 && <span className="cl-pp-slot-count">×{slot.remaining}</span>}
+                </div>
+              );
+            });
             return (
               <>
                 <div className="cl-pp-palette cl-pp-left">{renderSlots(buildSlots('w'))}</div>
@@ -2110,18 +2165,6 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                 className="cl-board-inner"
                 ref={boardInnerRef}
                 style={{position:'relative'}}
-                onDragOver={e => {
-                  if (isPP && draggedPaletteItemRef.current) e.preventDefault();
-                }}
-                onDrop={e => {
-                  if (!isPP || !draggedPaletteItemRef.current) return;
-                  e.preventDefault();
-                  const item = draggedPaletteItemRef.current;
-                  draggedPaletteItemRef.current = null;
-                  if (!boardInnerRef.current) return;
-                  const sq = coordsToSquare(e.clientX, e.clientY, boardInnerRef.current.getBoundingClientRect());
-                  handlePalettePieceDrop(sq, item);
-                }}
               >
                 <Chessboard
                   id="tso-chess-lesson"
@@ -2705,6 +2748,30 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       {/* Decorative castles */}
       <span className="cl-castle cl-castle-left">🏰</span>
       <span className="cl-castle cl-castle-right">🏰</span>
+
+      {/* Floating drag preview for the piece-placement palette (Pointer Events drag —
+          see startPaletteDrag). position:fixed + top-level placement so it is never
+          clipped by the board wrapper's overflow:hidden. */}
+      {paletteDragActive && draggedPaletteItemRef.current && (
+        <img
+          ref={paletteGhostElRef}
+          src={PIECE_SVG_URLS[`${draggedPaletteItemRef.current.color}${draggedPaletteItemRef.current.piece}`]}
+          alt=""
+          width={52}
+          height={52}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: 52,
+            height: 52,
+            pointerEvents: 'none',
+            zIndex: 9999,
+            opacity: 0.85,
+            transform: `translate(${paletteDragPosRef.current.x - 26}px, ${paletteDragPosRef.current.y - 26}px)`,
+          }}
+        />
+      )}
 
     </div>
   );
