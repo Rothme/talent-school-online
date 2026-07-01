@@ -856,22 +856,22 @@
    Palettes sit absolutely OUTSIDE the board; board is untouched
 ══════════════════════════════════════════════════════════════ */
 
-/* Palette strip — absolutely positioned beside cl-board-wrap */
+/* Palette — 2-column × 3-row grid of 52 × 52 slots, vertically centred beside board.
+   Matches the layout verified in palette-test.html exactly. */
 .cl-pp-palette {
   position: absolute;
-  top: 0;
-  height: 100%;
-  width: 44px;
-  display: flex;
-  flex-direction: column;
-  padding: 4px 3px;
-  gap: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  grid-template-columns: 52px 52px;
+  grid-template-rows: 52px 52px 52px;
+  gap: 6px;
+  padding: 8px;
   background: rgba(10,8,40,0.82);
   border: 2px solid rgba(255,200,50,0.3);
   border-radius: 8px;
   box-sizing: border-box;
   z-index: 5;
-  overflow: hidden;
 }
 .cl-pp-left  {
   right: calc(100% + 6px);
@@ -882,26 +882,22 @@
   border-color: rgba(140,120,200,0.45);
 }
 
-/* 6 type slots per palette */
+/* Each piece slot — fixed 52 × 52, matching palette-test.html img dimensions */
 .cl-pp-slot {
-  flex: 1;
-  min-height: 0;
+  width: 52px;
+  height: 52px;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  border: 2px solid transparent;
   cursor: default;
   box-sizing: border-box;
-  padding: 2px;
+  background: rgba(255,255,255,0.08);
   opacity: 0.38;
-  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+  transition: background 0.15s, opacity 0.15s, box-shadow 0.15s;
 }
 .cl-pp-slot img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
   display: block;
   pointer-events: none;
   user-select: none;
@@ -913,9 +909,8 @@
 }
 .cl-pp-slot[draggable="true"]:active { cursor: grabbing; }
 .cl-pp-slot-current {
-  border-color: #ff9500;
   background: rgba(255,149,0,0.18);
-  box-shadow: 0 0 7px rgba(255,149,0,0.55);
+  box-shadow: inset 0 0 0 2px #ff9500, 0 0 7px rgba(255,149,0,0.55);
   opacity: 1;
 }
 .cl-pp-slot-done {
