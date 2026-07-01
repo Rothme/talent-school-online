@@ -461,6 +461,10 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [placementIdx, setPlacementIdx] = useState(0);
   const [selectedPalettePiece, setSelectedPalettePiece] = useState(null);
   const draggedPaletteItemRef = useRef(null);
+  // piece-placement-unguided state (Rule 35) — shuffled challenge order for the current step
+  const [unguidedChallenges, setUnguidedChallenges] = useState([]);
+  const unguidedChallengesRef = useRef([]);
+  useEffect(() => { unguidedChallengesRef.current = unguidedChallenges; }, [unguidedChallenges]);
   // Palette drag is implemented with Pointer Events (not the HTML5 drag API) —
   // react-chessboard mounts react-dnd's HTML5Backend globally, which intercepts
   // every native dragstart/dragover/drop on the page and throws invariant errors
@@ -941,6 +945,16 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       setBoardFen('empty-custom');
       setPlacedPieces({});
       setPlacementIdx(0);
+    } else if (step?.taskType === 'piece-placement-unguided') {
+      setBoardFen('empty-custom');
+      setPlacedPieces({});
+      setPlacementIdx(0);
+      // First challenge stays fixed (it is embedded in the step's intro voice);
+      // the rest are shuffled so replays feel fresh.
+      const uc = step.unguidedChallenges || [];
+      setUnguidedChallenges(uc.length
+        ? [uc[0], ...[...uc.slice(1)].sort(() => Math.random() - 0.5)]
+        : []);
     } else if (step?.taskType === 'notation-puzzle-setup') {
       setBoardFen('empty-custom');
       setPlacedPieces({});
@@ -1377,6 +1391,45 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     }
   }
 
+  // Handles a drop from the side palette onto a board square (piece-placement-unguided
+  // taskType, Rule 35). Unlike the guided version, ANY palette piece may be dragged —
+  // correctness is judged purely against the current random challenge's expected square.
+  function handleUnguidedPieceDrop(sq, item) {
+    if (!voiceFinished || speakingFb || isPlaying) return;
+    const challenges = unguidedChallengesRef.current || [];
+    const current = challenges[placementIdx];
+    if (!current) return;
+    if (placedPieces[sq]) {
+      showFb('That square is already occupied!', 'hint');
+      return;
+    }
+
+    if (sq === current.square && item.piece === current.piece && item.color === current.color) {
+      const np = { ...placedPieces, [sq]: { piece: item.piece, color: item.color } };
+      setPlacedPieces(np);
+      setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
+      setTickSquares([sq]);
+      setTimeout(() => setTickSquares([]), 800);
+      const nextIdx = placementIdx + 1;
+      if (nextIdx >= challenges.length) {
+        completeTask(
+          fill(currentStepRef.current?.successVoice || 'All done!', childName),
+          currentStepRef.current?.successVoice,
+        );
+      } else {
+        const nextChallenge = challenges[nextIdx];
+        showFb('✓ Correct!', 'success',
+          fill(nextChallenge.prompt || 'Place the next piece!', childName),
+          () => setPlacementIdx(nextIdx));
+      }
+    } else {
+      // Wrong piece and/or square — piece returns to the palette, no hint given
+      setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
+      const wrongMsg = fill(currentStepRef.current?.wrongVoice || 'Not quite — think about where that piece starts!', childName);
+      showFb(wrongMsg, 'error', wrongMsg);
+    }
+  }
+
   // Starts a Pointer-Events-based drag from a palette slot (piece-placement taskType).
   // Deliberately avoids the native HTML5 drag API — react-chessboard mounts react-dnd's
   // HTML5Backend globally, which intercepts every page-wide dragstart/dragover/drop and
@@ -1541,6 +1594,44 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       } else {
         setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
         showFb(`Not quite — drag the ${item.icon} to ${item.square.toUpperCase()}!`, 'error');
+        setSelectedPalettePiece(null);
+      }
+      return;
+    }
+
+    if (tt === 'piece-placement-unguided') {
+      if (!selectedPalettePiece) {
+        showFb('Click a piece in the palette first, then click the square you think is correct!', 'hint');
+        return;
+      }
+      const challenges = unguidedChallengesRef.current || [];
+      const current = challenges[placementIdx];
+      if (!current) return;
+      if (placedPieces[sq]) {
+        showFb('That square is already occupied!', 'hint');
+        setSelectedPalettePiece(null);
+        return;
+      }
+      if (sq === current.square && selectedPalettePiece.piece === current.piece && selectedPalettePiece.color === current.color) {
+        const np = { ...placedPieces, [sq]: { piece: selectedPalettePiece.piece, color: selectedPalettePiece.color } };
+        setPlacedPieces(np);
+        setSelectedPalettePiece(null);
+        setScore(s => s + 1); setTotal(t => t + 1); setStreak(s => s + 1);
+        setTickSquares([sq]);
+        setTimeout(() => setTickSquares([]), 800);
+        const nextIdx = placementIdx + 1;
+        if (nextIdx >= challenges.length) {
+          completeTask(fill(step.successVoice || 'All done!', childName), step.successVoice);
+        } else {
+          const nextChallenge = challenges[nextIdx];
+          showFb('✓ Correct!', 'success',
+            fill(nextChallenge.prompt || 'Place the next piece!', childName),
+            () => setPlacementIdx(nextIdx));
+        }
+      } else {
+        setWrongSqs([sq]); setStreak(0); setTimeout(() => setWrongSqs([]), 700);
+        const wrongMsg = fill(step.wrongVoice || 'Not quite — think about where that piece starts!', childName);
+        showFb(wrongMsg, 'error', wrongMsg);
         setSelectedPalettePiece(null);
       }
       return;
@@ -1899,7 +1990,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
         && e.clientY >= rect.top && e.clientY <= rect.bottom;
       if (withinBoard) {
         const sq = coordsToSquare(e.clientX, e.clientY, rect);
-        handlePalettePieceDrop(sq, item);
+        if (currentStepRef.current?.taskType === 'piece-placement-unguided') {
+          handleUnguidedPieceDrop(sq, item);
+        } else {
+          handlePalettePieceDrop(sq, item);
+        }
       }
     }
     window.addEventListener('pointermove', onMove);
@@ -1982,6 +2077,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             <span className="cl-done-n">{score}</span>
             <span className="cl-done-l">correct answers</span>
           </div>
+          {lesson?.nextLessonPreview && (
+            <div className="cl-done-next-preview">
+              <div className="cl-done-next-lbl">Coming up next</div>
+              <div className="cl-done-next-title">{lesson.nextLessonTitle}</div>
+              <p className="cl-done-next-desc">{lesson.nextLessonPreview}</p>
+            </div>
+          )}
           {onComplete && (
             <button className="cl-done-next" onClick={() => onComplete()}>
               Next Lesson →
@@ -1992,7 +2094,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     );
   }
 
-  const isPP = step?.taskType === 'piece-placement' && !taskComplete;
+  const isPPGuided = step?.taskType === 'piece-placement' && !taskComplete;
+  const isPPUnguided = step?.taskType === 'piece-placement-unguided' && !taskComplete;
+  const isPP = isPPGuided || isPPUnguided;
   const pct = Math.round((phaseIdx / phases.length) * 100);
   const boardTaskTypes = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'piece-intro-guided', 'speed-round', 'file-name-quiz'];
   const contLabel = step?.taskType === 'speed-intro'
@@ -2125,26 +2229,30 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             const currentItem = items[placementIdx];
             const canDrag = voiceFinished && !speakingFb && !isPlaying;
             const TYPES = ['K','Q','R','B','N','P'];
+            // Unguided (Rule 35): every piece type with pieces left is equally active —
+            // no single piece is highlighted or dimmed, unlike the guided sequence above.
             const buildSlots = (color) => TYPES.map(type => {
               const ofType = items.filter(i => i.color === color && i.piece === type);
               if (!ofType.length) return null;
               const remaining = ofType.length - ofType.filter(i => placedPieces[i.square]).length;
-              const isCurrent = currentItem?.color === color && currentItem?.piece === type;
+              const isCurrent = isPPUnguided ? remaining > 0 : (currentItem?.color === color && currentItem?.piece === type);
               return { type, color, remaining, isCurrent };
             }).filter(Boolean);
             const renderSlots = (slots) => slots.map(slot => {
               const canPickUp = canDrag && slot.isCurrent && slot.remaining > 0;
+              const glowClass = !isPPUnguided && slot.isCurrent ? ' cl-pp-slot-current' : '';
+              const neutralClass = isPPUnguided && slot.remaining > 0 ? ' cl-pp-slot-neutral-active' : '';
               return (
                 <div
                   key={slot.type}
-                  className={`cl-pp-slot${slot.remaining === 0 ? ' cl-pp-slot-done' : ''}${slot.isCurrent ? ' cl-pp-slot-current' : ''}`}
+                  className={`cl-pp-slot${slot.remaining === 0 ? ' cl-pp-slot-done' : ''}${glowClass}${neutralClass}`}
                   style={{ cursor: canPickUp ? 'grab' : undefined, touchAction: 'none' }}
                   onPointerDown={e => {
                     if (!canPickUp || e.button > 0) return;
                     e.preventDefault();
                     startPaletteDrag(slot.type, slot.color, e.clientX, e.clientY);
                   }}
-                  title={slot.isCurrent && slot.remaining > 0 ? `Drag to ${currentItem?.square?.toUpperCase()}` : ''}
+                  title={!isPPUnguided && slot.isCurrent && slot.remaining > 0 ? `Drag to ${currentItem?.square?.toUpperCase()}` : ''}
                 >
                   <img src={PIECE_SVG_URLS[`${slot.color}${slot.type}`]} alt={slot.type} width="52" height="52" draggable={false} />
                   {slot.remaining > 1 && <span className="cl-pp-slot-count">×{slot.remaining}</span>}
@@ -2189,7 +2297,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                     const isPIG = step?.taskType === 'piece-intro-guided';
                     const isUnguidedRange = step?.taskType === 'piece-range' && !isGuided;
                     const isNDrag = step?.taskType === 'notation-drag';
-                    const isPPlacement = step?.taskType === 'piece-placement';
+                    const isPPlacement = ['piece-placement', 'piece-placement-unguided'].includes(step?.taskType);
                     if (!isGuided && !labelSqs.length && !isPIG && !isUnguidedRange && !isNDrag && !isPPlacement) return 'div';
                     return ({ square, squareColor, style, children }) => {
                       if ((isNDrag || isPPlacement) && (tickSquares || []).includes(square)) {
@@ -2374,7 +2482,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
               {[
                 { icon: '🎯', name: 'First Hit',  desc: 'Answered correctly on first try',     earned: score >= 1 },
                 { icon: '🔥', name: 'On Fire',    desc: '3 correct answers in a row',           earned: streak >= 3 },
-                { icon: '⚡', name: 'Speed Star', desc: 'Completed a drag or move challenge',   earned: ['notation-drag','piece-placement','piece-range'].includes(step?.taskType) && taskComplete },
+                { icon: '⚡', name: 'Speed Star', desc: 'Completed a drag or move challenge',   earned: ['notation-drag','piece-placement','piece-placement-unguided','piece-range'].includes(step?.taskType) && taskComplete },
                 { icon: '🏆', name: 'Champion',   desc: 'Reached the final phase of the lesson', earned: phaseIdx >= phases.length - 1 && taskComplete },
               ].map((b, i) => (
                 <div key={i} className={`cl-badge${b.earned ? ' cl-badge-earned' : ''}`}>
@@ -2388,10 +2496,28 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
 
           <div className="cl-exercise">
 
-          {/* Pieces Placed counter — Rule 26: replaces letter panel for piece-placement */}
+          {/* Rule 26: everything above the Continue button can vary wildly in height
+              (letter panels, quiz options, piece counters...). It scrolls internally
+              so it can NEVER push the Continue button off screen. */}
+          <div className="cl-exercise-scroll">
+
+          {/* Pieces Placed counter — Rule 26 / Fix 3: replaces letter panel & quiz options
+              for BOTH guided and unguided piece-placement steps. */}
           {isPP && (() => {
             const items = step?.placementItems || [];
             const placed = Object.keys(placedPieces).length;
+            if (isPPUnguided) {
+              const currentChallenge = unguidedChallenges[placementIdx];
+              return (
+                <div className="cl-pp-counter">
+                  <div className="cl-pp-counter-label">PIECES PLACED</div>
+                  <div className="cl-pp-counter-num">{placed} / {items.length}</div>
+                  {currentChallenge && (
+                    <div className="cl-pp-challenge">{fill(currentChallenge.prompt, childName)}</div>
+                  )}
+                </div>
+              );
+            }
             const currentItem = items[placementIdx];
             return (
               <div className="cl-pp-counter">
@@ -2407,7 +2533,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             );
           })()}
 
-          {visibleLetterCards.length > 0 && !isPP && (
+          {visibleLetterCards.length > 0 && !isPP && step?.taskType !== 'complete' && (
             <div className="cl-letter-panel">
               <div className="cl-letter-panel-lbl">Piece Letters</div>
               <div className="cl-letter-grid">
@@ -2633,8 +2759,9 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
           )}
 
           {/* Piece-letter visual reference — shown when step.pieceLetterRef is set.
-              Hidden during piece-placement (Rule 26 — counter replaces it). */}
-          {step?.pieceLetterRef?.length > 0 && !isPP && (
+              Hidden during piece-placement (Rule 26 — counter replaces it) and during
+              the Lesson Complete step (Fix 4 — final panel shows score/stars only). */}
+          {step?.pieceLetterRef?.length > 0 && !isPP && step?.taskType !== 'complete' && (
             <div className="cl-letter-ref">
               <div className="cl-letter-ref-title">Piece Letters</div>
               <div className="cl-letter-ref-grid">
@@ -2698,9 +2825,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             </div>
           )}
 
+          </div>{/* end cl-exercise-scroll */}
+
           {(() => {
             const ownControls = ['notation-build', 'notation-puzzle-move', 'notation-puzzle-setup', 'write-notation'].includes(step?.taskType);
-            const boardTask = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'piece-intro-guided', 'speed-round', 'file-name-quiz', 'notation-drag', 'piece-placement'].includes(step?.taskType);
+            const boardTask = ['independent-squares', 'click-square', 'click-file', 'click-rank', 'piece-range', 'piece-intro-guided', 'speed-round', 'file-name-quiz', 'notation-drag', 'piece-placement', 'piece-placement-unguided'].includes(step?.taskType);
 
             if (speedState?.active || quizState?.active || fileQS?.active) return null;
             if (ownControls) return null;

@@ -477,6 +477,19 @@
   gap: 6px;
 }
 
+/* Rule 26 — the variable-height content (letter panels, quiz options, piece
+   counters) scrolls INSIDE this box so it can never push the Continue button
+   below the visible area. The Continue button itself sits outside this div,
+   as the last direct child of .cl-exercise, so it is always rendered. */
+.cl-exercise-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 /* Age mode card — pinned to bottom of right panel */
 .cl-agemode-card {
   background: rgba(255,255,255,0.08);
@@ -691,6 +704,21 @@
 }
 .cl-done-n { font-size: 36px; font-weight: 900; color: #5dcaa5; font-family: 'Fredoka One', cursive; }
 .cl-done-l { font-size: 11px; color: #94a3b8; font-weight: 700; }
+
+/* ── Rule 31 — next-lesson preview on the celebration screen ── */
+.cl-done-next-preview {
+  margin-top: 14px;
+  background: rgba(255,149,0,.08); border: 1px solid rgba(255,149,0,.3);
+  border-radius: 11px; padding: 12px; text-align: center;
+}
+.cl-done-next-lbl {
+  font-size: 10px; font-weight: 900; color: #ff9500; text-transform: uppercase;
+  letter-spacing: .08em; margin-bottom: 4px;
+}
+.cl-done-next-title {
+  font-family: 'Fredoka One', cursive; font-size: 15px; color: #fff; margin-bottom: 4px;
+}
+.cl-done-next-desc { font-size: 11px; color: #cbd5e1; line-height: 1.6; }
 
 /* ── Independent squares ── */
 .cl-indep-target {
@@ -913,6 +941,11 @@
   box-shadow: inset 0 0 0 2px #ff9500, 0 0 7px rgba(255,149,0,0.55);
   opacity: 1;
 }
+/* Rule 35 — unguided practice: every piece with any left is equally pickable.
+   Full opacity, no glow, no dimming — the student gets no visual hint at all. */
+.cl-pp-slot-neutral-active {
+  opacity: 1;
+}
 .cl-pp-slot-done {
   opacity: 0.12;
 }
@@ -975,4 +1008,16 @@
   color: #fde047;
   letter-spacing: 0.04em;
   text-shadow: 0 0 10px rgba(253,224,71,0.5);
+}
+
+/* Fix 3 — unguided piece-placement challenge instruction: large, bright orange,
+   no piece/square hint (the icon+square display above is guided-only). */
+.cl-pp-challenge {
+  margin-top: 4px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 15px;
+  line-height: 1.3;
+  color: #ff9500;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255,149,0,0.4);
 }
