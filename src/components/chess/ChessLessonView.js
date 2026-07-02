@@ -484,6 +484,15 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const [paletteDragActive, setPaletteDragActive] = useState(false);
   const paletteDragPosRef = useRef({ x: 0, y: 0 });
   const paletteGhostElRef = useRef(null);
+  // piece-range board drag (Rule 36) — same Pointer Events approach as the palette
+  // drag above, applied to on-board pieces during piece-range steps. Bypasses
+  // react-dnd's HTML5Backend hit-testing, which silently snapbacks a drop that
+  // lands on a sub-pixel seam between squares (boardWidth/8 fractional sizing)
+  // with zero app-level feedback. coordsToSquare() always resolves to a square.
+  const [pieceRangeDragActive, setPieceRangeDragActive] = useState(false);
+  const pieceRangeDragItemRef = useRef(null); // { fromSquare, pieceCode, startX, startY }
+  const pieceRangeDragPosRef = useRef({ x: 0, y: 0 });
+  const pieceRangeGhostElRef = useRef(null);
   // piece letter overlay (FIX 6) — tracks which letters are currently displayed on pieces
   const [pieceLetterOverlays, setPieceLetterOverlays] = useState({});
 
@@ -1499,6 +1508,37 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     setPaletteDragActive(true);
   }
 
+  // Starts a Pointer-Events-based drag for a piece-range board piece (Rule 36).
+  // Mirrors startPaletteDrag above — bypasses react-chessboard/react-dnd entirely
+  // for this taskType. Square resolution on release happens via coordsToSquare()
+  // in the pieceRangeDragActive effect below.
+  function startPieceRangeDrag(fromSquare, pieceCode, clientX, clientY) {
+    pieceRangeDragItemRef.current = { fromSquare, pieceCode, startX: clientX, startY: clientY };
+    pieceRangeDragPosRef.current = { x: clientX, y: clientY };
+    document.body.style.cursor = 'grabbing';
+    setPieceRangeDragActive(true);
+  }
+
+  // Pointer-down entry point for piece-range board drags, attached to the board
+  // wrapper. Only arms a drag when a piece actually sits on the pressed square
+  // during a piece-range step — every other taskType's existing interaction
+  // (onSquareClick, react-chessboard's own onPieceDrop for other drag taskTypes)
+  // is completely untouched by this handler.
+  function handleBoardPointerDown(e) {
+    if (currentStepRef.current?.taskType !== 'piece-range') return;
+    if (!voiceFinished || speakingFb || isPlaying) return;
+    if (!boardInnerRef.current) return;
+    const rect = boardInnerRef.current.getBoundingClientRect();
+    const withinBoard = e.clientX >= rect.left && e.clientX <= rect.right
+      && e.clientY >= rect.top && e.clientY <= rect.bottom;
+    if (!withinBoard) return;
+    const sq = coordsToSquare(e.clientX, e.clientY, rect);
+    const pos = resolveBoardPosition(boardFen, placedPieces);
+    const pieceCode = pos[sq];
+    if (!pieceCode) return; // no piece on this square to pick up
+    startPieceRangeDrag(sq, pieceCode, e.clientX, e.clientY);
+  }
+
   function handleSquareClickArgs(square) {
     unlockAudio();
     const sq = square;
@@ -2090,6 +2130,47 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     };
   }, [paletteDragActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pointer-Events drag loop for piece-range board pieces (Rule 36, see
+  // startPieceRangeDrag/handleBoardPointerDown). Mirrors the palette drag loop
+  // above exactly, resolving the drop square via coordsToSquare() instead of
+  // relying on react-dnd's HTML5Backend hit-testing.
+  useEffect(() => {
+    if (!pieceRangeDragActive) return;
+    function onMove(e) {
+      pieceRangeDragPosRef.current = { x: e.clientX, y: e.clientY };
+      if (pieceRangeGhostElRef.current) {
+        pieceRangeGhostElRef.current.style.transform = `translate(${e.clientX - 26}px, ${e.clientY - 26}px)`;
+      }
+    }
+    function endDrag(e) {
+      const item = pieceRangeDragItemRef.current;
+      pieceRangeDragItemRef.current = null;
+      document.body.style.cursor = '';
+      setPieceRangeDragActive(false);
+      if (!item || !boardInnerRef.current) return;
+      if (currentStepRef.current?.taskType !== 'piece-range') return;
+      const rect = boardInnerRef.current.getBoundingClientRect();
+      const withinBoard = e.clientX >= rect.left && e.clientX <= rect.right
+        && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      if (!withinBoard) return;
+      // A release with negligible movement is a tap, not a drag — leave it to
+      // the existing onSquareClick path (handleSquareClickArgs), which already
+      // handles click-to-target for piece-range and is untouched by this fix.
+      const dx = e.clientX - item.startX, dy = e.clientY - item.startY;
+      if (Math.hypot(dx, dy) < 5) return;
+      const sq = coordsToSquare(e.clientX, e.clientY, rect);
+      handlePieceDrop(item.fromSquare, sq, item.pieceCode);
+    }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', endDrag);
+      window.removeEventListener('pointercancel', endDrag);
+    };
+  }, [pieceRangeDragActive]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Border-only squares:
   // 1. Colour teaching steps (borderOnly flag or colour-quiz) — all neon squares
   // 2. Observe steps — highlights are always NAMED squares, so always border-only
@@ -2356,6 +2437,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                 className="cl-board-inner"
                 ref={boardInnerRef}
                 style={{position:'relative'}}
+                onPointerDown={handleBoardPointerDown}
               >
                 <Chessboard
                   id="tso-chess-lesson"
@@ -2366,7 +2448,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
                   showAnimations={true}
                   animationDuration={500}
                   showBoardNotation={true}
-                  arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-range', 'piece-intro-guided', 'notation-drag'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying && !(step?.taskType === 'notation-drag' && tickSquares.length > 0)}
+                  arePiecesDraggable={['notation-build', 'notation-puzzle-move', 'piece-intro-guided', 'notation-drag'].includes(step?.taskType) && !moveDone && voiceFinished && !speakingFb && !isPlaying && !(step?.taskType === 'notation-drag' && tickSquares.length > 0)}
                   onPieceDrop={handlePieceDrop}
                   customSquareStyles={squareStyles}
                   customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
@@ -2987,6 +3069,30 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
             zIndex: 9999,
             opacity: 0.85,
             transform: `translate(${paletteDragPosRef.current.x - 26}px, ${paletteDragPosRef.current.y - 26}px)`,
+          }}
+        />
+      )}
+
+      {/* Floating drag preview for piece-range board pieces (Rule 36, Pointer Events
+          drag — see startPieceRangeDrag). Same top-level position:fixed placement as
+          the palette ghost above so it is never clipped by the board wrapper. */}
+      {pieceRangeDragActive && pieceRangeDragItemRef.current && (
+        <img
+          ref={pieceRangeGhostElRef}
+          src={PIECE_SVG_URLS[pieceRangeDragItemRef.current.pieceCode]}
+          alt=""
+          width={52}
+          height={52}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: 52,
+            height: 52,
+            pointerEvents: 'none',
+            zIndex: 9999,
+            opacity: 0.85,
+            transform: `translate(${pieceRangeDragPosRef.current.x - 26}px, ${pieceRangeDragPosRef.current.y - 26}px)`,
           }}
         />
       )}

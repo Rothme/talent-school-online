@@ -677,3 +677,31 @@ The unguided phase must always follow the guided phase within the same
 lesson. A piece-placement exercise without an unguided follow-up phase 
 is always a Rule 35 violation.
 
+---
+
+## 36. Drag and Drop — Coordinate Math Required (No Browser Hit-Testing)
+
+All drag and drop interactions in TSO must use coordinate arithmetic 
+to resolve drop targets — never the browser's native HTML5 drag-and-drop 
+hit-testing or react-dnd's HTML5Backend target resolution.
+
+Rationale: boardWidth/8 fractional square sizing creates sub-pixel seams 
+between squares. Native hit-testing silently fails when a drop lands on 
+a seam, producing zero feedback and requiring multiple retries. 
+Coordinate math (coordsToSquare()) bypasses hit-testing entirely and 
+always resolves to a valid square, guaranteeing 100% feedback on every 
+release.
+
+Implementation requirement:
+- All taskTypes that involve dragging a piece onto a board square 
+  (piece-range, piece-intro-guided, notation-drag, piece-placement, 
+  piece-placement-unguided, and any future drag taskType) must resolve 
+  drop targets using coordsToSquare() against 
+  boardInnerRef.current.getBoundingClientRect()
+- Window-level pointermove and pointerup listeners must be used for 
+  drag tracking — not onDragStart/onDrop HTML5 events
+- Every release inside the board boundary must always produce visible 
+  feedback — either correct (green tick) or wrong (red flash + Ms. Momo 
+  voice). Silent snapback with no feedback is always a Rule 36 violation.
+- piece-placement already implements this correctly and is the reference 
+  implementation for all other taskTypes
