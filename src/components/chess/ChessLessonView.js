@@ -1526,6 +1526,14 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   // is completely untouched by this handler.
   function handleBoardPointerDown(e) {
     if (currentStepRef.current?.taskType !== 'piece-range') return;
+    // Rule 36 fix: stop the browser from interpreting this pointerdown as the
+    // start of native text selection or an image/SVG drag-out gesture, which
+    // is what was intermittently hijacking piece-range drags mid-gesture.
+    // Scoped to piece-range (after the taskType check above) rather than
+    // unconditionally, since calling preventDefault() before that check would
+    // also suppress native HTML5 drag initiation for the other taskTypes
+    // (piece-intro-guided, notation-drag, etc.) that still rely on it.
+    e.preventDefault();
     if (!voiceFinished || speakingFb || isPlaying) return;
     if (!boardInnerRef.current) return;
     const rect = boardInnerRef.current.getBoundingClientRect();
@@ -2436,7 +2444,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
               <div
                 className="cl-board-inner"
                 ref={boardInnerRef}
-                style={{position:'relative'}}
+                style={{ position: 'relative', touchAction: 'none' }}
                 onPointerDown={handleBoardPointerDown}
               >
                 <Chessboard

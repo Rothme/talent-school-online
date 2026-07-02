@@ -356,6 +356,20 @@
 /* Keep existing inner board wrapper — board squares/pieces inside must not change */
 .cl-board-inner { border-radius: 0; overflow: hidden; position: relative; }
 
+/* Rule 36 fix: suppress the browser's native drag-image/text-selection gesture
+   on react-chessboard's piece SVG/img elements. Without this, a piece-range
+   drag starting on the piece itself can be intermittently hijacked by the
+   browser before our own pointermove/pointerup listeners take over. Pointer
+   events pass through to the piece's parent element (which still carries
+   react-dnd's own drag ref for the other taskTypes), so this does not block
+   drag pickup for piece-intro-guided/notation-drag/etc. */
+.cl-board-inner svg,
+.cl-board-inner img {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 /* Task bar below board */
 .cl-taskbar {
   flex-shrink: 0;
