@@ -493,6 +493,13 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   const pieceRangeDragItemRef = useRef(null); // { fromSquare, pieceCode, startX, startY }
   const pieceRangeDragPosRef = useRef({ x: 0, y: 0 });
   const pieceRangeGhostElRef = useRef(null);
+  // Last square resolved via coordsToSquare() during pointermove while a piece-range
+  // drag is active. Used to resolve the drop target on release instead of a one-shot
+  // coordsToSquare() call at the exact pointerup coordinate — the release point can
+  // land a frame after the visual position settles, and a continuously-updated ref
+  // is more robust than a single calculation at the instant of release. Still uses
+  // coordsToSquare() (Rule 36 coordinate math), never browser/react-chessboard hit-testing.
+  const lastHoveredSquareRef = useRef(null);
   // piece letter overlay (FIX 6) — tracks which letters are currently displayed on pieces
   const [pieceLetterOverlays, setPieceLetterOverlays] = useState({});
 
@@ -1515,6 +1522,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
   function startPieceRangeDrag(fromSquare, pieceCode, clientX, clientY) {
     pieceRangeDragItemRef.current = { fromSquare, pieceCode, startX: clientX, startY: clientY };
     pieceRangeDragPosRef.current = { x: clientX, y: clientY };
+    lastHoveredSquareRef.current = null;
     document.body.style.cursor = 'grabbing';
     setPieceRangeDragActive(true);
   }
@@ -2149,24 +2157,33 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       if (pieceRangeGhostElRef.current) {
         pieceRangeGhostElRef.current.style.transform = `translate(${e.clientX - 26}px, ${e.clientY - 26}px)`;
       }
+      // Continuously resolve the hovered square via coordinate math (Rule 36) as the
+      // pointer moves, so the drop target on release is a recently-confirmed square
+      // rather than a single coordsToSquare() call at the exact release coordinate.
+      if (boardInnerRef.current) {
+        const rect = boardInnerRef.current.getBoundingClientRect();
+        const withinBoard = e.clientX >= rect.left && e.clientX <= rect.right
+          && e.clientY >= rect.top && e.clientY <= rect.bottom;
+        if (withinBoard) {
+          lastHoveredSquareRef.current = coordsToSquare(e.clientX, e.clientY, rect);
+        }
+      }
     }
     function endDrag(e) {
       const item = pieceRangeDragItemRef.current;
       pieceRangeDragItemRef.current = null;
       document.body.style.cursor = '';
       setPieceRangeDragActive(false);
-      if (!item || !boardInnerRef.current) return;
+      if (!item) return;
       if (currentStepRef.current?.taskType !== 'piece-range') return;
-      const rect = boardInnerRef.current.getBoundingClientRect();
-      const withinBoard = e.clientX >= rect.left && e.clientX <= rect.right
-        && e.clientY >= rect.top && e.clientY <= rect.bottom;
-      if (!withinBoard) return;
       // A release with negligible movement is a tap, not a drag — leave it to
       // the existing onSquareClick path (handleSquareClickArgs), which already
       // handles click-to-target for piece-range and is untouched by this fix.
       const dx = e.clientX - item.startX, dy = e.clientY - item.startY;
       if (Math.hypot(dx, dy) < 5) return;
-      const sq = coordsToSquare(e.clientX, e.clientY, rect);
+      const sq = lastHoveredSquareRef.current;
+      lastHoveredSquareRef.current = null;
+      if (!sq) return;
       handlePieceDrop(item.fromSquare, sq, item.pieceCode);
     }
     window.addEventListener('pointermove', onMove);
