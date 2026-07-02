@@ -75,11 +75,18 @@ function fenToPositionObj(fen) {
 }
 
 // Convert browser clientX/Y into a board square name (white orientation).
-// rect = boardInnerRef.current.getBoundingClientRect()
-function coordsToSquare(clientX, clientY, rect) {
+// rect = boardInnerRef.current.getBoundingClientRect() — .left/.top are always
+// used for the offset origin. The divisor defaults to rect.width (fresh,
+// fractional, measured at call time) but callers may pass divisorWidth to use
+// the same integer boardWidth react-chessboard actually rendered its squares
+// with instead — see the piece-range endDrag call, which does this to avoid
+// drift from rect.width vs. react-chessboard's internal integer boardWidth/8
+// accumulating toward h-file/rank-1. Piece-placement's call passes no
+// divisorWidth, so its behavior is unchanged.
+function coordsToSquare(clientX, clientY, rect, divisorWidth) {
   const x = clientX - rect.left;
   const y = clientY - rect.top;
-  const sqSize = rect.width / 8;
+  const sqSize = (divisorWidth ?? rect.width) / 8;
   const fileIdx = Math.min(7, Math.max(0, Math.floor(x / sqSize)));
   const rankIdx = Math.min(7, Math.max(0, Math.floor(y / sqSize)));
   return 'abcdefgh'[fileIdx] + (8 - rankIdx);
@@ -2187,7 +2194,11 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
       // on-board square in the first place.
       const dx = e.clientX - item.startX, dy = e.clientY - item.startY;
       if (Math.hypot(dx, dy) < 5) return;
-      const sq = coordsToSquare(e.clientX, e.clientY, rect);
+      // Divisor is the same integer boardWidth passed to <Chessboard> (line ~2473),
+      // not rect.width — react-chessboard laid its squares out using that integer,
+      // so resolving drops against it (rather than a fresh fractional rect.width)
+      // keeps drop resolution aligned with the squares' real rendered boundaries.
+      const sq = coordsToSquare(e.clientX, e.clientY, rect, Math.max(200, boardWidth));
       handlePieceDrop(item.fromSquare, sq, item.pieceCode);
     }
     window.addEventListener('pointermove', onMove);
