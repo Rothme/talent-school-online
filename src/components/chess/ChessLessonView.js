@@ -1910,13 +1910,21 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
     if (step?.taskType === 'complete') {
       // bonusActive flag is the definitive check — also fall back to phase-id inspection
       const isBonus = bonusActive || phases.some(p => p.id?.startsWith('bonus'));
-      if (isBonus || remainSecsRef.current < 300) {
-        // Bonus already active, or less than 5 min left — end the lesson
-        setLessonDone(true);
-        confetti({ particleCount: 200, spread: 120 });
-        const closingVoice = fill(lesson?.doneVoice || `Amazing work, {name}! You have completed the lesson. You are a chess champion!`, childName);
-        speakElevenLabs(closingVoice, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
-        setTimeout(() => onComplete?.(), 4000);
+      if (isBonus) {
+        if (remainSecsRef.current > 300) {
+          // Bonus content exhausted but time still remains — loop the bonus round (Rule 21)
+          setPhaseIdx(0); setStepIdx(0);
+          setVoiceFinished(false);
+          voiceRef.current = false;
+          continueSpoke.current = false;
+        } else {
+          // Less than 5 min left — end the lesson
+          setLessonDone(true);
+          confetti({ particleCount: 200, spread: 120 });
+          const closingVoice = fill(lesson?.doneVoice || `Amazing work, {name}! You have completed the lesson. You are a chess champion!`, childName);
+          speakElevenLabs(closingVoice, { onStart: () => setIsPlaying(true), onEnd: () => setIsPlaying(false) });
+          setTimeout(() => onComplete?.(), 4000);
+        }
       } else {
         // Main lesson complete with time remaining — activate bonus round!
         // The transition announcement lives in the lessonComplete step's own
@@ -2531,8 +2539,7 @@ export default function ChessLessonView({ lessonData, childName = 'Student', chi
 
           {(() => {
             // Context-sensitive score label — Rule 26
-            const isSquareFinding = ['independent-squares', 'speed-round'].includes(step?.taskType) ||
-              phase?.type === 'warmup';
+            const isSquareFinding = ['independent-squares', 'speed-round'].includes(step?.taskType);
             const isPieceLetter = phase?.id === 'pieceletters' || phase?.id === 'letterquiz';
             const isNotation = phase?.id === 'readmove';
             const scoreLabel = isSquareFinding ? 'SQUARES FOUND'
